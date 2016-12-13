@@ -1,0 +1,15 @@
+version: '2'
+services:
+  php:
+    image: php:7-fpm
+    volumes:
+      - ./src:/var/www/html/
+  caddy:
+    build:
+      dockerfile: images/caddy/Dockerfile
+      context: ./
+    ports:
+      - '8090:8080'
+    volumes_from:
+      - php
+
