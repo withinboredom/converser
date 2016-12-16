@@ -1,0 +1,17 @@
+{
+    "name": "withinboredom/prank-caller",
+    "description": "Prank calls for the win",
+    "type": "project",
+    "license": "GPLv3",
+    "authors": [
+        {
+            "name": "Rob Landers",
+            "email": "landers.robert@gmail.com"
+        }
+    ],
+    "require": {
+        "myclabs/deep-copy": "^1.5",
+        "amphp/aerys": "dev-master"
+    },
+    "minimum-stability": "dev"
+}

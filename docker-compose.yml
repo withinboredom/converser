@@ -1,15 +1,20 @@
 version: '2'
 services:
-  php:
-    image: php:7-fpm
-    volumes:
-      - ./src:/var/www/html/
-  caddy:
+  api:
     build:
-      dockerfile: images/caddy/Dockerfile
+      dockerfile: ./images/php/Dockerfile
       context: ./
+    volumes:
+      - ./src/api:/app
+      - vendor:/app/vendor
+    command: bash -c "composer install && /app/vendor/amphp/aerys/bin/aerys -c /app/index.php"
+  web:
+    build:
+      dockerfile: ./images/caddy/Dockerfile
+      context: ./
+    volumes:
+      - ./src/site:/app
     ports:
       - '8090:8080'
-    volumes_from:
-      - php
-
+volumes:
+  vendor:
