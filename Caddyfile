@@ -5,7 +5,6 @@ localhost:8080 {
     }
     root /app
     rewrite {
-        r (.*)
-        to /index.html
+        to {path} /index.html
     }
 }

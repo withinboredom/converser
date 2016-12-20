@@ -1,0 +1,79 @@
+.highscores {
+    display: flex;
+    flex-flow: column nowrap;
+    margin-top: 17px;
+}
+
+.headertabs {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-end;
+    border-bottom: 1px dotted white;
+}
+
+.tab {
+    padding: 10px;
+    flex: 1 0 auto;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.4);
+    cursor: pointer;
+}
+
+.active {
+    composes: tab;
+    border: 1px solid gold;
+    color: black;
+    background: white;
+}
+
+.table {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 0 3em 0;
+    padding: 0;
+}
+
+.header {
+    width: 33.3%;
+    box-sizing: border-box;
+    flex-grow: 1;
+    overflow: hidden;
+    list-style: none;
+    border: solid 1px white;
+    text-align: center;
+    /*font-size: xx-large;*/
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.converser {
+    width: 33.3%;
+    box-sizing: border-box;
+    flex-grow: 1;
+    list-style: none;
+    border: solid 1px white;
+    text-align: center;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    font-size: small;
+    font-size: 2vw;
+    font-weight: bold;
+}
+
+.text {
+    vertical-align: middle;
+}
+
+.rank {
+    composes: converser;
+    font-size: large;
+    font-size: 5vw;
+    text-align: left;
+    padding-left: 1vw;
+}
+
+.score {
+    composes: converser;
+    font-size: large;
+    font-size: 4vw;
+}

@@ -1,0 +1,24 @@
+.insertCoin {
+    padding: 45px;
+    display: flex;
+    flex-flow: row wrap;
+    border: 3px dotted gold;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.helper {
+    width: 100%;
+    text-align: center;
+}
+
+.insert {
+    margin:auto;
+    text-align: center;
+    border-top: 3px solid gold;
+    padding-top: 3vw;
+    padding-bottom: 3vw;
+    border-bottom: 3px solid gold;
+    font-size: 5vw;
+}

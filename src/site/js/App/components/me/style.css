@@ -1,0 +1,64 @@
+.me {
+    display: flex;
+    flex-flow: row wrap;
+    min-height: 18vh;
+    align-content: space-around;
+    align-items: center;
+}
+
+.total {
+    width: 100%;
+}
+
+.heart {
+    position:relative;
+    width: 15vw;
+    fill: red;
+    margin: auto;
+}
+
+.counter {
+    position: absolute;
+    top: 37%;
+    left: 0;
+    font-size: 3vh;
+    width: 15vw;
+    text-align: center;
+}
+
+.life {
+    composes: total;
+}
+
+.status {
+    composes: total;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.half {
+    width: 48%;
+    font-size: 3vw;
+}
+
+.label {
+    composes: half;
+    text-align: right;
+}
+
+.content {
+    composes: half;
+}
+
+.button {
+    composes: content;
+    border: 2px solid white;
+    text-align: center;
+    cursor: pointer;
+    padding: 5px 0px;
+}
+
+.hide {
+    filter: blur(1vw);
+}

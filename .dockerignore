@@ -1,2 +1,3 @@
 .git
-src/vendor
+src/api/vendor
+src/site/js/node_modules

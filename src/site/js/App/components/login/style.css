@@ -1,0 +1,11 @@
+.input {
+    width: 48vw;
+    padding: 5px 0;
+    border: 2px solid white;
+    background: inherit;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    display: inherit;
+    text-align: center;
+}

@@ -1,0 +1,20 @@
+.button {
+    width: 48%;
+    font-size: 3vw;
+    border: 2px solid lightgray;
+    text-align: center;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.button:hover {
+    border: 2px solid yellowgreen;
+    background: lightgray;
+    color: #231f20;
+}
+
+.button:active {
+    border: 2px solid blue;
+    background: white;
+    color: #231f20;
+}
