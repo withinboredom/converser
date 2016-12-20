@@ -1,6 +1,8 @@
 const { resolve } = require('path');
 const webpack = require('webpack');
 
+const isProd = process.env.NODE_ENV == 'production';
+
 const config = {
     entry: [
         './index.js'
@@ -18,9 +20,9 @@ const config = {
 
     context: resolve(__dirname),
 
-    devtool: 'inline-source-map',
+    devtool: isProd ? 'cheap-source-map' : 'inline-source-map',
 
-    devServer: {
+    devServer: isProd ? undefined : {
         hot: true,
         // activate hot reloading
 
@@ -51,8 +53,14 @@ const config = {
     },
 
     plugins: [
+        new webpack.DefinePlugin({
+            'process.env': {
+                'NODE_ENV': JSON.stringify('production')
+            }
+        }),
         new webpack.NamedModulesPlugin(),
-        // prints more readable module names in the browser console on HMR updates
+        new webpack.optimize.DedupePlugin(),
+        new webpack.optimize.AggressiveMergingPlugin()
     ],
 };
 
