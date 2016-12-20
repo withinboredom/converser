@@ -11,6 +11,7 @@ const login = (phone, cb) => {
 const auth = (phone, pass, cb) => {
     //todo: send pass response to server
     token = 123;
+    localStorage.setItem('token', token);
     cb(token);
 };
 

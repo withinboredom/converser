@@ -1,11 +1,19 @@
 import React, {PureComponent, PropTypes} from 'react';
+import { browserHistory } from 'react-router';
 
 import Heart from './heart';
 import Hide from '../hidden';
+import auth from '../../auth';
+import Continue from '../continue';
 import Button from '../button';
 import styles from './style.css';
 
 class Me extends PureComponent {
+    logout = () => {
+        auth.logout();
+        browserHistory.push('/');
+    };
+
     render() {
 
         let status = 'Not Playing';
@@ -50,13 +58,27 @@ class Me extends PureComponent {
             }
         };
 
+        let mod = Math.log10(this.props.player.lives);
+        if (mod < 0) mod = 0;
+
         return (
             <div className={styles.me}>
                 <div className={styles.life}>
-                    <div className={styles.heart}>
-                        <Heart />
-                        <div className={styles.counter}>{this.props.player.lives}</div>
-                    </div>
+                    {this.props.player.lives > 0
+                        ?
+                        <div
+                            className={styles.heart}
+                            style={{animation: `${styles.heartbeat} ${1.5 * mod}s infinite`}}
+                            onClick={() => {
+                                browserHistory.push('/continue');
+                            }}
+                        >
+                            <Heart />
+                            <div className={styles.counter}>{this.props.player.lives}</div>
+                        </div>
+                        :
+                        <Continue/>
+                    }
                 </div>
                 <div className={styles.status}>
                     <div className={styles.label}>Status: </div>
@@ -70,7 +92,18 @@ class Me extends PureComponent {
                         <div className={styles.label}>Report:</div>
                         <Button>This Call</Button>
                     </div>
-                    : null }
+                    : null
+                }
+                <div className={styles.status}>
+                    <Button
+                        style={{
+                            width: '100%'
+                        }}
+                        onClick={this.logout}
+                    >
+                        Logout
+                    </Button>
+                </div>
             </div>
         );
     }

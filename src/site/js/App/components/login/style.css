@@ -9,3 +9,17 @@
     display: inherit;
     text-align: center;
 }
+
+.item {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-flow: row wrap;
+    width: 100%;
+}
+
+.label {
+    width: 100%;
+    font-size: 3vw;
+    text-align: center;
+}

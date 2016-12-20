@@ -38,6 +38,9 @@ class Login extends PureComponent {
     };
 
     next = (ev) => {
+        if (ev.key && ev.key !== 'Enter') {
+            return;
+        }
         if (this.state.state !== null) {
             this.state.state(this.state.currentPass);
         }
@@ -72,36 +75,41 @@ class Login extends PureComponent {
 
     render() {
         return (
-            <div className={me.me}>
-                { this.state.waiting
-                    ? <div className={me.status} >
-                        <div className={me.label}>Your Code:</div>
-                        <input
-                            name="password"
-                            className={styles.input}
-                            type="num"
-                            onChange={this.passInput}
-                            value={this.state.currentPass}
-                        />
-                    </div>
-                    : <div className={me.status} >
-                        <div className={me.label}>Your phone number:</div>
-                        <div className={me.content}>
+            <form noValidate="noValidate" onSubmit={(ev) => {ev.preventDefault()}}>
+                <div className={me.me}>
+                    { this.state.waiting
+                        ? <div className={styles.item} >
+                            <div className={styles.label}>Your Code:</div>
                             <input
-                                name="phone"
+                                name="password"
                                 className={styles.input}
-                                type="tel"
-                                onChange={this.validate}
-                                value={this.state.currentPhone}
+                                type="number"
+                                pattern="[0-9]*"
+                                onChange={this.passInput}
+                                onKeyPress={this.next}
+                                value={this.state.currentPass}
                             />
                         </div>
-                    </div>}
-                <div className={me.status}>
-                    <Button onClick={this.next}>
-                        {this.state.waiting ? 'Login' : 'Send verification sms'}
-                    </Button>
+                        : <div className={styles.item} >
+                            <div className={styles.label}>Your phone number:</div>
+                            <div className={me.content}>
+                                <input
+                                    name="phone"
+                                    className={styles.input}
+                                    type="tel"
+                                    onChange={this.validate}
+                                    onKeyPress={this.next}
+                                    value={this.state.currentPhone}
+                                />
+                            </div>
+                        </div>}
+                    <div className={me.status}>
+                        <Button onClick={this.next}>
+                            {this.state.waiting ? 'Login' : 'Send verification sms'}
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            </form>
         );
     }
 }

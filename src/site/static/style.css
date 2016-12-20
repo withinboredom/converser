@@ -10,3 +10,8 @@ body {
     line-height: 3.5vw;
     font-size: 3vw;
 }
+
+h1 {
+    margin: auto;
+    width: 50vw;
+}
