@@ -2,62 +2,62 @@
 
 use Aerys\{ Host, Request, Response, Router, Websocket, function root, function router, function websocket };
 
+function prep() {
+	$conn = r\connect('rethunk');
+	$dbs = r\dbList()->run($conn);
+	$filtered = array_filter($dbs, function($db) {
+		return $db == 'converser';
+	});
+	if (count($filtered) == 0) {
+		try {
+			r\dbCreate( 'converser' )->run( $conn );
+			$db = r\db( 'converser' );
+			$db->tableCreate( 'users' )->run( $conn );
+			$db->tableCreate( 'calls' )->run( $conn );
+			$db->tableCreate( 'sessions' )->run( $conn );
+			$db->table('users')->indexCreate('phone');
+			$db->table('sessions')->indexCreate('phone');
+			$db->table('sessions')->indexCreate('token');
+			$db->table('sessions')->indexCreate('user_id');
+			$db->table( 'users' )->insert( [
+				'phone' => '19102974810',
+				'admin' => true,
+				'lives' => 1000,
+				'score' => 0,
+				'status' => 'not-playing'
+			] )->run( $conn );
+		}
+		catch (Exception $exception) {
+			// nothing to do here
+		}
+	}
+	return $conn;
+}
+global $plivo;
+global $conn;
+
+$conn = prep();
+
 /* --- Global server options -------------------------------------------------------------------- */
 
 const AERYS_OPTIONS = [
 	"keepAliveTimeout" => 60,
+	"user" => "nobody",
+	"defaultContentType" => "application/json",
 	//"deflateMinimumLength" => 0,
 ];
+
+$auth_id = "MAMDYZMZRKN2IYMDC0MT";
+$auth_token = "NjlmOGI1YzlkZGJiMzQ1Y2E0MGNmNWVjZmE5MDM0";
+$plivo = new \Plivo\RestAPI($auth_id, $auth_token);
+unset($auth_id);
+unset($auth_token);
 
 /* --- http://localhost:1337/ ------------------------------------------------------------------- */
 
 $router = router()
 	->get("/", function(Request $req, Response $res) {
 		$res->end("<html><body><h1>Hello, world. yo...</h1></body></html>");
-	})
-	->get("/router/{myarg}", function(Request $req, Response $res, array $routeArgs) {
-		$body = "<html><body><h1>Route Args at param 3</h1>".print_r($routeArgs, true)."</body></html>";
-		$res->end($body);
-	})
-	->post("/", function(Request $req, Response $res) {
-		$res->end("<html><body><h1>Hello, world (POST).</h1></body></html>");
-	})
-	->get("error1", function(Request $req, Response $res) {
-		// ^ the router normalizes the leading forward slash in your URIs
-		$nonexistent->methodCall();
-	})
-	->get("/error2", function(Request $req, Response $res) {
-		throw new Exception("wooooooooo!");
-	})
-	->get("/directory/?", function(Request $req, Response $res) {
-		// The trailing "/?" in the URI allows this route to match /directory OR /directory/
-		$res->end("<html><body><h1>Dual directory match</h1></body></html>");
-	})
-	->get("/long-poll", function(Request $req, Response $res) {
-		while (true) {
-			yield $res->stream("hello!<br/>");
-			$res->flush();
-			yield new Amp\Pause(1000);
-		}
-	})
-	->post("/body1", function(Request $req, Response $res) {
-		$body = yield $req->getBody();
-		$res->end("<html><body><h1>Buffer Body Echo:</h1><pre>{$body}</pre></body></html>");
-	})
-	->post("/body2", function(Request $req, Response $res) {
-		$body = "";
-		foreach ($req->getBody()->stream() as $bodyPart) {
-			$body .= yield $bodyPart;
-		}
-		$res->end("<html><body><h1>Stream Body Echo:</h1><pre>{$body}</pre></body></html>");
-	})
-	->get("/favicon.ico", function(Request $req, Response $res) {
-		$res->setStatus(404);
-		$res->setHeader("Aerys-Generic-Response", "enable");
-		$res->end();
-	})
-	->zanzibar("/zanzibar", function (Request $req, Response $res) {
-		$res->end("<html><body><h1>ZANZIBAR!</h1></body></html>");
 	});
 
 $websocket = websocket(new class implements Aerys\Websocket {
@@ -66,20 +66,189 @@ $websocket = websocket(new class implements Aerys\Websocket {
 	 */
 	private $endpoint;
 
+	private function generateOneTimeCode() {
+		$number = '' . random_int(1, 9);
+		for($i = 0; $i < 4; $i++) {
+			$number .= random_int(0, 9);
+		}
+
+		return $number;
+	}
+
+	private function getOrCreateUser($phone) {
+		global $conn;
+		$user = r\db('converser')->table('users')->filter(['phone' => $phone])->limit(1)->run($conn)->toArray();
+		if (count($user) == 1) {
+			return $user[0];
+		}
+
+		$user = [
+			'phone' => $phone,
+			'lives' => 0,
+			'status' => 'not-playing',
+			'opponent' => null,
+			'score' => 0
+		];
+
+		echo "Created new user for $phone\n";
+
+		r\db('converser')->table('users')->insert($user)->run($conn);
+		return $user;
+	}
+
+	private function createSession($phone, $client, $password) {
+		global $conn;
+		$user = $this->getOrCreateUser($phone);
+		$session = [
+			'user_id' => $user['id'],
+			'clientId' => $client,
+			'password' => $password,
+			'verified' => false,
+			'valid' => true
+		];
+		echo "Created new session for with password: $password\n";
+		r\db('converser')->table('sessions')->insert($session)->run($conn);
+	}
+
+	private function verifySession($client, $password) {
+		global $conn;
+		$sessions = r\db('converser')->table('sessions')->filter([
+			'clientId' => $client,
+			'password' => $password,
+			'verified' => false
+		])->limit(1)->run($conn);
+
+		$sessions = $sessions->toArray();
+
+		foreach($sessions as $session) {
+			$token = r\uuid($client . $password)->run($conn);
+			r\db('converser')->table('sessions')->filter([
+				'clientId' => $client,
+				'password' => $password,
+				'verified' => false
+			])->limit(1)->update(['verified' => true, 'token' => $token])->run($conn);
+			return $token;
+		}
+
+		return false;
+	}
+
+	private function cleanPhone($phone) {
+		return preg_replace('/\D+/', '', $phone);
+	}
+
+	private function isVerified($userID, $client, $token = false) {
+		global $conn;
+		$check = [
+			'user_id' => $userID,
+			'clientId' => $client,
+			'verified' => true,
+			'valid' => true
+		];
+
+		if ($token && $token !== true) {
+			$check['token'] = $token;
+		}
+		$session = r\db('converser')->table('sessions')->filter($check)->limit(1)->run($conn);
+		foreach($session as $sess) {
+			return true;
+		}
+		return false;
+	}
+
+	private function invalidate($token) {
+		global $conn;
+		r\db('converser')->table('sessions')->filter(['token' => $token])->update([
+			'valid' => false
+		])->run($conn);
+	}
+
+	private function getPlayerInfo($userId) {
+		global $conn;
+		$user = r\db('converser')->table('users')->get($userId)->run($conn);
+		$display = [
+			'type'  => 'user',
+			'lives' => $user['lives'],
+			'score' => $user['score'],
+			'status' => $user['status'],
+			'opponent' => $user['opponent']
+		];
+
+		return $display;
+	}
+
 	public function onStart(Websocket\Endpoint $endpoint) {
 		$this->endpoint = $endpoint;
 	}
 
-	public function onHandshake(Request $request, Response $response) { /* check origin header here */ }
-	public function onOpen(int $clientId, $handshakeData) { }
-
-	public function onData(int $clientId, Websocket\Message $msg) {
-		// broadcast to all connected clients
-		$this->endpoint->send(null, yield $msg);
+	public function onHandshake(Request $request, Response $response) {
+		/* check origin header here */
 	}
 
-	public function onClose(int $clientId, int $code, string $reason) { }
-	public function onStop() { }
+	public function onOpen(int $clientId, $handshakeData) {
+
+	}
+
+	public function onData(int $clientId, Websocket\Message $msg) {
+		global $plivo, $conn;
+		$request = json_decode(yield $msg, true);
+		if ($request['token']) {
+			$this->isVerified($request['token']['userId'], $clientId, $request['token']);
+			switch($request['command']) {
+				case 'logout':
+					$this->invalidate($request['token']);
+					break;
+				case 'refresh':
+					$this->endpoint->send($clientId, json_encode($this->getPlayerInfo($request['token']['userId'])));
+					break;
+			}
+		}
+		else {
+			switch($request['command']) {
+				case 'login':
+					$phone = $this->cleanPhone($request['phone']);
+					print "Logging $clientId in with $phone\n";
+					$this->endpoint->send($clientId, json_encode([
+						'type' => 'logging_in',
+						'phone' => $phone
+					]));
+					$number = $this->generateOneTimeCode();
+					$this->getOrCreateUser($phone);
+					$this->createSession($phone, $clientId, $number);
+					Amp\immediately(function() use ($plivo, $phone, $number) {
+						$plivo->send_message([
+							'src' => '13108762370',
+							'dst' => $phone,
+							'text' => "Your converser login code is ${number}"
+						]);
+						echo "Notified $phone of password\n";
+					});
+					break;
+				case 'verify':
+					echo "Verifying session of $clientId with password ${request['password']}\n";
+					$token = $this->verifySession($clientId, $request['password']);
+					if ($token !== false) {
+						$user = $this->getOrCreateUser( $this->cleanPhone( $request['phone'] ));
+						echo "${user['id']} is logged in and verified\n";
+						$this->endpoint->send( $clientId, json_encode( [
+							'type'   => 'token',
+							'userId' => $user['id'],
+							'token'  => $token
+						] ) );
+						$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo($user['id']) ) );
+					}
+					break;
+			}
+		}
+	}
+
+	public function onClose(int $clientId, int $code, string $reason) {
+
+	}
+
+	public function onStop() {
+
+	}
 });
 
 $router->get("/ws", $websocket);
@@ -89,7 +258,7 @@ $root = root($docrootPath = __DIR__);
 
 // If no static files match fallback to this
 $fallback = function(Request $req, Response $res) {
-	$res->end("<html><body><h1>Fallback \o/</h1></body></html>");
+	$res->end("<html><body><h1>I don't know! \o/</h1></body></html>");
 };
 
 (new Host)->expose("*", 1337)->use($router)->use($root)->use($fallback);

@@ -8,6 +8,8 @@ services:
       - ./src/api:/app
       - vendor:/app/vendor
     command: bash -c "composer install && /app/vendor/amphp/aerys/bin/aerys -c /app/index.php"
+    ports:
+      - '1337:1337'
   web:
     build:
       dockerfile: ./images/caddy/Dockerfile
@@ -17,5 +19,9 @@ services:
       - /app/js/node_modules
     ports:
       - '8090:8080'
+  rethunk:
+    image: rethinkdb:latest
+    ports:
+      - '9000:8080'
 volumes:
   vendor:
