@@ -65,6 +65,7 @@ $websocket = websocket(new class implements Aerys\Websocket {
 	 * @var Websocket\Endpoint;
 	 */
 	private $endpoint;
+	private $needsRefresh = [];
 
 	private function generateOneTimeCode() {
 		$number = '' . random_int(1, 9);
@@ -141,14 +142,11 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		global $conn;
 		$check = [
 			'user_id' => $userID,
-			'clientId' => $client,
 			'verified' => true,
-			'valid' => true
+			'valid' => true,
+			'token' => $token
 		];
 
-		if ($token && $token !== true) {
-			$check['token'] = $token;
-		}
 		$session = r\db('converser')->table('sessions')->filter($check)->limit(1)->run($conn);
 		foreach($session as $sess) {
 			return true;
@@ -165,6 +163,7 @@ $websocket = websocket(new class implements Aerys\Websocket {
 
 	private function getPlayerInfo($userId) {
 		global $conn;
+		echo "Refreshing $userId\n";
 		$user = r\db('converser')->table('users')->get($userId)->run($conn);
 		$display = [
 			'type'  => 'user',
@@ -175,6 +174,75 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		];
 
 		return $display;
+	}
+
+	private function pay($userId, $payToken, $packageId) {
+		global $conn;
+		//todo: make these not hard coded
+		$packages = [
+			1 => [
+				'cost' => 100,
+				'description' => '1 life',
+				'lives' => 1
+			],
+			2 => [
+				'cost' => 300,
+				'description' => '3 lives',
+				'lives' => 3
+			],
+			3 => [
+				'cost' => 2000,
+				'description' => '25 lives',
+				'lives' => 25
+			]
+		];
+
+		$package = $packages[$packageId];
+
+		$payment = [
+			'amount' => $package['cost'],
+			'currency' => 'usd',
+			'source' => $payToken['id'],
+			'description' => $package['description'],
+			'metadata' => [
+				'userId' => $userId
+			]
+		];
+
+		Stripe\Stripe::setApiKey('sk_test_osM11tRI7n2u8cChs2J3R4kx');
+
+		try {
+			$charge = Stripe\Charge::create($payment);
+			if ($charge->amount === $payment['amount']) {
+				echo "Increasing ${userId} lives by ${package['lives']}\n";
+				// update the user object
+				r\db('converser')->table('users')->get($userId)->update([
+					'lives' => r\row('lives')->add($package['lives'])->rDefault(0)
+				])->run($conn);
+				return true;
+			} else if ($charge->captured) {
+				echo "$userId charge was partial, refunding\n";
+				//todo: refund & fail;
+			}
+			else {
+				echo "$userId charge failed\n";
+				//todo: fail
+			}
+		}
+		catch(Exception $exception) {
+			//todo: fail
+			echo "$userId Charge failed for reason: (${payToken})\n";
+			echo $exception->getMessage() . "\n";
+		}
+
+		return false;
+	}
+
+	private function notify($clientId, $message) {
+		$this->endpoint->send($clientId, json_encode([
+			'type' => 'notification',
+			'message' => $message
+		]));
 	}
 
 	public function onStart(Websocket\Endpoint $endpoint) {
@@ -200,6 +268,13 @@ $websocket = websocket(new class implements Aerys\Websocket {
 					break;
 				case 'refresh':
 					$this->endpoint->send($clientId, json_encode($this->getPlayerInfo($request['token']['userId'])));
+					break;
+				case 'pay':
+					$userId = $request['token']['userId'];
+					echo "Preparing to accept payment from $userId for ${request['packageId']}\n";
+					if ($this->pay($request['token']['userId'], $request['payToken'], $request['packageId'])) {
+						$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
+					}
 					break;
 			}
 		}

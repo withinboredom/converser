@@ -1,12 +1,14 @@
 import React, {PureComponent} from 'react';
 import Carrier from './carrier';
 import { browserHistory } from 'react-router';
+import auth from '../../auth';
 
 import me from '../me/style.css';
 
 class Purchase extends PureComponent {
     fund = (packageId) => (token) => {
         console.log(packageId, token);
+        auth.makePayment(packageId, token);
         browserHistory.push('/me');
     };
 

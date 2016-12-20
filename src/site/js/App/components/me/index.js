@@ -18,15 +18,15 @@ class Me extends PureComponent {
 
         let status = 'Not Playing';
 
-        switch (this.props.status.type) {
+        switch (this.props.status) {
             case 'in-call':
                 status = (
                     <span>
                         Playing against
-                        {` ${this.props.status.opponent.country} `}
-                        {`${this.props.status.opponent.start} `}
-                        <Hide hidden={this.props.status.opponent.hidden} />
-                        {` ${this.props.status.opponent.end}`}
+                        {` ${this.props.opponent.country} `}
+                        {`${this.props.opponent.start} `}
+                        <Hide hidden={this.props.opponent.hidden} />
+                        {` ${this.props.opponent.end}`}
                     </span>
                 );
                 break;
@@ -113,16 +113,13 @@ Me.propTypes = {
     player: PropTypes.shape({
         lives: PropTypes.number.isRequired,
         score: PropTypes.number.isRequired,
-        isPlaying: PropTypes.bool.isRequired
     }).isRequired,
-    status: PropTypes.shape({
-        type: PropTypes.string.isRequired,
-        opponent: PropTypes.shape({
-            country: PropTypes.string.isRequired,
-            start: PropTypes.string.isRequired,
-            end: PropTypes.string.isRequired,
-            hidden: PropTypes.number
-        })
+    status: PropTypes.string.isRequired,
+    opponent: PropTypes.shape({
+        country: PropTypes.string.isRequired,
+        start: PropTypes.string.isRequired,
+        end: PropTypes.string.isRequired,
+        hidden: PropTypes.number
     })
 };
 

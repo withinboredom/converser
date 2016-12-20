@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {PureComponent} from 'react';
 import ReactDOM from 'react-dom';
 import { Router, Route, Link, browserHistory } from 'react-router'
 
@@ -18,6 +18,46 @@ const requireAuth = (nextState, replace) => {
     }
 };
 
+class State extends PureComponent {
+    playerUpdated = (newPlayer) => {
+        this.setState({
+            player: newPlayer,
+            status: newPlayer.status
+        });
+    };
+
+    syncPlayer = () => {
+        auth.onPlayerUpdate = this.playerUpdated;
+        const player = auth.getPlayer();
+        this.setState({
+            player,
+            status: player.status
+        });
+    };
+
+    componentWillMount() {
+        this.syncPlayer();
+    }
+
+    componentWillReceiveProps(newProps) {
+        this.syncPlayer();
+    }
+
+    componentWillUnmount() {
+        auth.onPlayerUpdate = null;
+    }
+
+    render() {
+        return React.Children.map(this.props.children, (child) => {
+            return React.cloneElement(child, {
+                ...this.state,
+                ...this.props,
+                status: this.state.player.status
+            });
+        })[0];
+    }
+}
+
 const render = () => {
     ReactDOM.render(
         <Router history={browserHistory}>
@@ -25,24 +65,7 @@ const render = () => {
                 <Route path="continue" component={Purchase} onEnter={requireAuth} />
                 <Route
                     path="me"
-                    component={(props) =>
-                        <Me
-                            {...props}
-                            player={{
-                                lives: 3,
-                                score: 100,
-                                isPlaying: true
-                            }}
-                            status={{
-                                type: 'in-call',
-                                opponent: {
-                                    country: '+1',
-                                    start: '843',
-                                    hidden: 3,
-                                    end: '5937'
-                                }
-                            }}
-                        />}
+                    component={() => (<State><Me player={{lives: 0, score: 0}} /></State>)}
                     onEnter={requireAuth}
                 />
                 <Route path="login" component={Login} />
