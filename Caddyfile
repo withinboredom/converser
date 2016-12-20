@@ -1,4 +1,4 @@
-localhost:8080 {
+*:8080 {
     gzip
     proxy /api api:1337 {
         transparent
