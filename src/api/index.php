@@ -65,9 +65,13 @@ $websocket = websocket(new class implements Aerys\Websocket {
 	 * @var Websocket\Endpoint;
 	 */
 	private $endpoint;
-	private $needsRefresh = [];
+	private $stopRefresher;
 
-	private function generateOneTimeCode() {
+	/**
+	 * Generates a one-time code for logging in
+	 * @return string The code
+	 */
+	private function generateOneTimeCode() : string {
 		$number = '' . random_int(1, 9);
 		for($i = 0; $i < 4; $i++) {
 			$number .= random_int(0, 9);
@@ -76,7 +80,12 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		return $number;
 	}
 
-	private function getOrCreateUser($phone) {
+	/**
+	 * Gets or creates a user given a phone number
+	 * @param $phone string The phone number
+	 * @return array The user object (may or may not contain a user id
+	 */
+	private function getOrCreateUser(string $phone) {
 		global $conn;
 		$user = r\db('converser')->table('users')->filter(['phone' => $phone])->limit(1)->run($conn)->toArray();
 		if (count($user) == 1) {
@@ -97,7 +106,13 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		return $user;
 	}
 
-	private function createSession($phone, $client, $password) {
+	/**
+	 * Creates a session for a user, which still requires verification
+	 * @param $phone string The phone number to create the session for
+	 * @param $client int The client id
+	 * @param $password string The password to use to create the session
+	 */
+	private function createSession(string $phone, int $client, string $password) {
 		global $conn;
 		$user = $this->getOrCreateUser($phone);
 		$session = [
@@ -111,7 +126,14 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		r\db('converser')->table('sessions')->insert($session)->run($conn);
 	}
 
-	private function verifySession($client, $password) {
+	/**
+	 * Verifies a session for use, completing the login process
+	 * @param $client int The client id
+	 * @param $password string The password
+	 *
+	 * @return bool|string false if verification wasn't successful, otherwise the auth token
+	 */
+	private function verifySession(int $client, string $password) {
 		global $conn;
 		$sessions = r\db('converser')->table('sessions')->filter([
 			'clientId' => $client,
@@ -134,17 +156,30 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		return false;
 	}
 
-	private function cleanPhone($phone) {
+	/**
+	 * Cleans a phone number
+	 * @param $phone string The phone number to clean
+	 * @return string The clean phone number
+	 */
+	private function cleanPhone(string $phone) : string {
 		return preg_replace('/\D+/', '', $phone);
 	}
 
-	private function isVerified($userID, $client, $token = false) {
+	/**
+	 * Verifies a request's session
+	 * @param string $userID The user id
+	 * @param int $client The client id
+	 * @param string $token The token from the request
+	 *
+	 * @return bool Whether the session is valid
+	 */
+	private function isVerified($userID, $client, $token = false) : bool {
 		global $conn;
 		$check = [
 			'user_id' => $userID,
 			'verified' => true,
 			'valid' => true,
-			'token' => $token
+			'token' => $token['token']
 		];
 
 		$session = r\db('converser')->table('sessions')->filter($check)->limit(1)->run($conn);
@@ -154,13 +189,23 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		return false;
 	}
 
-	private function invalidate($token) {
+	/**
+	 * Invalidates a token
+	 * @param string $token The token to invalidate
+	 */
+	private function invalidate($token) : void {
 		global $conn;
 		r\db('converser')->table('sessions')->filter(['token' => $token])->update([
 			'valid' => false
 		])->run($conn);
 	}
 
+	/**
+	 * Get a player's information
+	 * @param string $userId The user's id
+	 *
+	 * @return array The player information
+	 */
 	private function getPlayerInfo($userId) {
 		global $conn;
 		echo "Refreshing $userId\n";
@@ -176,6 +221,14 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		return $display;
 	}
 
+	/**
+	 * Takes money from people
+	 * @param string $userId The user's id
+	 * @param string $payToken The payment token from the request
+	 * @param int $packageId The package to purchase
+	 *
+	 * @return bool Whether or not the charge was successful
+	 */
 	private function pay($userId, $payToken, $packageId) {
 		global $conn;
 		//todo: make these not hard coded
@@ -238,13 +291,52 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		return false;
 	}
 
-	private function notify($clientId, $message) {
+	/**
+	 * Notify the client of some event
+	 * @param int $clientId The client id
+	 * @param string $message The message to send
+	 */
+	private function notify(int $clientId, string $message) : void {
 		$this->endpoint->send($clientId, json_encode([
 			'type' => 'notification',
 			'message' => $message
 		]));
 	}
 
+	public function autoRefresh($clientId, $userId) {
+		global $conn;
+		echo "Waiting for changes\n";
+		$changes = r\db('converser')->table('users')->get($userId)->changes()->run($conn);
+		echo "Pusher installed\n";
+		\Amp\repeat(function($watcherId) use ($clientId, $userId, $changes) {
+			$sent = false;
+
+			echo "Looking for changes for $userId\n";
+
+			$client = array_filter($this->endpoint->getClients(), function($item) use ($clientId) {
+				return $clientId == $item;
+			});
+
+			if (count($client) == 0) {
+				echo "No longer sending changes to $userId\n";
+				Amp\cancel($watcherId);
+				return;
+			}
+
+			foreach($changes as $change) {
+				if (!$sent) {
+					echo "Sent changes to $userId\n";
+					$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $userId ) ) );
+					$sent = true;
+				}
+			}
+		}, 1000);
+	}
+
+	/**
+	 * Called when a websocket first connects
+	 * @param Websocket\Endpoint $endpoint
+	 */
 	public function onStart(Websocket\Endpoint $endpoint) {
 		$this->endpoint = $endpoint;
 	}
@@ -261,21 +353,26 @@ $websocket = websocket(new class implements Aerys\Websocket {
 		global $plivo, $conn;
 		$request = json_decode(yield $msg, true);
 		if ($request['token']) {
-			$this->isVerified($request['token']['userId'], $clientId, $request['token']);
-			switch($request['command']) {
-				case 'logout':
-					$this->invalidate($request['token']);
-					break;
-				case 'refresh':
-					$this->endpoint->send($clientId, json_encode($this->getPlayerInfo($request['token']['userId'])));
-					break;
-				case 'pay':
-					$userId = $request['token']['userId'];
-					echo "Preparing to accept payment from $userId for ${request['packageId']}\n";
-					if ($this->pay($request['token']['userId'], $request['payToken'], $request['packageId'])) {
+			if ($this->isVerified($request['token']['userId'], $clientId, $request['token'])) {
+				$this->autoRefresh($clientId, $request['token']['userId']);
+				switch ( $request['command'] ) {
+					case 'logout':
+						$this->invalidate( $request['token'] );
+						break;
+					case 'refresh':
 						$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
-					}
-					break;
+						break;
+					case 'pay':
+						$userId = $request['token']['userId'];
+						echo "Preparing to accept payment from $userId for ${request['packageId']}\n";
+						if ( $this->pay( $request['token']['userId'], $request['payToken'], $request['packageId'] ) ) {
+							$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
+						}
+						break;
+				}
+			}
+			else {
+				echo "Not verified\n";
 			}
 		}
 		else {
@@ -292,7 +389,7 @@ $websocket = websocket(new class implements Aerys\Websocket {
 					$this->createSession($phone, $clientId, $number);
 					Amp\immediately(function() use ($plivo, $phone, $number) {
 						$plivo->send_message([
-							'src' => '13108762370',
+							'src' => '18037143889',
 							'dst' => $phone,
 							'text' => "Your converser login code is ${number}"
 						]);
