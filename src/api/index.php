@@ -323,13 +323,11 @@ $websocket = websocket(new class implements Aerys\Websocket {
 				return;
 			}
 
-			foreach($changes as $change) {
-				if (!$sent) {
-					echo "Sent changes to $userId\n";
-					$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $userId ) ) );
-					$sent = true;
-				}
-			}
+			var_dump($changes->toArray());
+			/*foreach($changes as $change) {
+				print_r($change);
+				break;
+			}*/
 		}, 1000);
 	}
 

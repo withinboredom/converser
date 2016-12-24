@@ -1,6 +1,6 @@
 
 let token = false;
-let websocket = new WebSocket('ws://10.0.0.50:1337/ws');
+let websocket = new WebSocket('ws://localhost:1337/ws');
 
 const tokenResp = [];
 
