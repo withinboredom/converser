@@ -52,16 +52,15 @@ const config = {
         ],
     },
 
-    plugins: [
+    plugins: isProd ? [
         new webpack.DefinePlugin({
             'process.env': {
                 'NODE_ENV': JSON.stringify('production')
             }
         }),
         new webpack.NamedModulesPlugin(),
-        new webpack.optimize.DedupePlugin(),
         new webpack.optimize.AggressiveMergingPlugin()
-    ],
+    ] : undefined,
 };
 
 module.exports = config;

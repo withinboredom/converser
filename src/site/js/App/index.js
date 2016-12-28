@@ -1,15 +1,26 @@
 import React, {PureComponent} from 'react';
+import NotificationSystem from 'react-notification-system';
 import styles from './app.css';
 
 import Homepage from './components/homepage';
 import Highscores from './components/highscores';
+import auth from './auth';
 
 class App extends PureComponent {
+    _notificationSystem = null;
+
+    _addNotification = ( message ) => {
+        if (this._notificationSystem) {
+            this._notificationSystem.addNotification(message);
+        }
+    };
+
     constructor(props) {
         super(props);
     }
 
     componentWillMount() {
+        auth.onNotify = this._addNotification;
         this.setState({
             shouldContinue: true,
             players: [
@@ -38,6 +49,7 @@ class App extends PureComponent {
             <div className={styles.app}>
                 { this.props.children ? this.props.children : <Homepage shouldContinue={this.state.shouldContinue} /> }
                 <Highscores players={this.state.players} />
+                <NotificationSystem ref={(ref) => { this._notificationSystem = ref } } />
             </div>
         );
     }

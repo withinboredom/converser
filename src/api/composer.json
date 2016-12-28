@@ -10,11 +10,11 @@
         }
     ],
     "require": {
-        "myclabs/deep-copy": "^1.5",
         "amphp/aerys": "dev-master",
         "danielmewes/php-rql": "dev-master",
         "plivo/plivo-php": "v1.1.5",
-        "stripe/stripe-php": "4.*"
+        "stripe/stripe-php": "4.*",
+        "amphp/loop": "dev-master"
     },
     "minimum-stability": "dev"
 }

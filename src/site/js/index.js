@@ -48,13 +48,15 @@ class State extends PureComponent {
     }
 
     render() {
-        return React.Children.map(this.props.children, (child) => {
-            return React.cloneElement(child, {
-                ...this.state,
-                ...this.props,
-                status: this.state.player.status
-            });
-        })[0];
+        return (
+            React.Children.map(this.props.children, (child) => {
+                return React.cloneElement(child, {
+                    ...this.state,
+                    ...this.props,
+                    status: this.state.player.status
+                });
+            })[0]
+        );
     }
 }
 
@@ -62,7 +64,7 @@ const render = () => {
     ReactDOM.render(
         <Router history={browserHistory}>
             <Route path="/" component={App}>
-                <Route path="continue" component={Purchase} onEnter={requireAuth} />
+                <Route path="continue" component={() => (<State><Purchase/></State>)} onEnter={requireAuth} />
                 <Route
                     path="me"
                     component={() => (<State><Me player={{lives: 0, score: 0}} /></State>)}

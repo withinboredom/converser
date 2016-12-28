@@ -16,12 +16,23 @@ services:
       context: ./
     volumes:
       - ./src/site:/app
-      - /app/js/node_modules
+      - node_modules:/app/js/node_modules
     ports:
       - '8090:8080'
+  builder:
+    build:
+      dockerfile: ./images/builder/Dockerfile
+      context: ./
+    tty: true
+    volumes:
+      - ./src/site:/app
+      - node_modules:/app/js/node_modules
+    working_dir: /app/js
+    command: bash -c "ls && yarn && node_modules/.bin/webpack -w"
   rethunk:
     image: rethinkdb:latest
     ports:
       - '9000:8080'
 volumes:
   vendor:
+  node_modules:

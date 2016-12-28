@@ -7,7 +7,8 @@ const tokenResp = [];
 let player = false;
 
 const ret = {
-    onPlayerUpdate: null
+    onPlayerUpdate: null,
+    onNotify: null
 };
 
 websocket.onopen = (event) => {
@@ -16,6 +17,21 @@ websocket.onopen = (event) => {
             command: 'refresh',
             token: getToken()
         });
+    }
+};
+
+const logout = () => {
+    try {
+        localStorage.clear();
+    }
+    finally {
+        token = false;
+        player = {
+            lives: 0,
+            score: 0,
+            status: 'loading'
+        };
+        location.reload();
     }
 };
 
@@ -40,11 +56,24 @@ websocket.onmessage = (event) => {
                 ret.onPlayerUpdate(player);
             }
             break;
+        case 'logout':
+            console.log('logging out due to invalid key/token');
+            logout();
+            break;
+        case 'notification':
+            if (ret.onNotify) {
+                const notification = {
+                    ...msg.notification,
+                    dismissible: false
+                };
+                ret.onNotify(notification);
+            }
+            break;
     }
 };
 
 const send = (message, retries = 100) => {
-    if (retries == 0) return; //todo: show error message
+    if (retries == 0) { location.reload() }
     try {
         if (websocket.readyState === 1) {
             websocket.send(JSON.stringify(message));
@@ -55,7 +84,9 @@ const send = (message, retries = 100) => {
     }
     catch (e) {
         const mess = websocket.onmessage;
+        const connect = websocket.onopen;
         websocket = new WebSocket('ws://localhost:1337/ws');
+        websocket.onopen = connect;
         websocket.onmessage = mess;
         setTimeout(() => send(message, retries - 1), 5000);
     }
@@ -107,20 +138,6 @@ const getPlayer = () => {
         };
     }
     return player;
-};
-
-const logout = () => {
-    try {
-        localStorage.clear();
-    }
-    finally {
-        token = false;
-        player = {
-            lives: 0,
-            score: 0,
-            status: 'loading'
-        };
-    }
 };
 
 const loggedIn = () => {
