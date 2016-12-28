@@ -35,10 +35,21 @@ const logout = () => {
     }
 };
 
+let isRefreshing = false;
+const autoRefresh = () => {
+    if (player && !isRefreshing) {
+        isRefreshing = true;
+        setInterval(() => {
+            send({
+                command: 'refresh',
+                token: getToken()
+            });
+        }, 5000);
+    }
+};
+
 websocket.onmessage = (event) => {
     const msg = JSON.parse(event.data);
-
-    console.log('got msg', msg);
 
     switch(msg.type) {
         case 'token':
@@ -55,6 +66,7 @@ websocket.onmessage = (event) => {
             if (ret.onPlayerUpdate) {
                 ret.onPlayerUpdate(player);
             }
+            autoRefresh();
             break;
         case 'logout':
             console.log('logging out due to invalid key/token');
