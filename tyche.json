@@ -1,0 +1,163 @@
+{
+  "settings": {
+    "defaultTool": "native"
+  },
+  "tasks": [
+    {
+      "name": "build",
+      "description": "build the project",
+      "tasks": [
+        {
+          "name": "pre-build-site",
+          "exec": {
+            "native": {
+              "command": ["docker-compose","run","builder","yarn"]
+            }
+          }
+        },
+        {
+          "name": "build-site",
+          "exec": {
+            "native": {
+              "command": ["docker-compose","run","-e","NODE_ENV=production","builder","node_modules/.bin/webpack","-p"]
+            }
+          }
+        },
+        {
+          "name": "build-api",
+          "exec": {
+            "native": {
+              "command": ["docker-compose","run","api","composer","install"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "develop",
+      "description": "Use to easily develop",
+      "tasks": [
+        {
+          "name": "install",
+          "tasks": [
+            {
+              "name": "install-api",
+              "exec": {
+                "native": {
+                  "command": ["composer install"],
+                  "working": "src/api"
+                }
+              }
+            },
+            {
+              "name": "install-web",
+              "exec": {
+                "native": {
+                  "command": ["yarn"],
+                  "working": "src/site/js"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "start",
+          "tasks": [
+            {
+              "name": "stop",
+              "exec": {
+                "native": {
+                  "command": ["docker-compose","down"]
+                }
+              }
+            }
+          ],
+          "exec": {
+            "native": {
+              "command": ["docker-compose","up","-d"]
+            }
+          }
+        },
+        {
+          "name": "api",
+          "exec": {
+            "native": {
+              "command": ["docker-compose","up","--no-recreate","api"]
+            }
+          }
+        },
+        {
+          "name": "site",
+          "exec": {
+            "native": {
+              "command": ["node_modules/.bin/webpack","-w"],
+              "working": "src/site/js"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "clean",
+      "description": "clean the repo",
+      "tasks": [
+        {
+          "name": "node_modules",
+          "exec": {
+            "native": {
+              "command": ["rm","-rf","node_modules"],
+              "working": "src/site/js"
+            }
+          }
+        },
+        {
+          "name": "vendor",
+          "exec": {
+            "native": {
+              "command": ["rm","-rf","vendor"],
+              "working": "src/api"
+            }
+          }
+        },
+        {
+          "name": "build",
+          "exec": {
+            "native": {
+              "command": ["rm","-f","bundle.js"],
+              "working": "src/site/build"
+            }
+          }
+        }
+      ],
+      "exec": {
+        "native": {
+          "command": ["docker-compose","down","-v"]
+        }
+      }
+    },
+    {
+      "name": "update",
+      "description": "Update all dependencies",
+      "tasks": [
+        {
+          "name": "update-composer",
+          "exec": {
+            "native": {
+              "command": ["composer","update"],
+              "working": "src/api"
+            }
+          }
+        },
+        {
+          "name": "update-node",
+          "exec": {
+            "native": {
+              "command": ["yarn","upgrade"],
+              "working": "src/site/js"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

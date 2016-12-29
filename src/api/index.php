@@ -445,11 +445,11 @@ $websocket = websocket( new class implements Aerys\Websocket {
 $router->get( "/ws", $websocket );
 
 // If none of our routes match try to serve a static file
-$root = root( $docrootPath = __DIR__ );
+//$root = root( $docrootPath = __DIR__ );
 
 // If no static files match fallback to this
 $fallback = function ( Request $req, Response $res ) {
 	$res->end( "<html><body><h1>I don't know! \o/</h1></body></html>" );
 };
 
-( new Host )->expose( "*", 1337 )->use( $router )->use( $root )->use( $fallback );
+( new Host )->expose( "*", 1337 )->use( $router )->use( $fallback );
