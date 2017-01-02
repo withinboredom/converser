@@ -326,19 +326,19 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/loop.git",
-                "reference": "7e875298b854b75396ae3fc9e1b4d3946d3905ba"
+                "reference": "26a707ed94b3e901dee1d4de59e3ae3c9dbd3556"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/loop/zipball/7e875298b854b75396ae3fc9e1b4d3946d3905ba",
-                "reference": "7e875298b854b75396ae3fc9e1b4d3946d3905ba",
+                "url": "https://api.github.com/repos/amphp/loop/zipball/26a707ed94b3e901dee1d4de59e3ae3c9dbd3556",
+                "reference": "26a707ed94b3e901dee1d4de59e3ae3c9dbd3556",
                 "shasum": ""
             },
             "require": {
-                "async-interop/event-loop": "^0.3"
+                "async-interop/event-loop": "0.4"
             },
             "provide": {
-                "async-interop/event-loop-implementation": "^0.3"
+                "async-interop/event-loop-implementation": "^0.4"
             },
             "require-dev": {
                 "async-interop/event-loop-test": "dev-master",
@@ -365,7 +365,7 @@
                 "loop",
                 "reactor"
             ],
-            "time": "2016-12-29 00:50:41"
+            "time": "2016-12-29 23:55:06"
         },
         {
             "name": "amphp/socket",
@@ -424,22 +424,24 @@
         },
         {
             "name": "async-interop/event-loop",
-            "version": "v0.3.0",
+            "version": "v0.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/async-interop/event-loop.git",
-                "reference": "9ab9e6a6bb409a68708fa5ef09eb593dcd73f7f2"
+                "reference": "0ede4e89a4bd8a01af05626278217a5e0054b631"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/async-interop/event-loop/zipball/9ab9e6a6bb409a68708fa5ef09eb593dcd73f7f2",
-                "reference": "9ab9e6a6bb409a68708fa5ef09eb593dcd73f7f2",
+                "url": "https://api.github.com/repos/async-interop/event-loop/zipball/0ede4e89a4bd8a01af05626278217a5e0054b631",
+                "reference": "0ede4e89a4bd8a01af05626278217a5e0054b631",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.5.0"
             },
             "require-dev": {
+                "jakub-onderka/php-console-highlighter": "^0.3.2",
+                "jakub-onderka/php-parallel-lint": "^0.9.2",
                 "phpunit/phpunit": "^4|^5"
             },
             "type": "library",
@@ -459,7 +461,7 @@
                 "interop",
                 "loop"
             ],
-            "time": "2016-08-30 20:35:31"
+            "time": "2016-12-29 15:41:03"
         },
         {
             "name": "danielmewes/php-rql",
@@ -554,12 +556,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "e7dea7f16d2119f443af15c357f35461c1455443"
+                "reference": "8bc9d2de8834a9b74921807ba29d081703868078"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/e7dea7f16d2119f443af15c357f35461c1455443",
-                "reference": "e7dea7f16d2119f443af15c357f35461c1455443",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/8bc9d2de8834a9b74921807ba29d081703868078",
+                "reference": "8bc9d2de8834a9b74921807ba29d081703868078",
                 "shasum": ""
             },
             "require": {
@@ -608,7 +610,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2016-12-27 10:24:35"
+            "time": "2016-12-29 13:24:34"
         },
         {
             "name": "guzzlehttp/promises",
