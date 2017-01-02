@@ -3,6 +3,7 @@ import Carrier from './carrier';
 import { browserHistory } from 'react-router';
 import auth from '../../auth';
 
+import Button from '../button';
 import me from '../me/style.css';
 
 class Purchase extends PureComponent {
@@ -19,6 +20,9 @@ class Purchase extends PureComponent {
                 <Carrier token={this.fund(1)} stripeKey={stripeKey} cost={1} lives={1} />
                 <Carrier token={this.fund(2)} stripeKey={stripeKey} cost={3} lives={3} />
                 <Carrier token={this.fund(3)} stripeKey={stripeKey} cost={20} lives={25} />
+                <div className={me.status} >
+                    { auth.getPlayer().lives > 0 ? <Button onClick={ () => { browserHistory.push('/me'); } } >Continue</Button> : null }
+                </div>
             </div>
             /*
             <div>
