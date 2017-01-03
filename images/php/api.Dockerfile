@@ -22,8 +22,12 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     php composer-setup.php --install-dir=/bin --filename=composer --version=1.2.4 &&\
     php -r "unlink('composer-setup.php');"
 
-COPY src /app
+COPY src/api/composer.lock /app/composer.lock
+COPY src/api/composer.json /app/composer.json
 
 WORKDIR /app
+RUN composer install
+
+COPY src/api /app
 
 CMD ["/app/vendor/amphp/aerys/bin/aerys","-c","/app/vendor/amphp/aerys/demo.php"]

@@ -21,10 +21,13 @@ function prep() {
 			$db->tableCreate( 'calls' )->run( $conn );
 			$db->tableCreate( 'sessions' )->run( $conn );
 			$db->tableCreate( 'events' )->run( $conn );
-			$db->table( 'users' )->indexCreate( 'phone' );
-			$db->table( 'sessions' )->indexCreate( 'phone' );
-			$db->table( 'sessions' )->indexCreate( 'token' );
-			$db->table( 'sessions' )->indexCreate( 'user_id' );
+			$db->tableCreate( 'sms' )->run( $conn );
+			$db->table( 'users' )->wait()->run( $conn );
+			$db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
+			$db->table( 'sessions' )->wait()->run( $conn );
+			$db->table( 'sessions' )->indexCreate( 'phone' )->run( $conn );
+			$db->table( 'sessions' )->indexCreate( 'token' )->run( $conn );
+			$db->table( 'sessions' )->indexCreate( 'user_id' )->run( $conn );
 			$db->table( 'users' )->insert( [
 				'phone'   => '19102974810',
 				'admin'   => true,
@@ -66,7 +69,6 @@ $auth_token = "NjlmOGI1YzlkZGJiMzQ1Y2E0MGNmNWVjZmE5MDM0";
 $plivo      = new \Plivo\RestAPI( $auth_id, $auth_token );
 unset( $auth_id );
 unset( $auth_token );
-
 /* --- http://localhost:1337/ ------------------------------------------------------------------- */
 
 function PlaceCall( $from, $left, $right ) {
@@ -326,7 +328,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			'source'      => $payToken['id'],
 			'description' => $package['description'],
 			'metadata'    => [
-				'user_id' => $userId,
+				'user_id'    => $userId,
 				'attempt_id' => $attempt
 			]
 		];

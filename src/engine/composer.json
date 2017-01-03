@@ -1,0 +1,19 @@
+{
+  "name": "withinboredom/engine",
+  "description": "Call Engine",
+  "type": "project",
+  "license": "GPLv3",
+  "authors": [
+    {
+      "name": "Rob Landers",
+      "email": "landers.robert@gmail.com"
+    }
+  ],
+  "require": {
+    "danielmewes/php-rql": "dev-master",
+    "plivo/plivo-php": "v1.1.5",
+    "amphp/amp": "dev-master",
+    "amphp/loop": "dev-master"
+  },
+  "minimum-stability": "dev"
+}

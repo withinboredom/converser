@@ -2,14 +2,24 @@ version: '2'
 services:
   api:
     build:
-      dockerfile: ./images/php/Dockerfile
+      dockerfile: ./images/php/api.Dockerfile
       context: ./
     volumes:
       - ./src/api:/app
-      - vendor:/app/vendor
+      - api_vendor:/app/vendor
     command: bash -c "composer install && /app/vendor/amphp/aerys/bin/aerys -c /app/index.php"
     ports:
       - '1337:1337'
+  engine:
+    build:
+      dockerfile: ./images/php/engine.Dockerfile
+      context: ./
+    volumes:
+      - ./src/engine:/var/www/html
+      - engine_vendor:/var/www/html/vendor
+    command: bash -c "composer install && apache2-foreground"
+    ports:
+      - '2200:80'
   web:
     build:
       dockerfile: ./images/caddy/Dockerfile
@@ -34,5 +44,6 @@ services:
     ports:
       - '9000:8080'
 volumes:
-  vendor:
+  api_vendor:
+  engine_vendor:
   node_modules:

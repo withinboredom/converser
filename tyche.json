@@ -57,6 +57,15 @@
                   "working": "src/site/js"
                 }
               }
+            },
+            {
+              "name": "install-engine",
+              "exec": {
+                "native": {
+                  "command": ["composer","install"],
+                  "working": "src/engine"
+                }
+              }
             }
           ]
         },
@@ -120,6 +129,15 @@
           }
         },
         {
+          "name": "engine-vendor",
+          "exec": {
+            "native": {
+              "command": ["rm","-rf","vendor"],
+              "working": "src/engine"
+            }
+          }
+        },
+        {
           "name": "build",
           "exec": {
             "native": {
@@ -140,11 +158,20 @@
       "description": "Update all dependencies",
       "tasks": [
         {
-          "name": "update-composer",
+          "name": "update-api-composer",
           "exec": {
             "native": {
               "command": ["composer","update"],
               "working": "src/api"
+            }
+          }
+        },
+        {
+          "name": "update-engine-composer",
+          "exec": {
+            "native": {
+              "command": ["composer","update"],
+              "working": "src/engine"
             }
           }
         },
