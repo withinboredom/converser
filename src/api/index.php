@@ -4,8 +4,16 @@ use Aerys\{
 	Host, Request, Response, Router, Websocket, function root, function router, function websocket
 };
 
-define( 'DB_NAME', 'converser' );
-define( 'DB_HOST', 'rethunk' );
+define( 'DB_NAME', getenv( 'DB_NAME' ) ?: 'converser' );
+define( 'DB_HOST', getenv( 'DB_HOST' ) ?: 'rethunk' );
+define( 'SMS', getenv( 'SMS' ) ?: '18037143889' );
+define( 'CALL', getenv( 'CALL' ) ?: '18882660156' );
+define( 'HOST', getenv( 'CALL_HOST' ) ?: 'http://dev.converser.space:2200/' );
+
+define( 'STRIPE_KEY', getenv( 'STRIPE_KEY' ) ?: 'sk_test_osM11tRI7n2u8cChs2J3R4kx' );
+
+$auth_id    = getenv('PLIVO_ID') ?: "SANTC0YTLLZTFMMZA3MM";
+$auth_token = getenv('PLIVO_TOKEN') ?: "MzA2M2UyMWViNTI5NjFmZjNjMmJiYmZlNmM5YmZh";
 
 function prep() {
 	$conn     = r\connect( DB_HOST );
@@ -64,8 +72,6 @@ const AERYS_OPTIONS = [
 	//"deflateMinimumLength" => 0,
 ];
 
-$auth_id    = "MAMDYZMZRKN2IYMDC0MT";
-$auth_token = "NjlmOGI1YzlkZGJiMzQ1Y2E0MGNmNWVjZmE5MDM0";
 $plivo      = new \Plivo\RestAPI( $auth_id, $auth_token );
 unset( $auth_id );
 unset( $auth_token );
@@ -333,7 +339,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			]
 		];
 
-		Stripe\Stripe::setApiKey( 'sk_test_osM11tRI7n2u8cChs2J3R4kx' );
+		Stripe\Stripe::setApiKey( STRIPE_KEY );
 
 		event( [
 			'type'        => 'payment_attempt',

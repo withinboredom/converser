@@ -107,3 +107,5 @@ fabric.properties
 vendor
 node_modules
 build
+
+create_env.sh

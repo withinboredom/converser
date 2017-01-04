@@ -55,12 +55,20 @@ const config = {
     plugins: isProd ? [
         new webpack.DefinePlugin({
             'process.env': {
-                'NODE_ENV': JSON.stringify('production')
+                'NODE_ENV': JSON.stringify('production'),
+                'STRIPE_P_KEY': JSON.stringify( process.env.STRIPE_P_KEY )
             }
         }),
         new webpack.NamedModulesPlugin(),
         new webpack.optimize.AggressiveMergingPlugin()
-    ] : undefined,
+    ] : [
+        new webpack.DefinePlugin({
+            'process.env': {
+                'STRIPE_P_KEY': JSON.stringify( process.env.STRIPE_P_KEY ),
+                'NODE_ENV': JSON.stringify( 'development' )
+            }
+        })
+        ],
 };
 
 module.exports = config;

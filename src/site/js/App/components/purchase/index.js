@@ -14,7 +14,7 @@ class Purchase extends PureComponent {
     };
 
     render() {
-        const stripeKey = 'pk_test_b8PzUzyYEIWBIDBODWw0dQBY';
+        const stripeKey = process.env.STRIPE_P_KEY;
         return (
             <div className={me.me}>
                 <Carrier token={this.fund(1)} stripeKey={stripeKey} cost={1} lives={1} />

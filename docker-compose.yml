@@ -8,6 +8,13 @@ services:
     command: bash -c "cd /app && exec composer install"
   api:
     image: quay.io/withinboredom/api:latest
+    environment:
+      - SMS:${SMS}
+      - CALL:${CALL}
+      - CALL_HOST:${CALL_HOST}
+      - STRIPE_KEY:${STRIPE_KEY}
+      - PLIVO_ID:${PLIVO_ID}
+      - PLIVO_TOKEN:${PLIVO_TOKEN}
     extends: api-builder
     depends_on:
       - rethunk
@@ -23,6 +30,13 @@ services:
     command: bash -c "cd /var/www/html && exec composer install"
   engine:
     image: quay.io/withinboredom/engine:latest
+    environment:
+      - SMS:${SMS}
+      - CALL:${CALL}
+      - CALL_HOST:${CALL_HOST}
+      - STRIPE_KEY:${STRIPE_KEY}
+      - PLIVO_ID:${PLIVO_ID}
+      - PLIVO_TOKEN:${PLIVO_TOKEN}
     extends: engine-builder
     depends_on:
       - engine-builder
@@ -32,6 +46,8 @@ services:
       - '2200:80'
   web-builder:
     image: withinboredom/yarn:latest
+    environment:
+      - STRIPE_P_KEY:${STRIPE_P_KEY}
     volumes:
       - ./src/site:/app
       - node_modules:/app/js/node_modules
