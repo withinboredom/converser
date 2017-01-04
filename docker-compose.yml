@@ -30,11 +30,18 @@ services:
     command: apache2-foreground
     ports:
       - '2200:80'
-  web:
-    image: quay.io/withinboredom/site:latest
+  web-builder:
+    image: withinboredom/yarn:latest
     volumes:
       - ./src/site:/app
       - node_modules:/app/js/node_modules
+    command: bash -c "cd /app/js && yarn && node_modules/.bin/webpack"
+  web:
+    image: quay.io/withinboredom/site:latest
+    extends: web-builder
+    depends_on:
+      - web-builder
+    command: /caddy -conf /Caddyfile
     ports:
       - '8090:8080'
   rethunk:
