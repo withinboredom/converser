@@ -27,8 +27,7 @@ docker run \
     -w $target \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $home:/root \
-    -e DB_NAME="$DBNAME" \
-    -e DB_HOST="$DBHOST" \
+    -e DB_NAME="$DBNAME" -e DB_HOST="$DBHOST" \
     -e SMS="$SMS" \
     -e CALL="$CALL" \
     -e CALL_HOST="$CALL_HOST" \
