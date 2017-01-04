@@ -26,10 +26,10 @@
       "name": "deploy",
       "tasks": [
         {
-          "name": "git-add",
+          "name": "git-tag",
           "exec": {
             "native": {
-              "command": ["git","add","--all"]
+              "command": ["git","tag","-s","$BUILD_NUMBER"]
             }
           }
         },
