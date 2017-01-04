@@ -8,26 +8,36 @@
       "description": "build the project",
       "tasks": [
         {
-          "name": "pre-build-site",
+          "name": "pre-build",
+          "tasks": [
+            {
+              "name": "rocker-build-builder",
+              "exec": {
+                "native": {
+                  "command": ["rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--no-garbage","."]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "deploy",
+      "tasks": [
+        {
+          "name": "git-add",
           "exec": {
             "native": {
-              "command": ["docker-compose","run","builder","yarn"]
+              "command": ["git","add","--all"]
             }
           }
         },
         {
-          "name": "build-site",
+          "name": "push",
           "exec": {
             "native": {
-              "command": ["docker-compose","run","-e","NODE_ENV=production","builder","node_modules/.bin/webpack","-p"]
-            }
-          }
-        },
-        {
-          "name": "build-api",
-          "exec": {
-            "native": {
-              "command": ["docker-compose","run","api","composer","install"]
+              "command": ["rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--pull","--no-garbage","--push","."]
             }
           }
         }
@@ -35,7 +45,7 @@
     },
     {
       "name": "develop",
-      "description": "Use to easily develop",
+      "description": "Use to easily develop -- make sure to run build first",
       "tasks": [
         {
           "name": "install",
@@ -101,6 +111,14 @@
             "native": {
               "command": ["node_modules/.bin/webpack","-w"],
               "working": "src/site/js"
+            }
+          }
+        },
+        {
+          "name": "engine",
+          "exec": {
+            "native": {
+              "command": ["docker-compose","up","--no-recreate","engine"]
             }
           }
         }
@@ -184,6 +202,12 @@
             }
           }
         }
+      ]
+    },
+    {
+      "name": "bump",
+      "tasks": [
+        "deploy"
       ]
     }
   ]

@@ -153,24 +153,3 @@ $params = [
 
 $r->addConference( $room, $params );
 echo $r->toXML();
-
-flush();
-
-Amp\run( function () use ($room) {
-	Amp\once( function () use ($room) {
-		global $plivo, $connection;
-
-		$table = r\db(DB_NAME)
-			->table('calls')
-			->get($room)
-			->run($connection)
-			->toArray();
-
-		if (empty($table['right_id'])) {
-			$plivo->speak( [
-				'text'      => "There's currently no other players, press one at any time to receive a call the next time a player is available.",
-				'call_uuid' => $_REQUEST['CallUUID']
-			] );
-		}
-	}, 30000 );
-} );

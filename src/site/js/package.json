@@ -1,5 +1,6 @@
 {
   "name": "Site",
+  "license": "GPL-3.0",
   "dependencies": {
     "google-libphonenumber": "^2.0.7",
     "react": "^15.4.1",

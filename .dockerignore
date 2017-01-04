@@ -1,3 +1,4 @@
 .git
 src/api/vendor
+src/engine/vendor
 src/site/js/node_modules

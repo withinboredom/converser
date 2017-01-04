@@ -1,0 +1,149 @@
+##############################
+# Step 1: Create a yarn container
+##############################
+
+FROM node:latest
+
+ENV YARN_VER=0.18.1
+RUN npm install -g yarn@$YARN_VER
+
+PUSH quay.io/withinboredom/yarn:{{ .BUILD_NUMBER }}
+PUSH quay.io/withinboredom/yarn:latest
+
+##############################
+# Step 2: Build the website
+##############################
+
+FROM quay.io/withinboredom/yarn:latest
+
+COPY ./src/site /app
+
+RUN cd /app/js && yarn && NODE_ENV=production node_modules/.bin/webpack -p && rm -rf /app/js
+EXPORT /app
+
+##############################
+# Step 3: Build the thing that serves the website
+##############################
+
+FROM ubuntu:16
+
+COPY ./images/builder/caddy /caddy
+COPY ./Caddyfile /Caddyfile
+
+USER nobody
+
+CMD ["/caddy","-conf","/Caddyfile"]
+
+USER root
+
+PUSH quay.io/withinboredom/caddy:{{ .BUILD_NUMBER }}
+PUSH quay.io/withinboredom/caddy:latest
+
+##############################
+# Step 4: Build the image with the website inside it
+##############################
+
+FROM quay.io/withinboredom/caddy:latest
+
+IMPORT /app
+
+PUSH quay.io/withinboredom/site:{{ .BUILD_NUMBER }}
+PUSH quay.io/withinboredom/site:latest
+
+##############################
+# Step 5: Build a generic composer container
+##############################
+
+FROM php:cli
+
+RUN apt-get update && \
+    apt-get install -y git unzip zlib1g-dev zlib1g && \
+    docker-php-ext-install -j$(nproc) zip
+
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+    php composer-setup.php --install-dir=/bin --filename=composer --version=1.2.4 &&\
+    php -r "unlink('composer-setup.php');"
+
+PUSH quay.io/withinboredom/composer:{{ .BUILD_NUMBER }}
+PUSH quay.io/withinboredom/composer:latest
+
+##############################
+# Step 6: Build the api
+##############################
+
+FROM quay.io/withinboredom/composer:latest
+
+COPY src/api/composer.lock /app/composer.lock
+COPY src/api/composer.json /app/composer.json
+
+WORKDIR /app
+RUN composer install
+
+COPY src/api /app
+
+EXPORT /app/ /api
+
+##############################
+# Step 7: Build the api image
+##############################
+
+FROM php:cli
+
+RUN echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list && \
+    apt-get update && apt-get install -y git && \
+    apt-get -t jessie-backports install -y libuv1 libuv1-dev && \
+    docker-php-source extract && \
+    git clone https://github.com/bwoebi/php-uv.git && \
+    apt-get purge -y git && apt-get autoremove -y && \
+    cd php-uv && \
+    phpize && \
+    ./configure && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && \
+    rm -rf php-uv && \
+    docker-php-ext-enable uv && \
+    docker-php-source delete
+
+IMPORT /api/ /app
+
+USER nobody
+
+CMD ["/app/vendor/amphp/aerys/bin/aerys","-c","/app/index.php"]
+
+USER root
+
+PUSH quay.io/withinboredom/api:{{ .BUILD_NUMBER }}
+PUSH quay.io/withinboredom/api:latest
+
+##############################
+# Step 8: Build the engine
+##############################
+
+FROM quay.io/withinboredom/composer:latest
+
+COPY src/engine/composer.lock /var/www/html/composer.lock
+COPY src/engine/composer.json /var/www/html/composer.json
+
+RUN cd /var/www/html && composer install
+
+COPY src/engine /var/www/html
+
+EXPORT /var/www/html/ /engine
+
+##############################
+# Step 9: Build the engine runtime
+##############################
+
+FROM php:7-apache
+
+IMPORT /engine/ /var/www/html
+
+USER nobody
+
+CMD apache2-foreground
+
+USER root
+
+PUSH quay.io/withinboredom/engine:{{ .BUILD_NUMBER }}
+PUSH quay.io/withinboredom/engine:latest
