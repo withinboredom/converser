@@ -1,0 +1,36 @@
+#!/bin/bash
+
+convertC() {
+    echo ${1#"/mnt"}
+}
+
+convertWin() {
+    declare start=${1#"/"}
+    start=${start:0:1}:${start:1}
+    echo $start | sed 's#/#\\#g'
+}
+
+if [ -d /mnt/c ]; then
+    target=$(convertC $(pwd -P))
+    source=$(convertWin $(convertC $(pwd -P)))
+    home=/c/Users/withi
+fi
+
+docker run \
+    -it \
+    --rm \
+    -v "$source:$target" \
+    -v $home:/root \
+    -w $target \
+    -e DB_NAME=${DBNAME} \
+    -e DB_HOST=${DBHOST} \
+    -e SMS=$SMS \
+    -e CALL=$CALL \
+    -e CALL_HOST=$CALL_HOST \
+    -e STRIPE_KEY=$STRIPE_KEY \
+    -e STRIPE_P_KEY=$STRIPE_P_KEY \
+    -e PLIVO_ID=$PLIVO_ID \
+    -e PLIVO_TOKEN=$PLIVO_TOKEN \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    docker/compose:1.9.0 \
+    $@

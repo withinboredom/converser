@@ -1,0 +1,22 @@
+git:
+  depth: 2
+sudo: required
+services:
+  - docker
+language: node_js
+node_js: node
+cache:
+  directories:
+    - $HOME/.rocker-cache
+
+before_install:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker login -u="$QUAY_USERNAME" -p="$QUAY_PASSWORD" quay.io
+  - docker pull docker/compose:1.9.0
+  - docker pull withinboredom/rocker:latest
+
+install:
+  - npm install -g tyche
+
+script:
+  - tyche bump --set $TRAVIS_BRANCH
