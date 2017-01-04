@@ -1,21 +1,26 @@
 version: '2'
 services:
-  api:
-    image: quay.io/withinboredom/api:latest
-    depends_on:
-      - rethunk
+  api-builder:
+    image: withinboredom/composer:latest
     volumes:
       - ./src/api:/app
       - api_vendor:/app/vendor
-    command: bash -c "cd /app && ls -lah /app/vendor && exit && composer install && exec /app/vendor/amphp/aerys/bin/aerys -c /app/index.php"
+    command: bash -c "cd /app && exec composer install"
+  api:
+    image: quay.io/withinboredom/api:latest
+    extends: api-builder
+    depends_on:
+      - rethunk
+      - api-builder
+    command: bash -c "cd /app && exec /app/vendor/amphp/aerys/bin/aerys -c /app/index.php"
     ports:
       - '1337:1337'
   engine-builder:
-    image: quay.io/withinboredom/composer:latest
+    image: withinboredom/composer:latest
     volumes:
       - ./src/engine:/var/www/html
       - engine_vendor:/var/www/html/vendor
-    command: bash -c "cd /var/www/html && composer install"
+    command: bash -c "cd /var/www/html && exec composer install"
   engine:
     image: quay.io/withinboredom/engine:latest
     extends: engine-builder

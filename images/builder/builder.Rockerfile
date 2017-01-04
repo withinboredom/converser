@@ -9,12 +9,13 @@ RUN npm install -g yarn@$YARN_VER
 
 PUSH quay.io/withinboredom/yarn:{{ .BUILD_NUMBER }}
 PUSH quay.io/withinboredom/yarn:latest
+PUSH withinboredom/yarn:latest
 
 ##############################
 # Step 2: Build the website
 ##############################
 
-FROM quay.io/withinboredom/yarn:latest
+FROM withinboredom/yarn:latest
 
 COPY ./src/site /app
 
@@ -38,12 +39,13 @@ USER root
 
 PUSH quay.io/withinboredom/caddy:{{ .BUILD_NUMBER }}
 PUSH quay.io/withinboredom/caddy:latest
+PUSH withinboredom/caddy:latest
 
 ##############################
 # Step 4: Build the image with the website inside it
 ##############################
 
-FROM quay.io/withinboredom/caddy:latest
+FROM withinboredom/caddy:latest
 
 IMPORT /app
 
@@ -56,6 +58,8 @@ PUSH quay.io/withinboredom/site:latest
 
 FROM php:cli
 
+COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
+
 RUN apt-get update && \
     apt-get install -y git unzip zlib1g-dev zlib1g && \
     docker-php-ext-install -j$(nproc) zip
@@ -66,12 +70,13 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
 
 PUSH quay.io/withinboredom/composer:{{ .BUILD_NUMBER }}
 PUSH quay.io/withinboredom/composer:latest
+PUSH withinboredom/composer:latest
 
 ##############################
 # Step 6: Build the api
 ##############################
 
-FROM quay.io/withinboredom/composer:latest
+FROM withinboredom/composer:latest
 
 COPY src/api/composer.lock /app/composer.lock
 COPY src/api/composer.json /app/composer.json
@@ -88,6 +93,8 @@ EXPORT /app/ /api
 ##############################
 
 FROM php:cli
+
+COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
 RUN echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list && \
     apt-get update && apt-get install -y git && \
@@ -120,7 +127,7 @@ PUSH quay.io/withinboredom/api:latest
 # Step 8: Build the engine
 ##############################
 
-FROM quay.io/withinboredom/composer:latest
+FROM withinboredom/composer:latest
 
 COPY src/engine/composer.lock /var/www/html/composer.lock
 COPY src/engine/composer.json /var/www/html/composer.json
@@ -136,6 +143,8 @@ EXPORT /var/www/html/ /engine
 ##############################
 
 FROM php:7-apache
+
+COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
 IMPORT /engine/ /var/www/html
 
