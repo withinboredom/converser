@@ -207,8 +207,7 @@
     {
       "name": "bump",
       "tasks": [
-        "clean",
-        "deploy"
+        "push"
       ]
     }
   ]
