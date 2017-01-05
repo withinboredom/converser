@@ -1,0 +1,78 @@
+version: '2'
+services:
+  call:
+    image: quay.io/withinboredom/engine:$VERSION
+    environment:
+      DB_NAME: "$DBNAME"
+      DB_HOST: "$DBHOST"
+      PLIVO_ID: "$PLIVO_ID"
+      PLIVO_TOKEN: "$PLIVO_TOKEN"
+      SMS: "$SMS"
+      CALL: "$CALL"
+      CALL_HOST: "$CALL_HOST"
+      STRIPE_KEY: "$STRIPE_KEY"
+      STRIPE_P_KEY: "$STRIPE_P_KEY"
+    labels:
+      traefik.frontend.rule: Host:converser.space
+      traefik.backend.circuitbreaker.expression: NetworkErrorRatio() > 0.5
+      traefik.enable: 'true'
+      traefik.backend: converser
+      traefik.port: '80'
+      traefik.domain: space
+      io.rancher.container.pull_image: always
+      traefik.frontend.passHostHeader: 'true'
+      traefik.frontend.entryPoints: https
+  www:
+    image: quay.io/withinboredom/site:$VERSION
+    labels:
+      traefik.frontend.rule: Host:converser.space
+      traefik.backend.circuitbreaker.expression: NetworkErrorRatio() > 0.5
+      traefik.enable: stack
+      traefik.backend: converser
+      traefik.alias: www.converser
+      traefik.port: '8080'
+      traefik.domain: space
+      io.rancher.container.pull_image: always
+      traefik.frontend.passHostHeader: 'true'
+      traefik.frontend.entryPoints: https
+  rethinkdb:
+    image: rethinkdb:latest
+    command:
+    - bash
+    - -c
+    - rethinkdb create && exec rethinkdb --bind all --join rethinkdb-joiner
+    labels:
+      io.rancher.scheduler.affinity:container_label_soft_ne: io.rancher.stack_service.name=converser/rethinkdb
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+  api:
+    image: quay.io/withinboredom/api:$VERSION
+    environment:
+      DB_NAME: "$DBNAME"
+      DB_HOST: "$DBHOST"
+      PLIVO_ID: "$PLIVO_ID"
+      PLIVO_TOKEN: "$PLIVO_TOKEN"
+      SMS: "$SMS"
+      CALL: "$CALL"
+      CALL_HOST: "$CALL_HOST"
+      STRIPE_KEY: "$STRIPE_KEY"
+      STRIPE_P_KEY: "$STRIPE_P_KEY"
+    labels:
+      traefik.frontend.rule: Host:converser.space
+      traefik.backend.circuitbreaker.expression: NetworkErrorRatio() > 0.5
+      traefik.enable: 'true'
+      traefik.backend: converser
+      traefik.port: '1337'
+      traefik.domain: space
+      io.rancher.container.pull_image: always
+      traefik.frontend.passHostHeader: 'true'
+      traefik.frontend.entryPoints: https
+  rethinkdb-joiner:
+    image: rethinkdb:latest
+    command:
+    - bash
+    - -c
+    - rethinkdb create && exec rethinkdb --bind all
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.container.hostname_override: container_name

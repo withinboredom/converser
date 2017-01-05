@@ -2,21 +2,27 @@ git:
   depth: 2
 sudo: required
 services:
-  - docker
+- docker
 language: node_js
 node_js: node
 cache:
   directories:
-    - $HOME/.rocker-cache
-
+  - "$HOME/.rocker-cache"
 before_install:
-  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-  - docker login -u="$QUAY_USERNAME" -p="$QUAY_PASSWORD" quay.io
-  - docker pull docker/compose:1.9.0
-  - docker pull withinboredom/rocker:latest
-
+- docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+- docker login -u="$QUAY_USERNAME" -p="$QUAY_PASSWORD" quay.io
+- docker pull docker/compose:1.9.0
+- docker pull withinboredom/rocker:latest
 install:
-  - npm install -g tyche
-
+- npm install -g tyche
 script:
-  - tyche bump --set $TRAVIS_BRANCH
+- tyche bump --set $TRAVIS_BRANCH
+deploy:
+  provider: releases
+  api_key:
+    secure: GXBHm8vkLMNpV61wvw2fnd7fo/VCGOBLC6Ffak3XYA6QQhkdQ2GdCRoWC9VG6rEeim1qCbl0Nw1vkxMikXiyMGkrLsCFj8sf7K5xeUPbxKasSq2qq9EUxtLqaN10gZ3mWsRDdnrdV8+5Dvtljg4jebCHfKSWhS4fsDBMDL0Fb7bHswpxcTLzUzhS4XEM9bg9FB2IqtskYu7TN1QcmnPeBx8kOzTvmnrD2iBRttQkJc7wfbB4ECJKzbTYbi3Kr9NM8HLbOWf7iiLMfMNOpOGtn9QZs3eeOYIitXevmFYFEkFYFGsOcl4Jma4XKGnEgfC5rnMeRDJZ+7XqECfVIaZt+JABurnhzDseOf/R9zqO/YXUOE2g1Y3N3zTJFbP633VUb5Oy2E197L2tWTMTDFkKZMe/FFU4/LJxhd9H2V+/kCzuH7LqtrfnvxGcJjFPgWOSA1gZZpS//uYE4Rs9dSQeaKxQ5hpISZmrm6ieGAY/AO1mC6SYbn7S8ttD2gWX3QJvVVi3/rlCf4ODyDIsbW5vqqp5beFoPHkjmCRyR5XceoJ4cTXQPAMtGLx6dSTRcBIF3XloYd1ODG2ugQ/E24/5MYDo70TqiUpjMyI9DVcJCk06aRmBWdPJ9KN0BSLAfXsqoR2Ig0pNs+I1DR6eKN1bFYHaAEZVdw/B7c2e4OFLoLo=
+  on:
+    repo: withinboredom/converser
+    tags: true
+after_deploy:
+  - ./deploy

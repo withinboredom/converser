@@ -156,3 +156,9 @@ USER root
 
 PUSH quay.io/withinboredom/engine:{{ .BUILD_NUMBER }}
 PUSH quay.io/withinboredom/engine:latest
+
+##############################
+# Step 10: Build rancher-compose
+##############################
+
+
