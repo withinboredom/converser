@@ -79,7 +79,7 @@ services:
   admin:
     image: beevelop/nginx-basic-auth
     environment:
-      HTPASSWD: "robert:$$2y$$15$$aGWq/QPfl0b93xGRtcNQ8OdKUZSw9GCVSLAwYPI7yGBoYFF/i5lti"
+      HTPASSWD: "robert:$$2y$$08$$AVEqelgZ8M8miAt26m3WhutIYj5/v8HNK4Y3TBK.Hdqcw6asnZqnC"
       FORWARD_PORT: 8080
     links:
       - rethinkdb-joiner:web
