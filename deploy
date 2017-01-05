@@ -12,7 +12,7 @@ echo "Preparing to deply $VERSION, press ctrl-c to cancel"
 
 sleep 1
 
-r=$(./rancher)
+r=./rancher
 
 $r ps
 
