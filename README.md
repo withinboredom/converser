@@ -1,5 +1,7 @@
 # Converser
 
+[![Build Status](https://travis-ci.org/withinboredom/converser.svg?branch=master)](https://travis-ci.org/withinboredom/converser)
+
 An interesting game of telephone
 
 # Building
