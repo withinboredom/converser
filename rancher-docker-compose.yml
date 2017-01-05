@@ -82,13 +82,13 @@ services:
       HTPASSWD: "robert:$$2y$$15$$aGWq/QPfl0b93xGRtcNQ8OdKUZSw9GCVSLAwYPI7yGBoYFF/i5lti"
       FORWARD_PORT: 8080
     links:
-      - rethinkdb:web
+      - rethinkdb-joiner:web
     labels:
       traefik.frontend.rule: Host:converser.space
       traefik.backend.circuitbreaker.expression: NetworkErrorRatio() > 0.5
       traefik.enable: 'true'
       traefik.backend: converser
-      traefik.port: '1337'
+      traefik.port: '80'
       traefik.domain: space
       io.rancher.container.pull_image: always
       traefik.frontend.passHostHeader: 'true'
