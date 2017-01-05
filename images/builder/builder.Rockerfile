@@ -7,8 +7,6 @@ FROM node:latest
 ENV YARN_VER=0.18.1
 RUN npm install -g yarn@$YARN_VER
 
-PUSH quay.io/withinboredom/yarn:{{ .BUILD_NUMBER }}
-PUSH quay.io/withinboredom/yarn:latest
 PUSH withinboredom/yarn:latest
 
 ##############################
@@ -37,8 +35,6 @@ CMD ["/caddy","-conf","/Caddyfile"]
 
 USER root
 
-PUSH quay.io/withinboredom/caddy:{{ .BUILD_NUMBER }}
-PUSH quay.io/withinboredom/caddy:latest
 PUSH withinboredom/caddy:latest
 
 ##############################
@@ -68,8 +64,6 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     php composer-setup.php --install-dir=/bin --filename=composer --version=1.2.4 &&\
     php -r "unlink('composer-setup.php');"
 
-PUSH quay.io/withinboredom/composer:{{ .BUILD_NUMBER }}
-PUSH quay.io/withinboredom/composer:latest
 PUSH withinboredom/composer:latest
 
 ##############################
