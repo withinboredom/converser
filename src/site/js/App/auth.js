@@ -1,6 +1,6 @@
 
 let token = false;
-let websocket = new WebSocket('ws://localhost:1337/ws');
+let websocket = new WebSocket(process.env.API_HOST);
 
 const tokenResp = [];
 

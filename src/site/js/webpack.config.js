@@ -56,6 +56,7 @@ const config = {
         new webpack.DefinePlugin({
             'process.env': {
                 'NODE_ENV': JSON.stringify('production'),
+                'API_HOST': JSON.stringify( process.env.API_HOST ),
                 'STRIPE_P_KEY': JSON.stringify( process.env.STRIPE_P_KEY )
             }
         }),
@@ -65,6 +66,7 @@ const config = {
         new webpack.DefinePlugin({
             'process.env': {
                 'STRIPE_P_KEY': JSON.stringify( process.env.STRIPE_P_KEY ),
+                'API_HOST': JSON.stringify( process.env.API_HOST ),
                 'NODE_ENV': JSON.stringify( 'development' )
             }
         })

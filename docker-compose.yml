@@ -48,6 +48,7 @@ services:
     image: withinboredom/yarn:latest
     environment:
       - STRIPE_P_KEY:${STRIPE_P_KEY}
+      - API_HOST:${API_HOST}
     volumes:
       - ./src/site:/app
       - node_modules:/app/js/node_modules
