@@ -39,3 +39,7 @@ up --confirm-upgrade call
 up --pull --upgrade --batch-size 2 --interval 20000 www
 $r wait converser/www
 up --confirm-upgrade www
+
+up --pull --upgrade --batch-size 1 --interval 1000 admin
+$r wait converser/admin
+up --confirm-upgrade admin
