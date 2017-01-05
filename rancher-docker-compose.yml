@@ -79,7 +79,7 @@ services:
   admin:
     image: beevelop/nginx-basic-auth
     environment:
-      - HTPASSWD: "robert:$$2y$15$$aGWq/QPfl0b93xGRtcNQ8OdKUZSw9GCVSLAwYPI7yGBoYFF/i5lti"
+      - HTPASSWD: "robert:$$2y$$15$$aGWq/QPfl0b93xGRtcNQ8OdKUZSw9GCVSLAwYPI7yGBoYFF/i5lti"
       - FORWARD_PORT: 8080
     links:
       - rethinkdb:web
