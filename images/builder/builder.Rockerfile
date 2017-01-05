@@ -4,6 +4,8 @@
 
 FROM node:latest
 
+MOUNT $HOME:/root
+
 ENV YARN_VER=0.18.1
 RUN npm install -g yarn@$YARN_VER
 
@@ -14,6 +16,8 @@ PUSH withinboredom/yarn:latest
 ##############################
 
 FROM withinboredom/yarn:latest
+
+MOUNT $HOME:/root
 
 COPY ./src/site /app
 
@@ -54,6 +58,8 @@ PUSH quay.io/withinboredom/site:latest
 
 FROM php:cli
 
+MOUNT $HOME:/root
+
 COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
 RUN apt-get update && \
@@ -72,6 +78,8 @@ PUSH withinboredom/composer:latest
 
 FROM withinboredom/composer:latest
 
+MOUNT $HOME:/root
+
 COPY src/api/composer.lock /app/composer.lock
 COPY src/api/composer.json /app/composer.json
 
@@ -87,6 +95,8 @@ EXPORT /app/ /api
 ##############################
 
 FROM php:cli
+
+MOUNT $HOME:/root
 
 COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
@@ -122,6 +132,8 @@ PUSH quay.io/withinboredom/api:latest
 ##############################
 
 FROM withinboredom/composer:latest
+
+MOUNT $HOME:/root
 
 COPY src/engine/composer.lock /var/www/html/composer.lock
 COPY src/engine/composer.json /var/www/html/composer.json

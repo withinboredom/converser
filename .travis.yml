@@ -8,6 +8,9 @@ node_js: node
 cache:
   directories:
   - "$HOME/.rocker-cache"
+  - "$HOME/.yarn-cache"
+  - "$HOME/.yarn"
+  - "$HOME/.yarn-config"
 before_install:
 - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 - docker login -u="$QUAY_USERNAME" -p="$QUAY_PASSWORD" quay.io
