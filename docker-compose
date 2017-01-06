@@ -24,6 +24,7 @@ docker run \
     -w $target \
     -e DB_NAME=${DBNAME} \
     -e DB_HOST=${DBHOST} \
+    -e API_HOST=$API_HOST \
     -e SMS=$SMS \
     -e CALL=$CALL \
     -e CALL_HOST=$CALL_HOST \

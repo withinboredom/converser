@@ -5,6 +5,8 @@
     text-align: center;
     cursor: pointer;
     padding: 5px 0;
+    color: lightgray;
+    text-decoration: none;
 }
 
 .button:active {

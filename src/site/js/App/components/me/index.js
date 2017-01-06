@@ -52,7 +52,7 @@ class Me extends PureComponent {
                     </div>);
                 default:
                     return (<div className={styles.status}>
-                        <div className={styles.label}>Last Score: </div>
+                        <div className={styles.label}>Score: </div>
                         <div className={styles.content}>{this.props.player.score}</div>
                     </div>);
             }
@@ -103,6 +103,14 @@ class Me extends PureComponent {
                     >
                         Logout
                     </Button>
+                </div>
+                <div className={styles.status}>
+                    <div className={styles.label}>
+                        Dial to play:
+                    </div>
+                    <div className={styles.content}>
+                        <a className={styles.link} href={`tel://${process.env.CALL}`}>{`${process.env.CALL}`}</a>
+                    </div>
                 </div>
             </div>
         );

@@ -57,6 +57,7 @@ const config = {
             'process.env': {
                 'NODE_ENV': JSON.stringify('production'),
                 'API_HOST': JSON.stringify( process.env.API_HOST ),
+                'CALL': JSON.stringify( process.env.CALL ),
                 'STRIPE_P_KEY': JSON.stringify( process.env.STRIPE_P_KEY )
             }
         }),
@@ -67,6 +68,7 @@ const config = {
             'process.env': {
                 'STRIPE_P_KEY': JSON.stringify( process.env.STRIPE_P_KEY ),
                 'API_HOST': JSON.stringify( process.env.API_HOST ),
+                'CALL': JSON.stringify( process.env.CALL ),
                 'NODE_ENV': JSON.stringify( 'development' )
             }
         })

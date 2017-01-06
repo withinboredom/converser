@@ -79,6 +79,10 @@
     composes: half;
 }
 
+.link {
+    color: white;
+}
+
 .button {
     composes: content;
     border: 2px solid white;
