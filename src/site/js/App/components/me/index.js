@@ -9,6 +9,10 @@ import Button from '../button';
 import styles from './style.css';
 
 class Me extends PureComponent {
+    componentWillMount() {
+        document.title = "Converser";
+    }
+
     logout = () => {
         auth.logout();
         browserHistory.push('/');

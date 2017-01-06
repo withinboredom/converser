@@ -20,6 +20,7 @@ class App extends PureComponent {
     }
 
     componentWillMount() {
+        document.title = "Converser";
         auth.onNotify = this._addNotification;
         this.setState({
             shouldContinue: true,

@@ -7,6 +7,10 @@ import Button from '../button';
 import me from '../me/style.css';
 
 class Purchase extends PureComponent {
+    componentWillMount() {
+        document.title = "Purchase more lives";
+    }
+
     fund = (packageId) => (token) => {
         console.log(packageId, token);
         auth.makePayment(packageId, token);

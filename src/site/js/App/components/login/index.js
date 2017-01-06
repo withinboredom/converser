@@ -10,6 +10,8 @@ import styles from './style.css';
 
 class Login extends PureComponent {
     componentWillMount() {
+        document.title = "Converser: Login";
+
         this.setState({
             hasPhone: false,
             currentPhone: '',
