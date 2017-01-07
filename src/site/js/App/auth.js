@@ -53,6 +53,7 @@ websocket.onmessage = (event) => {
 
     switch(msg.type) {
         case 'token':
+            window.ga('send','event','user','login', '', -1);
             localStorage.setItem('token', JSON.stringify(msg));
             token = msg;
             tokenResp.forEach((cb) => {
@@ -73,6 +74,7 @@ websocket.onmessage = (event) => {
             logout();
             break;
         case 'notification':
+            window.ga('send', 'event', 'user', 'received_notification');
             if (ret.onNotify) {
                 const notification = {
                     ...msg.notification,
@@ -106,6 +108,7 @@ const send = (message, retries = 100) => {
 
 const login = (phone, cb) => {
     tokenResp.push(cb);
+    window.ga('send', 'event', 'user', 'login_attempt');
     send({
         command: 'login',
         phone: phone
@@ -116,6 +119,7 @@ const login = (phone, cb) => {
 };
 
 const auth = (phone, pass, cb) => {
+    window.ga('send','event','user','verify_attempt');
     send({
         command: 'verify',
         phone: phone,
@@ -127,6 +131,7 @@ const onChange = () => {};
 
 const getToken = () => {
     try {
+        window.ga('send','event','user','returned');
         return token = token || JSON.parse(localStorage.getItem('token'));
     }
     catch(e) {

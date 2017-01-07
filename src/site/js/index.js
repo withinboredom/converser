@@ -9,6 +9,10 @@ import Login from './App/components/login';
 import Logout from './App/components/logout';
 import auth from './App/auth';
 
+const track = (nextState, replace) => {
+    window.ga('send', 'pageview');
+};
+
 const requireAuth = (nextState, replace) => {
     if(!auth.loggedIn()) {
         replace({
@@ -63,7 +67,7 @@ class State extends PureComponent {
 const render = () => {
     ReactDOM.render(
         <Router history={browserHistory}>
-            <Route path="/" component={App}>
+            <Route path="/" component={App} onEnter={track} onChange={track}>
                 <Route path="continue" component={() => (<State><Purchase/></State>)} onEnter={requireAuth} />
                 <Route
                     path="me"
