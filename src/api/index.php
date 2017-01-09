@@ -12,6 +12,8 @@ define( 'HOST', getenv( 'CALL_HOST' ) ?: 'http://dev.converser.space:2200/' );
 
 define( 'STRIPE_KEY', getenv( 'STRIPE_KEY' ) ?: 'sk_test_osM11tRI7n2u8cChs2J3R4kx' );
 
+define( 'METRICS_DB', DB_NAME . '_metrics' );
+
 $auth_id    = getenv( 'PLIVO_ID' ) ?: "SANTC0YTLLZTFMMZA3MM";
 $auth_token = getenv( 'PLIVO_TOKEN' ) ?: "MzA2M2UyMWViNTI5NjFmZjNjMmJiYmZlNmM5YmZh";
 
@@ -54,14 +56,102 @@ function prep() {
 		}
 	}
 
+	$expectedVersion = 2;
+	$currentVersion  = r\db( DB_NAME )->table( 'version' )->get( 'db' )['value'];
 	// put migrations here
-	switch ( r\db( DB_NAME )->table( 'version' )->get( 'db' )['value'] ) {
+	switch ( $currentVersion ) {
 		case 1:
-			r\db( DB_NAME )->tableCreate( 'metrics' )->run( $conn );
-			break;
+			r\dbCreate( METRICS_DB )->run( $conn );
+			r\db( METRICS_DB )->wait()->run( $conn );
+			r\db( METRICS_DB )->tableCreate( 'acquisition' )->run( $conn );
+			r\db( METRICS_DB )->tableCreate( 'activation' )->run( $conn );
+			r\db( METRICS_DB )->tableCreate( 'retention' )->run( $conn );
+			r\db( METRICS_DB )->tableCreate( 'referral' )->run( $conn );
+			r\db( METRICS_DB )->tableCreate( 'revenue' )->run( $conn );
+	}
+
+	if ( $currentVersion != $expectedVersion ) {
+		r\db( DB_NAME )->table( 'version' )->update( [
+			'id'    => 'db',
+			'value' => $expectedVersion
+		] )->run( $conn );
 	}
 
 	return $conn;
+}
+
+/**
+ * Call when a user first connects to the api
+ *
+ * @param $campaign string The Campaign (utm_)
+ */
+function acquire( $campaign ) {
+	global $conn;
+	r\db( METRICS_DB )->table( 'acquisition' )->insert( [
+		'id'       => r\uuid(),
+		'campaign' => $campaign,
+		'when'     => r\now()
+	] )->run( $conn );
+}
+
+/**
+ * Call when a user logins for the very first time
+ *
+ * @param $userid
+ */
+function activate( $userid, $campaign ) {
+	global $conn;
+	r\db( METRICS_DB )->table( 'activation' )->insert( [
+		'id'       => r\uuid(),
+		'userid'   => $userid,
+		'campaign' => $campaign,
+		'when'     => r\now()
+	] )->run( $conn );
+}
+
+/**
+ * Call whenever a user returns
+ *
+ * @param $userid
+ */
+function retented( $userid ) {
+	global $conn;
+	r\db( METRICS_DB )->table( 'retention' )->insert( [
+		'id'     => r\uuid(),
+		'userid' => $userid,
+		'when'   => r\now()
+	] )->run( $conn );
+}
+
+/**
+ * Call whenever a user refers another user
+ *
+ * @param $from
+ * @param $to
+ */
+function referral( $from, $to ) {
+	global $conn;
+	r\db( METRICS_DB )->table( 'referral' )->insert( [
+		'id'   => r\uuid(),
+		'from' => $from,
+		'to'   => $to,
+		'when' => r\now()
+	] )->run( $conn );
+}
+
+/**
+ * Call whenever a user generates revenue
+ * @param $userid
+ * @param $amount
+ */
+function revenue( $userid, $amount ) {
+	global $conn;
+	r\db( METRICS_DB )->table( 'revenue' )->insert( [
+		'id'     => r\uuid(),
+		'userid' => $userid,
+		'amount' => $amount,
+		'when'   => r\now()
+	] )->run( $conn );
 }
 
 global $plivo;
@@ -133,7 +223,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		global $conn;
 		$phone = $this->cleanPhone( $phone );
 
-		$user  = r\db( DB_NAME )
+		$user = r\db( DB_NAME )
 			->table( 'users' )
 			->filter( [ 'phone' => $phone ] )
 			->limit( 1 )
@@ -171,7 +261,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 */
 	private function createSession( string $phone, int $client, string $password ) {
 		global $conn;
-		$user    = $this->getOrCreateUser( $phone );
+		$user = $this->getOrCreateUser( $phone );
 
 		$session = [
 			'user_id'  => $user['id'],
@@ -224,6 +314,8 @@ $websocket = websocket( new class implements Aerys\Websocket {
 				'type'    => 'session-verified',
 				'user_id' => $user['id']
 			] );
+
+			activate($user['id'], null); //todo: collect campaign
 
 			return $token;
 		}
@@ -560,6 +652,9 @@ $websocket = websocket( new class implements Aerys\Websocket {
 						] ) );
 						$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $user['id'] ) ) );
 					}
+					break;
+				case 'connect':
+					acquire($request['campaign']);
 					break;
 			}
 		}
