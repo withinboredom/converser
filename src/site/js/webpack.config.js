@@ -14,7 +14,7 @@ const config = {
 
         path: resolve(__dirname, '../build'),
 
-        publicPath: '/'
+        publicPath: '/build/'
         // necessary for HMR to know where to load the hot update chunks
     },
 
@@ -29,7 +29,7 @@ const config = {
         contentBase: resolve(__dirname, '../static'),
         // match the output path
 
-        publicPath: '/'
+        publicPath: '/build/'
         // match the output `publicPath`
     },
 

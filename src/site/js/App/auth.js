@@ -131,7 +131,6 @@ const onChange = () => {};
 
 const getToken = () => {
     try {
-        window.ga('send','event','user','returned');
         return token = token || JSON.parse(localStorage.getItem('token'));
     }
     catch(e) {

@@ -13,24 +13,26 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "9ff73ac6816eb63562fa63a091410f8d7404f4dc"
+                "reference": "ec45474c8e270cd4bdfdd9378b8a5b971462171b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/9ff73ac6816eb63562fa63a091410f8d7404f4dc",
-                "reference": "9ff73ac6816eb63562fa63a091410f8d7404f4dc",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/ec45474c8e270cd4bdfdd9378b8a5b971462171b",
+                "reference": "ec45474c8e270cd4bdfdd9378b8a5b971462171b",
                 "shasum": ""
             },
             "require": {
-                "async-interop/event-loop": "^0.4",
-                "async-interop/event-loop-implementation": "^0.4",
-                "async-interop/promise": "^0.3",
+                "async-interop/event-loop": "^0.5",
+                "async-interop/event-loop-implementation": "^0.5",
+                "async-interop/promise": "^0.4",
                 "php": ">=7"
             },
             "require-dev": {
                 "amphp/loop": "dev-master",
-                "async-interop/promise-test": "dev-master",
-                "friendsofphp/php-cs-fixer": "~1.9"
+                "async-interop/promise-test": "^0.4.1",
+                "friendsofphp/php-cs-fixer": "~1.9",
+                "humbug/humbug": "^1@dev",
+                "phpunit/phpunit": "^5.7"
             },
             "type": "library",
             "extra": {
@@ -75,7 +77,7 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2017-01-04 16:24:51"
+            "time": "2017-01-09 03:38:30"
         },
         {
             "name": "amphp/loop",
@@ -83,22 +85,22 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/loop.git",
-                "reference": "3e0cd85b67f32d23cff48eb406b718ad62bde0c9"
+                "reference": "5a92c31197378f2df9416cb82bdd4c35fe43f61a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/loop/zipball/3e0cd85b67f32d23cff48eb406b718ad62bde0c9",
-                "reference": "3e0cd85b67f32d23cff48eb406b718ad62bde0c9",
+                "url": "https://api.github.com/repos/amphp/loop/zipball/5a92c31197378f2df9416cb82bdd4c35fe43f61a",
+                "reference": "5a92c31197378f2df9416cb82bdd4c35fe43f61a",
                 "shasum": ""
             },
             "require": {
-                "async-interop/event-loop": "0.4"
+                "async-interop/event-loop": "^0.5"
             },
             "provide": {
-                "async-interop/event-loop-implementation": "^0.4"
+                "async-interop/event-loop-implementation": "0.5"
             },
             "require-dev": {
-                "async-interop/event-loop-test": "dev-master",
+                "async-interop/event-loop-test": "^0.5",
                 "friendsofphp/php-cs-fixer": "~1.9"
             },
             "type": "library",
@@ -122,20 +124,20 @@
                 "loop",
                 "reactor"
             ],
-            "time": "2017-01-05 23:38:33"
+            "time": "2017-01-08 16:24:25"
         },
         {
             "name": "async-interop/event-loop",
-            "version": "v0.4.0",
+            "version": "v0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/async-interop/event-loop.git",
-                "reference": "0ede4e89a4bd8a01af05626278217a5e0054b631"
+                "reference": "372272601b3f43064bd06e90fa1c8f3a009accd8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/async-interop/event-loop/zipball/0ede4e89a4bd8a01af05626278217a5e0054b631",
-                "reference": "0ede4e89a4bd8a01af05626278217a5e0054b631",
+                "url": "https://api.github.com/repos/async-interop/event-loop/zipball/372272601b3f43064bd06e90fa1c8f3a009accd8",
+                "reference": "372272601b3f43064bd06e90fa1c8f3a009accd8",
                 "shasum": ""
             },
             "require": {
@@ -149,7 +151,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Interop\\Async\\": "src"
+                    "AsyncInterop\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -163,20 +165,20 @@
                 "interop",
                 "loop"
             ],
-            "time": "2016-12-29 15:41:03"
+            "time": "2017-01-05 10:19:16"
         },
         {
             "name": "async-interop/promise",
-            "version": "v0.3.0",
+            "version": "v0.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/async-interop/promise.git",
-                "reference": "614ae88db4e21e16fa373abe6c963ceb78594519"
+                "reference": "511ae43724719c2419712fa3ebeb020ab94633d0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/async-interop/promise/zipball/614ae88db4e21e16fa373abe6c963ceb78594519",
-                "reference": "614ae88db4e21e16fa373abe6c963ceb78594519",
+                "url": "https://api.github.com/repos/async-interop/promise/zipball/511ae43724719c2419712fa3ebeb020ab94633d0",
+                "reference": "511ae43724719c2419712fa3ebeb020ab94633d0",
                 "shasum": ""
             },
             "require": {
@@ -190,7 +192,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Interop\\Async\\": "src"
+                    "AsyncInterop\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -205,7 +207,7 @@
                 "interop",
                 "promise"
             ],
-            "time": "2016-12-25 10:45:56"
+            "time": "2017-01-06 20:45:59"
         },
         {
             "name": "danielmewes/php-rql",

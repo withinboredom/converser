@@ -327,22 +327,22 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/loop.git",
-                "reference": "3e0cd85b67f32d23cff48eb406b718ad62bde0c9"
+                "reference": "5a92c31197378f2df9416cb82bdd4c35fe43f61a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/loop/zipball/3e0cd85b67f32d23cff48eb406b718ad62bde0c9",
-                "reference": "3e0cd85b67f32d23cff48eb406b718ad62bde0c9",
+                "url": "https://api.github.com/repos/amphp/loop/zipball/5a92c31197378f2df9416cb82bdd4c35fe43f61a",
+                "reference": "5a92c31197378f2df9416cb82bdd4c35fe43f61a",
                 "shasum": ""
             },
             "require": {
-                "async-interop/event-loop": "0.4"
+                "async-interop/event-loop": "^0.5"
             },
             "provide": {
-                "async-interop/event-loop-implementation": "^0.4"
+                "async-interop/event-loop-implementation": "0.5"
             },
             "require-dev": {
-                "async-interop/event-loop-test": "dev-master",
+                "async-interop/event-loop-test": "^0.5",
                 "friendsofphp/php-cs-fixer": "~1.9"
             },
             "type": "library",
@@ -366,7 +366,7 @@
                 "loop",
                 "reactor"
             ],
-            "time": "2017-01-05 23:38:33"
+            "time": "2017-01-08 16:24:25"
         },
         {
             "name": "amphp/process",
@@ -506,16 +506,16 @@
         },
         {
             "name": "async-interop/event-loop",
-            "version": "v0.4.0",
+            "version": "v0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/async-interop/event-loop.git",
-                "reference": "0ede4e89a4bd8a01af05626278217a5e0054b631"
+                "reference": "372272601b3f43064bd06e90fa1c8f3a009accd8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/async-interop/event-loop/zipball/0ede4e89a4bd8a01af05626278217a5e0054b631",
-                "reference": "0ede4e89a4bd8a01af05626278217a5e0054b631",
+                "url": "https://api.github.com/repos/async-interop/event-loop/zipball/372272601b3f43064bd06e90fa1c8f3a009accd8",
+                "reference": "372272601b3f43064bd06e90fa1c8f3a009accd8",
                 "shasum": ""
             },
             "require": {
@@ -529,7 +529,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Interop\\Async\\": "src"
+                    "AsyncInterop\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -543,7 +543,7 @@
                 "interop",
                 "loop"
             ],
-            "time": "2016-12-29 15:41:03"
+            "time": "2017-01-05 10:19:16"
         },
         {
             "name": "danielmewes/php-rql",
