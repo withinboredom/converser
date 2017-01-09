@@ -12,8 +12,8 @@ define( 'HOST', getenv( 'CALL_HOST' ) ?: 'http://dev.converser.space:2200/' );
 
 define( 'STRIPE_KEY', getenv( 'STRIPE_KEY' ) ?: 'sk_test_osM11tRI7n2u8cChs2J3R4kx' );
 
-$auth_id    = getenv('PLIVO_ID') ?: "SANTC0YTLLZTFMMZA3MM";
-$auth_token = getenv('PLIVO_TOKEN') ?: "MzA2M2UyMWViNTI5NjFmZjNjMmJiYmZlNmM5YmZh";
+$auth_id    = getenv( 'PLIVO_ID' ) ?: "SANTC0YTLLZTFMMZA3MM";
+$auth_token = getenv( 'PLIVO_TOKEN' ) ?: "MzA2M2UyMWViNTI5NjFmZjNjMmJiYmZlNmM5YmZh";
 
 function prep() {
 	$conn     = r\connect( DB_HOST );
@@ -28,8 +28,9 @@ function prep() {
 			$db->tableCreate( 'users' )->run( $conn );
 			$db->tableCreate( 'calls' )->run( $conn );
 			$db->tableCreate( 'sessions' )->run( $conn );
-			$db->tableCreate( 'events' )->run( $conn );
-			$db->tableCreate( 'sms' )->run( $conn );
+			$db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
+			$db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
+			$db->tableCreate( 'version', [ 'durability' => 'soft' ] )->run( $conn );
 			$db->table( 'users' )->wait()->run( $conn );
 			$db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
 			$db->table( 'sessions' )->wait()->run( $conn );
@@ -44,9 +45,20 @@ function prep() {
 				'status'  => 'not-playing',
 				'created' => r\now()
 			] )->run( $conn );
+			$db->table( 'version' )->insert( [
+				'id'    => 'db',
+				'value' => 1
+			] )->run( $conn );
 		} catch ( Exception $exception ) {
 			// nothing to do here
 		}
+	}
+
+	// put migrations here
+	switch ( r\db( DB_NAME )->table( 'version' )->get( 'db' )['value'] ) {
+		case 1:
+			r\db( DB_NAME )->tableCreate( 'metrics' )->run( $conn );
+			break;
 	}
 
 	return $conn;
@@ -72,7 +84,7 @@ const AERYS_OPTIONS = [
 	//"deflateMinimumLength" => 0,
 ];
 
-$plivo      = new \Plivo\RestAPI( $auth_id, $auth_token );
+$plivo = new \Plivo\RestAPI( $auth_id, $auth_token );
 unset( $auth_id );
 unset( $auth_token );
 /* --- http://localhost:1337/ ------------------------------------------------------------------- */
@@ -120,7 +132,13 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	private function getOrCreateUser( string $phone ) {
 		global $conn;
 		$phone = $this->cleanPhone( $phone );
-		$user  = r\db( 'converser' )->table( 'users' )->filter( [ 'phone' => $phone ] )->limit( 1 )->run( $conn )->toArray();
+
+		$user  = r\db( DB_NAME )
+			->table( 'users' )
+			->filter( [ 'phone' => $phone ] )
+			->limit( 1 )
+			->run( $conn )->toArray();
+
 		if ( count( $user ) == 1 ) {
 			return $user[0];
 		}
@@ -134,9 +152,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			'created'  => r\now()
 		];
 
-		echo "Created new user for $phone\n";
-
-		$data = r\db( 'converser' )->table( 'users' )->insert( $user )->run( $conn );
+		$data = r\db( DB_NAME )->table( 'users' )->insert( $user )->run( $conn );
 		event( [
 			'type'  => 'signup',
 			'phone' => $phone,
@@ -156,6 +172,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	private function createSession( string $phone, int $client, string $password ) {
 		global $conn;
 		$user    = $this->getOrCreateUser( $phone );
+
 		$session = [
 			'user_id'  => $user['id'],
 			'clientId' => $client,
@@ -163,8 +180,10 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			'verified' => false,
 			'valid'    => true
 		];
+
 		echo "Created new session for with password: $password\n";
-		$data = r\db( 'converser' )->table( 'sessions' )->insert( $session )->run( $conn );
+
+		$data = r\db( DB_NAME )->table( 'sessions' )->insert( $session )->run( $conn );
 		event( [
 			'type'          => 'session-created',
 			'user_id'       => $user['id'],
@@ -185,7 +204,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		global $conn;
 		$user = $this->getOrCreateUser( $phone );
 
-		$sessions = r\db( 'converser' )->table( 'sessions' )->filter( [
+		$sessions = r\db( DB_NAME )->table( 'sessions' )->filter( [
 			'user_id'  => $user['id'],
 			'password' => $password,
 			'verified' => false
@@ -195,7 +214,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 
 		foreach ( $sessions as $session ) {
 			$token = r\uuid( $client . $password )->run( $conn );
-			r\db( 'converser' )->table( 'sessions' )->filter( [
+			r\db( DB_NAME )->table( 'sessions' )->filter( [
 				'user_id'  => $user['id'],
 				'password' => $password,
 				'verified' => false
@@ -246,7 +265,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			'token'    => $token['token']
 		];
 
-		$session = r\db( 'converser' )->table( 'sessions' )->filter( $check )->limit( 1 )->run( $conn );
+		$session = r\db( DB_NAME )->table( 'sessions' )->filter( $check )->limit( 1 )->run( $conn );
 
 		foreach ( $session as $sess ) {
 			return true;
@@ -262,12 +281,12 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 */
 	private function invalidate( $token ): void {
 		global $conn;
-		r\db( 'converser' )->table( 'sessions' )->filter( [ 'token' => $token ] )->update( [
+		r\db( DB_NAME )->table( 'sessions' )->filter( [ 'token' => $token ] )->update( [
 			'valid' => false
 		] )->run( $conn );
 
 		event( [
-			'type'  => 'invalidate-token',
+			'type'  => 'invalidated-token',
 			'token' => $token
 		] );
 	}
@@ -282,7 +301,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	private function getPlayerInfo( $userId ) {
 		global $conn;
 		echo "Refreshing $userId\n";
-		$user    = r\db( 'converser' )->table( 'users' )->get( $userId )->run( $conn );
+		$user    = r\db( DB_NAME )->table( 'users' )->get( $userId )->run( $conn );
 		$display = [
 			'type'     => 'user',
 			'lives'    => $user['lives'],
@@ -371,7 +390,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			if ( $charge->amount === $payment['amount'] ) {
 				echo "Increasing ${userId} lives by ${package['lives']}\n";
 				// update the user object
-				r\db( 'converser' )->table( 'users' )->get( $userId )->update( [
+				r\db( DB_NAME )->table( 'users' )->get( $userId )->update( [
 					'lives' => r\row( 'lives' )->add( $package['lives'] )->rDefault( 0 )
 				] )->run( $conn );
 
@@ -438,7 +457,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	public function autoRefresh( $clientId, $userId ) {
 		global $conn;
 		echo "Waiting for changes\n";
-		$changes = r\db( 'converser' )->table( 'users' )->get( $userId )->changes()->run( $conn );
+		$changes = r\db( DB_NAME )->table( 'users' )->get( $userId )->changes()->run( $conn );
 		echo "Pusher installed\n";
 		\Amp\repeat( function ( $watcherId ) use ( $clientId, $userId, $changes ) {
 			$sent = false;
