@@ -4,6 +4,8 @@ let websocket = new WebSocket(process.env.API_HOST);
 
 const tokenResp = [];
 
+const sendCache = [];
+
 let player = false;
 
 const ret = {
@@ -12,6 +14,13 @@ const ret = {
 };
 
 websocket.onopen = (event) => {
+    if ( sendCache.length > 0 ) {
+        let s;
+        while(s = sendCache.pop()) {
+            send(s);
+        }
+    }
+
     if (getToken()) {
         send({
             command: 'refresh',
@@ -118,7 +127,21 @@ const send = (message, retries = 100) => {
         websocket = new WebSocket('ws://localhost:1337/ws');
         websocket.onopen = connect;
         websocket.onmessage = mess;
-        setTimeout(() => send(message, retries - 1), 5000);
+        if (message.command !== 'refresh') {
+            sendCache.push(message);
+        }
+
+        mess({
+            data: JSON.stringify({
+                type: 'notification',
+                notification: {
+                    message: 'please reconnect to the internet',
+                    title: 'disconnected',
+                    level: 'error',
+                    autoDismiss: 5
+                }
+            })
+        });
     }
 };
 
