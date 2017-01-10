@@ -9,17 +9,18 @@ services:
   api:
     image: quay.io/withinboredom/api:latest
     environment:
-      - SMS:${SMS}
-      - CALL:${CALL}
-      - CALL_HOST:${CALL_HOST}
-      - STRIPE_KEY:${STRIPE_KEY}
-      - PLIVO_ID:${PLIVO_ID}
-      - PLIVO_TOKEN:${PLIVO_TOKEN}
-    extends: api-builder
+      - SMS
+      - CALL
+      - CALL_HOST
+      - STRIPE_KEY
+      - PLIVO_ID
+      - PLIVO_TOKEN
+    volumes:
+      - ./src/api:/app
+      - api_vendor:/app/vendor
     depends_on:
       - rethunk
       - api-builder
-    command: bash -c "cd /app && exec /app/vendor/amphp/aerys/bin/aerys -c /app/index.php"
     ports:
       - '1337:1337'
   engine-builder:
@@ -31,12 +32,12 @@ services:
   engine:
     image: quay.io/withinboredom/engine:latest
     environment:
-      - SMS:${SMS}
-      - CALL:${CALL}
-      - CALL_HOST:${CALL_HOST}
-      - STRIPE_KEY:${STRIPE_KEY}
-      - PLIVO_ID:${PLIVO_ID}
-      - PLIVO_TOKEN:${PLIVO_TOKEN}
+      - SMS
+      - CALL
+      - CALL_HOST
+      - STRIPE_KEY
+      - PLIVO_ID
+      - PLIVO_TOKEN
     extends: engine-builder
     depends_on:
       - engine-builder
@@ -47,8 +48,8 @@ services:
   web-builder:
     image: withinboredom/yarn:latest
     environment:
-      - STRIPE_P_KEY:${STRIPE_P_KEY}
-      - API_HOST:${API_HOST}
+      - STRIPE_P_KEY
+      - API_HOST
     volumes:
       - ./src/site:/app
       - node_modules:/app/js/node_modules
