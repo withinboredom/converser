@@ -80,12 +80,6 @@ function prep() {
  * @param $campaign string The Campaign (utm_)
  */
 function acquire( $campaign ) {
-	global $conn;
-	r\db( METRICS_DB )->table( 'acquisition' )->insert( [
-		'id'       => r\uuid(),
-		'campaign' => $campaign,
-		'when'     => r\now()
-	] )->run( $conn );
 }
 
 /**
@@ -94,13 +88,6 @@ function acquire( $campaign ) {
  * @param $userid
  */
 function activate( $userid, $campaign ) {
-	global $conn;
-	r\db( METRICS_DB )->table( 'activation' )->insert( [
-		'id'       => r\uuid(),
-		'userid'   => $userid,
-		'campaign' => $campaign,
-		'when'     => r\now()
-	] )->run( $conn );
 }
 
 /**
@@ -109,12 +96,6 @@ function activate( $userid, $campaign ) {
  * @param $userid
  */
 function retented( $userid ) {
-	global $conn;
-	r\db( METRICS_DB )->table( 'retention' )->insert( [
-		'id'     => r\uuid(),
-		'userid' => $userid,
-		'when'   => r\now()
-	] )->run( $conn );
 }
 
 /**
@@ -124,13 +105,6 @@ function retented( $userid ) {
  * @param $to
  */
 function referral( $from, $to ) {
-	global $conn;
-	r\db( METRICS_DB )->table( 'referral' )->insert( [
-		'id'   => r\uuid(),
-		'from' => $from,
-		'to'   => $to,
-		'when' => r\now()
-	] )->run( $conn );
 }
 
 /**
@@ -139,13 +113,6 @@ function referral( $from, $to ) {
  * @param $amount
  */
 function revenue( $userid, $amount ) {
-	global $conn;
-	r\db( METRICS_DB )->table( 'revenue' )->insert( [
-		'id'     => r\uuid(),
-		'userid' => $userid,
-		'amount' => $amount,
-		'when'   => r\now()
-	] )->run( $conn );
 }
 
 global $plivo;
