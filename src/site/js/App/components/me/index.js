@@ -1,5 +1,6 @@
 import React, {PureComponent, PropTypes} from 'react';
 import { browserHistory } from 'react-router';
+import { PhoneNumberFormat, PhoneNumberUtil } from 'google-libphonenumber';
 
 import Heart from './heart';
 import Hide from '../hidden';
@@ -65,6 +66,11 @@ class Me extends PureComponent {
         let mod = Math.log10(this.props.player.lives);
         if (mod < 0) mod = 0;
 
+        const phoneUtil = PhoneNumberUtil.getInstance();
+        const parsed = phoneUtil.parse(process.env.CALL, 'US');
+        const intlNumber = phoneUtil.format(parsed, PhoneNumberFormat.INTERNATIONAL);
+        const localNumber = phoneUtil.format(parsed, PhoneNumberFormat.NATIONAL);
+
         return (
             <div className={styles.me}>
                 <div className={styles.life}>
@@ -113,7 +119,7 @@ class Me extends PureComponent {
                         Dial to play:
                     </div>
                     <div className={styles.content}>
-                        <a className={styles.link} href={`tel://${process.env.CALL}`}>{`${process.env.CALL}`}</a>
+                        <a className={styles.link} href={`tel://${localNumber}`}>{`${localNumber}`}</a>
                     </div>
                 </div>
             </div>
