@@ -32,7 +32,7 @@ function prep() {
 			$db->tableCreate( 'sessions' )->run( $conn );
 			$db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
 			$db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
-			$db->tableCreate( 'version', [ 'durability' => 'soft' ] )->run( $conn );
+			$db->tableCreate( 'version' )->run( $conn );
 			$db->table( 'users' )->wait()->run( $conn );
 			$db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
 			$db->table( 'sessions' )->wait()->run( $conn );
@@ -51,23 +51,17 @@ function prep() {
 				'id'    => 'db',
 				'value' => 1
 			] )->run( $conn );
+			$db->table('version')->wait()->run($conn);
 		} catch ( Exception $exception ) {
 			// nothing to do here
 		}
 	}
 
-	$expectedVersion = 2;
-	$currentVersion  = r\db( DB_NAME )->table( 'version' )->get( 'db' )['value'];
+	$expectedVersion = 1;
+	$currentVersion  = r\db( DB_NAME )->table( 'version' )->get( 'db' )->run($conn)['value'];
 	// put migrations here
 	switch ( $currentVersion ) {
 		case 1:
-			r\dbCreate( METRICS_DB )->run( $conn );
-			r\db( METRICS_DB )->wait()->run( $conn );
-			r\db( METRICS_DB )->tableCreate( 'acquisition' )->run( $conn );
-			r\db( METRICS_DB )->tableCreate( 'activation' )->run( $conn );
-			r\db( METRICS_DB )->tableCreate( 'retention' )->run( $conn );
-			r\db( METRICS_DB )->tableCreate( 'referral' )->run( $conn );
-			r\db( METRICS_DB )->tableCreate( 'revenue' )->run( $conn );
 	}
 
 	if ( $currentVersion != $expectedVersion ) {
