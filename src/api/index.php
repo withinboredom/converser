@@ -47,21 +47,23 @@ function prep() {
 				'status'  => 'not-playing',
 				'created' => r\now()
 			] )->run( $conn );
+			$db->table( 'version' )->wait()->run( $conn );
 			$db->table( 'version' )->insert( [
 				'id'    => 'db',
 				'value' => 1
 			] )->run( $conn );
-			$db->table('version')->wait()->run($conn);
 		} catch ( Exception $exception ) {
 			// nothing to do here
 		}
 	}
 
-	$expectedVersion = 1;
-	$currentVersion  = r\db( DB_NAME )->table( 'version' )->get( 'db' )->run($conn)['value'];
+	$expectedVersion = 2;
+	$currentVersion  = r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn )['value'];
 	// put migrations here
 	switch ( $currentVersion ) {
 		case 1:
+			r\db( DB_NAME )->tableCreate( 'leaderboard' )->run( $conn );
+			r\db( DB_NAME )->table( 'leaderboard' )->wait()->run( $conn );
 	}
 
 	if ( $currentVersion != $expectedVersion ) {
@@ -109,6 +111,7 @@ function referral( $from, $to ) {
 
 /**
  * Call whenever a user generates revenue
+ *
  * @param $userid
  * @param $amount
  */
@@ -276,7 +279,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 				'user_id' => $user['id']
 			] );
 
-			activate($user['id'], null); //todo: collect campaign
+			activate( $user['id'], null ); //todo: collect campaign
 
 			return $token;
 		}
@@ -489,6 +492,80 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		return false;
 	}
 
+	private function getRank($phone) {
+		global $conn;
+		$rank = r\db(DB_NAME)
+			->table('events')
+			->filter([
+				'type' => 'increase_score',
+			])
+			->group('player')
+			->map(function($row) {
+				return $row('amount');
+			})
+			->ungroup()
+			->map(function($res) {
+				return r\expr([
+					'player' => $res('group'),
+					'score' => $res('reduction')->sum()
+				]);
+			})
+			->orderBy(r\desc('score'))
+			->offsetsOf(function($row) use ($phone) {
+				return $row('player')->eq($phone);
+			})->run($conn)->toArray();
+
+		if (empty($rank)) {
+			return 'not ranked';
+		}
+
+		return $rank[0];
+	}
+
+	private function getLeaderboard() {
+		global $conn;
+		$lastDay = r\db( DB_NAME )
+			->table( 'events' )
+			->filter( [ 'type' => 'increase_score' ] )
+			->group( 'player' )
+			->map( function ( $row ) {
+				return $row( 'amount' );
+			} )
+			->ungroup()
+			->map( function ( $res ) {
+				return r\expr( [
+					'player_prefix' => $res( 'group' )->slice( 1, 4 ),
+					'player_suffix' => $res( 'group' )->slice( - 4 ),
+					'score'         => $res( 'reduction' )->sum()
+				] );
+			} )
+			->orderBy( r\desc( 'score' ) )
+			->limit( 10 )->run( $conn )->toArray();
+
+		$allTime = r\db( DB_NAME )
+			->table( 'events' )
+			->filter( [ 'type' => 'increase_score' ] )
+			->group( 'player' )
+			->map( function ( $row ) {
+				return $row( 'amount' );
+			} )
+			->ungroup()
+			->map( function ( $res ) {
+				return r\expr( [
+					'player_prefix' => $res( 'group' )->slice( 1, 4 ),
+					'player_suffix' => $res( 'group' )->slice( - 4 ),
+					'score'         => $res( 'reduction' )->sum()
+				] );
+			} )
+			->orderBy( r\desc( 'score' ) )
+			->limit( 10 )->run( $conn )->toArray();
+
+		return [
+			'lastDay' => $lastDay,
+			'allTime' => $allTime
+		];
+	}
+
 	/**
 	 * Notify the client of some event
 	 *
@@ -615,7 +692,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					}
 					break;
 				case 'connect':
-					acquire($request['campaign']);
+					acquire( $request['campaign'] );
 					break;
 			}
 		}

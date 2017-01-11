@@ -38,6 +38,8 @@ switch ( $action ) {
 			], [ 'return_changes' => true ] )
 			->run( $connection );
 		$call = $call['changes'][0]['new_val'];
+
+		// finish the contest
 		if ( $call['callers'] <= 0 ) {
 
 			if ( $call['callers'] < 0 ) {
@@ -67,46 +69,40 @@ switch ( $action ) {
 					'winner' => $me
 				] )->run( $connection );
 
-			// calculate points
-			$points = r\db( DB_NAME )
-				->table( 'calls' )
-				->getAll( $room )
-				->map( function ( $item ) use ( $call ) {
-					print_r( $call['left_id'] . '_exit' );
-					print_r( $item( $call['left_id'] . '_exit' ) );
-					print_r( $call );
-
-					return [
-						'id'     => $item( 'id' ),
-						'points' => r\expr( [
-							$item( $call['left_id'] . '_exit' ),
-							$item( $call['right_id'] . '_exit' )
-						] )
-							->min()
-							->sub( r\expr( [
-								$item( $call['left_id'] . '_enter' ),
-								$item( $call['right_id'] . '_enter' )
+			$points   = 0;
+			$myPoints = 0;
+			if ( ! empty( $other ) ) {
+				// calculate points
+				$points = r\db( DB_NAME )
+					->table( 'calls' )
+					->getAll( $room )
+					->map( function ( $item ) use ( $call ) {
+						return [
+							'id'     => $item( 'id' ),
+							'points' => r\expr( [
+								$item( $call['left_id'] . '_exit' ),
+								$item( $call['right_id'] . '_exit' )
 							] )
-								->max() )
-							->div( 120 )
-							->floor()
-							->mul( 200 )
-					];
-				} )->run( $connection )->toArray();
+								->min()
+								->sub( r\expr( [
+									$item( $call['left_id'] . '_enter' ),
+									$item( $call['right_id'] . '_enter' )
+								] )
+									->max() )
+								->div( 120 )
+								->floor()
+								->mul( 200 )
+						];
+					} )->run( $connection )->toArray();
+				$points = $points[0]['points'];
 
-			print_r( $points );
-			$points = $points[0]['points'];
+				$myPoints = $points + 1000;
+			}
 
 			event( [
 				'type'   => 'increase_score',
 				'player' => $me,
-				'amount' => $points + 1000
-			] );
-
-			event( [
-				'type'   => 'increase_score',
-				'player' => $other,
-				'amount' => $points
+				'amount' => $myPoints
 			] );
 
 			event( [
@@ -115,20 +111,28 @@ switch ( $action ) {
 				'status' => 'not_playing'
 			] );
 
-			event( [
-				'type'   => 'mark_player',
-				'player' => $other,
-				'status' => 'not_playing'
-			] );
+			if (!empty($other)) {
+				event( [
+					'type'   => 'increase_score',
+					'player' => $other,
+					'amount' => $points
+				] );
 
-			event( [
-				'type'   => 'kill_player',
-				'player' => $other
-			] );
+				event( [
+					'type'   => 'mark_player',
+					'player' => $other,
+					'status' => 'not_playing'
+				] );
+
+				event( [
+					'type'   => 'kill_player',
+					'player' => $other
+				] );
+			}
 
 			// give points to winner
 			user( $me )->update( [
-				'score'  => r\row( 'score' )->add( $points )->add( 1000 ),
+				'score'  => r\row( 'score' )->add( $myPoints ),
 				'status' => 'not_playing'
 			] )->run( $connection );
 
@@ -138,6 +142,12 @@ switch ( $action ) {
 				'lives'  => r\row( 'lives' )->sub( 1 ),
 				'status' => 'not_playing'
 			] )->run( $connection );
+
+			// update the leaderboard
+			/*r\db(DB_NAME)->table('leaderboard')->replace([
+				'id' => $me,
+				'score' =>
+			]);*/
 		}
 		break;
 }
