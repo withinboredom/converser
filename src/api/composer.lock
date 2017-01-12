@@ -327,12 +327,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/loop.git",
-                "reference": "5a92c31197378f2df9416cb82bdd4c35fe43f61a"
+                "reference": "6312ac15aa2dd188eb0356fa4f88c0273ac39152"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/loop/zipball/5a92c31197378f2df9416cb82bdd4c35fe43f61a",
-                "reference": "5a92c31197378f2df9416cb82bdd4c35fe43f61a",
+                "url": "https://api.github.com/repos/amphp/loop/zipball/6312ac15aa2dd188eb0356fa4f88c0273ac39152",
+                "reference": "6312ac15aa2dd188eb0356fa4f88c0273ac39152",
                 "shasum": ""
             },
             "require": {
@@ -366,7 +366,7 @@
                 "loop",
                 "reactor"
             ],
-            "time": "2017-01-08 16:24:25"
+            "time": "2017-01-11 13:28:27"
         },
         {
             "name": "amphp/process",
