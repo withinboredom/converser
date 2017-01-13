@@ -41,8 +41,6 @@ services:
     - bash
     - -c
     - rethinkdb create && exec rethinkdb --bind all --join rethinkdb-joiner
-    volumes:
-      - rethinkdb:/data
     labels:
       io.rancher.scheduler.affinity:container_label_ne: io.rancher.stack_service.name=converser/rethinkdb,io.rancher.stack_service.name=converser/rethinkdb-joiner
       io.rancher.container.hostname_override: container_name
@@ -71,8 +69,6 @@ services:
       traefik.frontend.entryPoints: https
   rethinkdb-joiner:
     image: rethinkdb:2.3.5
-    volumes:
-      - rethinkdb:/data
     command:
     - bash
     - -c
