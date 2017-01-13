@@ -20,7 +20,10 @@
 }
 
 .active {
-    composes: tab;
+    padding: 10px;
+    flex: 1 0 auto;
+    text-align: center;
+    cursor: pointer;
     border: 1px solid gold;
     color: black;
     background: white;
@@ -65,15 +68,28 @@
 }
 
 .rank {
-    composes: converser;
-    font-size: large;
+    width: 33.3%;
+    box-sizing: border-box;
+    flex-grow: 1;
+    list-style: none;
+    border: solid 1px white;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    font-weight: bold;
     font-size: 5vw;
     text-align: left;
     padding-left: 1vw;
 }
 
 .score {
-    composes: converser;
-    font-size: large;
+    width: 33.3%;
+    box-sizing: border-box;
+    flex-grow: 1;
+    list-style: none;
+    border: solid 1px white;
+    text-align: center;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    font-weight: bold;
     font-size: 4vw;
 }

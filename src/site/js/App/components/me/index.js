@@ -73,7 +73,7 @@ class Me extends PureComponent {
 
         return (
             <div className={styles.me}>
-                <div className={styles.life}>
+                <div className={styles.total}>
                     {this.props.player.lives > 0
                         ?
                         <div

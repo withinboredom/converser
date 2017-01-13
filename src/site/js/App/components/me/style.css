@@ -54,12 +54,8 @@
     text-align: center;
 }
 
-.life {
-    composes: total;
-}
-
 .status {
-    composes: total;
+    width: 100%;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -71,12 +67,14 @@
 }
 
 .label {
-    composes: half;
+    width: 48%;
+    font-size: 3vw;
     text-align: right;
 }
 
 .content {
-    composes: half;
+    width: 48%;
+    font-size: 3vw;
 }
 
 .link {
@@ -84,7 +82,8 @@
 }
 
 .button {
-    composes: content;
+    width: 48%;
+    font-size: 3vw;
     border: 2px solid white;
     text-align: center;
     cursor: pointer;

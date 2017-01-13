@@ -1,5 +1,6 @@
 const { resolve } = require('path');
 const webpack = require('webpack');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const isProd = process.env.NODE_ENV == 'production';
 
@@ -23,9 +24,6 @@ const config = {
     devtool: isProd ? 'cheap-source-map' : 'inline-source-map',
 
     devServer: isProd ? undefined : {
-        hot: true,
-        // activate hot reloading
-
         contentBase: resolve(__dirname, '../static'),
         // match the output path
 
@@ -62,7 +60,7 @@ const config = {
             }
         }),
         new webpack.NamedModulesPlugin(),
-        new webpack.optimize.AggressiveMergingPlugin()
+        new webpack.optimize.AggressiveMergingPlugin(),
     ] : [
         new webpack.DefinePlugin({
             'process.env': {
@@ -71,7 +69,7 @@ const config = {
                 'CALL': JSON.stringify( process.env.CALL ),
                 'NODE_ENV': JSON.stringify( 'development' )
             }
-        })
+        }),
         ],
 };
 
