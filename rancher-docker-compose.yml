@@ -36,13 +36,15 @@ services:
       traefik.frontend.passHostHeader: 'true'
       traefik.frontend.entryPoints: https
   rethinkdb:
-    image: rethinkdb:latest
+    image: rethinkdb:2.3.5
     command:
     - bash
     - -c
     - rethinkdb create && exec rethinkdb --bind all --join rethinkdb-joiner
+    volumes:
+      - rethinkdb:/data
     labels:
-      io.rancher.scheduler.affinity:container_label_soft_ne: io.rancher.stack_service.name=converser/rethinkdb
+      io.rancher.scheduler.affinity:container_label_ne: io.rancher.stack_service.name=converser/rethinkdb,io.rancher.stack_service.name=converser/rethinkdb-joiner
       io.rancher.container.hostname_override: container_name
       io.rancher.container.pull_image: always
   api:
@@ -68,7 +70,9 @@ services:
       traefik.frontend.passHostHeader: 'true'
       traefik.frontend.entryPoints: https
   rethinkdb-joiner:
-    image: rethinkdb:latest
+    image: rethinkdb:2.3.5
+    volumes:
+      - rethinkdb:/data
     command:
     - bash
     - -c
@@ -76,6 +80,7 @@ services:
     labels:
       io.rancher.container.pull_image: always
       io.rancher.container.hostname_override: container_name
+      io.rancher.scheduler.affinity:container_label_ne: io.rancher.stack_service.name=converser/rethinkdb
   admin:
     image: beevelop/nginx-basic-auth
     environment:
