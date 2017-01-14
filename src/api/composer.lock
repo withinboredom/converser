@@ -638,12 +638,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "14fa40e26857c8f406d7a0c7d577705085fb6950"
+                "reference": "3a66f89432d2796561c5eaed7afbdda52f73b163"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/14fa40e26857c8f406d7a0c7d577705085fb6950",
-                "reference": "14fa40e26857c8f406d7a0c7d577705085fb6950",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/3a66f89432d2796561c5eaed7afbdda52f73b163",
+                "reference": "3a66f89432d2796561c5eaed7afbdda52f73b163",
                 "shasum": ""
             },
             "require": {
@@ -692,7 +692,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2017-01-05 10:54:39"
+            "time": "2017-01-14 07:11:58"
         },
         {
             "name": "guzzlehttp/promises",
