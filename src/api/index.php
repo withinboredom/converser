@@ -711,7 +711,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	}
 } );
 
-//$router->get( "/ws", $websocket );
+$router->get( "/ws", $websocket );
 $router->get( "/ws/", $websocket );
 
 // If none of our routes match try to serve a static file
