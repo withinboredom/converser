@@ -573,7 +573,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 * @param string $message The message to send
 	 */
 	private function notify( int $clientId, string $message, string $title = "", string $level = "info", string $position = "tc" ): void {
-		$this->endpoint->send( $clientId, json_encode( [
+		$this->send( $clientId, json_encode( [
 			'type'         => 'notification',
 			'notification' => [
 				'title'    => $title,
@@ -631,6 +631,10 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	public function onOpen( int $clientId, $handshakeData ) {
 		$this->connection[ $clientId ] = $handshakeData;
 	}
+	
+	private function send( $clientId, $data ) {
+	    $this->endpoint->send( $data, $clientId );
+    }
 
 	public function onData( int $clientId, Websocket\Message $msg ) {
 		global $plivo, $conn;
@@ -642,26 +646,26 @@ $websocket = websocket( new class implements Aerys\Websocket {
 						$this->invalidate( $request['token'] );
 						break;
 					case 'refresh':
-						$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
+						$this->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
 						break;
 					case 'pay':
 						$userId = $request['token']['userId'];
 						echo "Preparing to accept payment from $userId for ${request['packageId']}\n";
 						if ( $this->pay( $request['token']['userId'], $request['payToken'], $request['packageId'], $clientId ) ) {
-							$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
+							$this->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
 						}
 						break;
 				}
 			} else {
 				echo "Not verified\n";
-				$this->endpoint->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
+				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
 			}
 		} else {
 			switch ( $request['command'] ) {
 				case 'login':
 					$phone = $this->cleanPhone( $request['phone'] );
 					print "Logging $clientId in with $phone\n";
-					$this->endpoint->send( $clientId, json_encode( [
+					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',
 						'phone' => $phone
 					] ) );
@@ -683,12 +687,12 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					if ( $token !== false ) {
 						$user = $this->getOrCreateUser( $this->cleanPhone( $request['phone'] ) );
 						echo "${user['id']} is logged in and verified\n";
-						$this->endpoint->send( $clientId, json_encode( [
+						$this->send( $clientId, json_encode( [
 							'type'   => 'token',
 							'userId' => $user['id'],
 							'token'  => $token
 						] ) );
-						$this->endpoint->send( $clientId, json_encode( $this->getPlayerInfo( $user['id'] ) ) );
+						$this->send( $clientId, json_encode( $this->getPlayerInfo( $user['id'] ) ) );
 					}
 					break;
 				case 'connect':
