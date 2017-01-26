@@ -49,8 +49,8 @@ FROM withinboredom/caddy:latest
 
 IMPORT /app
 
-PUSH quay.io/withinboredom/site:{{ .BUILD_NUMBER }}
-PUSH quay.io/withinboredom/site:latest
+PUSH withinboredom/site:{{ .BUILD_NUMBER }}
+PUSH withinboredom/site:latest
 
 ##############################
 # Step 5: Build a generic composer container
@@ -124,8 +124,8 @@ CMD ["/app/vendor/amphp/aerys/bin/aerys","-c","/app/index.php"]
 
 USER root
 
-PUSH quay.io/withinboredom/api:{{ .BUILD_NUMBER }}
-PUSH quay.io/withinboredom/api:latest
+PUSH withinboredom/api:{{ .BUILD_NUMBER }}
+PUSH withinboredom/api:latest
 
 ##############################
 # Step 8: Build the engine
@@ -160,8 +160,8 @@ CMD apache2-foreground
 
 USER root
 
-PUSH quay.io/withinboredom/engine:{{ .BUILD_NUMBER }}
-PUSH quay.io/withinboredom/engine:latest
+PUSH withinboredom/engine:{{ .BUILD_NUMBER }}
+PUSH withinboredom/engine:latest
 
 ##############################
 # Step 10: Build rancher-compose

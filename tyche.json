@@ -14,7 +14,7 @@
               "name": "rocker-build-builder",
               "exec": {
                 "native": {
-                  "command": ["./rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--no-garbage","."]
+                  "command": ["rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--no-garbage","."]
                 }
               }
             }
