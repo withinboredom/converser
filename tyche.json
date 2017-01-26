@@ -37,7 +37,7 @@
           "name": "push",
           "exec": {
             "native": {
-              "command": ["./rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--pull","--no-garbage","--push","."]
+              "command": ["rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--pull","--no-garbage","--push","."]
             }
           }
         }
@@ -86,14 +86,14 @@
               "name": "stop",
               "exec": {
                 "native": {
-                  "command": ["./docker-compose","down"]
+                  "command": ["docker-compose","down"]
                 }
               }
             }
           ],
           "exec": {
             "native": {
-              "command": ["./docker-compose","up","-d"]
+              "command": ["docker-compose","up","-d"]
             }
           }
         },
@@ -101,7 +101,7 @@
           "name": "api",
           "exec": {
             "native": {
-              "command": ["./docker-compose","up","--no-recreate","api"]
+              "command": ["docker-compose","up","--no-recreate","api"]
             }
           }
         },
@@ -118,7 +118,7 @@
           "name": "engine",
           "exec": {
             "native": {
-              "command": ["./docker-compose","up","--no-recreate","engine"]
+              "command": ["docker-compose","up","--no-recreate","engine"]
             }
           }
         }
@@ -167,7 +167,7 @@
       ],
       "exec": {
         "native": {
-          "command": ["./docker-compose","down","-v"]
+          "command": ["docker-compose","down","-v"]
         }
       }
     },

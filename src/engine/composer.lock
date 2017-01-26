@@ -4,7 +4,6 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "6b31ccc7293babb09108cc0ee7153bdb",
     "content-hash": "055730d81dfd08be5c753b3ecafbcb99",
     "packages": [
         {
@@ -13,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "130825d9f5610ab37cfad46a9ed5b7481ef21159"
+                "reference": "0631560c65057b2c4227287988232b61e559cb94"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/130825d9f5610ab37cfad46a9ed5b7481ef21159",
-                "reference": "130825d9f5610ab37cfad46a9ed5b7481ef21159",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/0631560c65057b2c4227287988232b61e559cb94",
+                "reference": "0631560c65057b2c4227287988232b61e559cb94",
                 "shasum": ""
             },
             "require": {
@@ -77,7 +76,7 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2017-01-13 18:11:23"
+            "time": "2017-01-15 14:49:11"
         },
         {
             "name": "amphp/loop",
@@ -85,12 +84,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/loop.git",
-                "reference": "6312ac15aa2dd188eb0356fa4f88c0273ac39152"
+                "reference": "a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/loop/zipball/6312ac15aa2dd188eb0356fa4f88c0273ac39152",
-                "reference": "6312ac15aa2dd188eb0356fa4f88c0273ac39152",
+                "url": "https://api.github.com/repos/amphp/loop/zipball/a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4",
+                "reference": "a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4",
                 "shasum": ""
             },
             "require": {
@@ -124,7 +123,7 @@
                 "loop",
                 "reactor"
             ],
-            "time": "2017-01-11 13:28:27"
+            "time": "2017-01-16 16:39:24"
         },
         {
             "name": "async-interop/event-loop",
@@ -165,7 +164,7 @@
                 "interop",
                 "loop"
             ],
-            "time": "2017-01-05 10:19:16"
+            "time": "2017-01-05T10:19:16+00:00"
         },
         {
             "name": "async-interop/promise",
@@ -207,7 +206,7 @@
                 "interop",
                 "promise"
             ],
-            "time": "2017-01-06 20:45:59"
+            "time": "2017-01-06T20:45:59+00:00"
         },
         {
             "name": "danielmewes/php-rql",
@@ -269,12 +268,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "3a66f89432d2796561c5eaed7afbdda52f73b163"
+                "reference": "443ca656dec18f3e5ea7751d2429fc2aeacf3ca2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/3a66f89432d2796561c5eaed7afbdda52f73b163",
-                "reference": "3a66f89432d2796561c5eaed7afbdda52f73b163",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/443ca656dec18f3e5ea7751d2429fc2aeacf3ca2",
+                "reference": "443ca656dec18f3e5ea7751d2429fc2aeacf3ca2",
                 "shasum": ""
             },
             "require": {
@@ -323,7 +322,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2017-01-14 07:11:58"
+            "time": "2017-01-16 17:41:59"
         },
         {
             "name": "guzzlehttp/promises",
@@ -487,7 +486,7 @@
                 }
             ],
             "description": "Plivo PHP helper library to access PlivoCloud API and generate Plivo XML",
-            "time": "2016-06-02 10:16:04"
+            "time": "2016-06-02T10:16:04+00:00"
         },
         {
             "name": "psr/http-message",
