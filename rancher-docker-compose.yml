@@ -1,7 +1,7 @@
 version: '2'
 services:
   call:
-    image: quay.io/withinboredom/engine:$VERSION
+    image: withinboredom/engine:$VERSION
     environment:
       DB_NAME: "$DBNAME"
       DB_HOST: "$DBHOST"
@@ -23,7 +23,7 @@ services:
       traefik.frontend.passHostHeader: 'true'
       traefik.frontend.entryPoints: https
   www:
-    image: quay.io/withinboredom/site:$VERSION
+    image: withinboredom/site:$VERSION
     labels:
       traefik.frontend.rule: Host:converser.space
       traefik.backend.circuitbreaker.expression: NetworkErrorRatio() > 0.5
@@ -46,7 +46,7 @@ services:
       io.rancher.container.hostname_override: container_name
       io.rancher.container.pull_image: always
   api:
-    image: quay.io/withinboredom/api:$VERSION
+    image: withinboredom/api:$VERSION
     environment:
       DB_NAME: "$DBNAME"
       DB_HOST: "$DBHOST"

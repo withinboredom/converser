@@ -1,19 +1,19 @@
 version: '2'
 services:
   api:
-    image: quay.io/withinboredom/api:latest
+    image: withinboredom/api:latest
     depends_on:
       - rethunk
     ports:
       - '1337:1337'
   engine:
-    image: quay.io/withinboredom/engine:latest
+    image: withinboredom/engine:latest
     depends_on:
       - rethunk
     ports:
       - '2200:80'
   web:
-    image: quay.io/withinboredom/site:latest
+    image: withinboredom/site:latest
     ports:
       - '8090:8080'
   rethunk:
