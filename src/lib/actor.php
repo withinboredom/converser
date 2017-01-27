@@ -26,6 +26,9 @@ abstract class Actor {
 	private $id;
 	private $nextVersion = 0;
 
+	/**
+	 * @var \ArrayObject
+	 */
 	protected $state = [];
 
 	/**
@@ -81,6 +84,16 @@ abstract class Actor {
 
 			$this->Load( $callback );
 		} );
+	}
+
+	/**
+	 * Get's a snapshot of the state
+	 */
+	public function Snapshot() {
+		$copy = new \ArrayObject( $this->state, \ArrayObject::STD_PROP_LIST );
+		$copy = $copy->getArrayCopy();
+
+		return $copy;
 	}
 
 	/**

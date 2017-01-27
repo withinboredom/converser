@@ -128,6 +128,7 @@ class User extends Actor {
 			} else {
 				$session['active'] = false;
 			}
+
 			return $session;
 		}, $this->state['sessions'] );
 	}
@@ -160,6 +161,10 @@ class User extends Actor {
 				'token' => $token
 			] );
 		}
+	}
+
+	public function DoPurchase( $payment, $packageId ) {
+
 	}
 
 	public function GetActiveToken() {
