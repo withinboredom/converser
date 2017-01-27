@@ -14,5 +14,9 @@
     "amphp/amp": "dev-master",
     "amphp/loop": "dev-master"
   },
+  "require-dev": {
+    "phpunit/phpunit": "5.5.*",
+    "plivo/plivo-php": "v1.1.5"
+  },
   "minimum-stability": "dev"
 }

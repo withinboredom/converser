@@ -19,7 +19,7 @@ class User extends Actor {
 	 * @param r\Connection $conn
 	 * @param $plivo
 	 */
-	public function __construct( $id, r\Connection $conn, $plivo ) {
+	public function __construct( $id, $conn, $plivo ) {
 		parent::__construct( $id, $conn );
 
 		$this->plivo = $plivo;
@@ -60,7 +60,7 @@ class User extends Actor {
 			'lives'    => 0,
 			'status'   => 'not-playing',
 			'opponent' => 'null',
-			'score'    => '0',
+			'score'    => 0,
 			'created'  => $data['at'],
 			'sessions' => []
 		];
@@ -102,6 +102,7 @@ class User extends Actor {
 		}
 		$this->Fire( 'readied', [
 			'id'       => r\uuid()->run( $this->conn ),
+			'phone'    => $phone,
 			'password' => $password,
 			'ip'       => $ip,
 			'at'       => new \DateTime()
@@ -120,17 +121,24 @@ class User extends Actor {
 	 * Projects the current state
 	 */
 	protected function Project() {
-		r\db( DB_NAME )->table( 'users' )->replace( [
-			'id'      => $this->Id(),
-			'phone'   => $this->state['phone'],
-			'lives'   => $this->state['lives'],
-			'status'  => $this->state['status'],
-			'score'   => $this->state['score'],
-			'created' => $this->state['created']
-		] )->run( $this->conn );
+		r\db( DB_NAME )
+			->table( 'users' )
+			->get( $this->Id() )
+			->replace( [
+				'id'      => $this->Id(),
+				'phone'   => $this->state['phone'],
+				'lives'   => $this->state['lives'],
+				'status'  => $this->state['status'],
+				'score'   => $this->state['score'],
+				'created' => $this->state['created']
+			] )->run( $this->conn );
 
 		foreach ( $this->state['sessions'] as $session ) {
-			r\db( DB_NAME )->table( 'sessions' )->replace( $session );
+			r\db( DB_NAME )
+				->table( 'sessions' )
+				->get( $session['id'] )
+				->replace( $session )
+				->run( $this->conn );
 		}
 	}
 }

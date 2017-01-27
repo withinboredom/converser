@@ -15,7 +15,7 @@ abstract class Actor {
 	/**
 	 * @var \ArrayObject The records that represent this model
 	 */
-	private $records;
+	private $records = [];
 
 	/**
 	 * @var r\Connection The connection to the db
@@ -96,6 +96,7 @@ abstract class Actor {
 	 */
 	private function ReduceEvents() {
 		$counter = 0;
+		//if (!is_array($this->records)) return;
 		foreach ( $this->records as $event ) {
 			/**
 			 * Expecting an array of the keys:
