@@ -146,6 +146,7 @@ class User extends Actor {
 				if (
 					$item['password'] === $password
 					&& $item['ends'] >= $now
+					&& $item['used'] === false
 				) {
 					return $item;
 				}
