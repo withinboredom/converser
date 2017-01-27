@@ -20,6 +20,7 @@ class User extends Actor {
 	 * @param $plivo
 	 */
 	public function __construct( $id, $conn, $plivo ) {
+		$id = self::cleanPhone( $id );
 		parent::__construct( $id, $conn );
 
 		$this->plivo = $plivo;
@@ -81,7 +82,8 @@ class User extends Actor {
 			'password' => $data['password'],
 			'begins'   => $begins,
 			'ends'     => $ends,
-			'used'     => false
+			'used'     => false,
+			'active'   => false
 		];
 	}
 
@@ -115,6 +117,71 @@ class User extends Actor {
 		$this->Fire( 'password_text', [
 			'text' => "${password} is your Converser login code."
 		] );
+	}
+
+	protected function set_active_session( $data ) {
+		$this->state['sessions'] = array_map( function ( $session ) use ( $data ) {
+			if ( $session['id'] === $data['id'] ) {
+				$session['used']   = true;
+				$session['active'] = true;
+				$session['token']  = $data['token'];
+			} else {
+				$session['active'] = false;
+			}
+			return $session;
+		}, $this->state['sessions'] );
+	}
+
+	public function DoVerify( $phone, $password ) {
+		$phone   = self::cleanPhone( $phone );
+		$now     = new \DateTime();
+		$session = array_reduce(
+			$this->state['sessions'],
+			function ( $carry, $item ) use ( $phone, $password, $now ) {
+				if ( empty( $password ) ) {
+					return null;
+				}
+
+				if (
+					$item['password'] === $password
+					&& $item['ends'] >= $now
+				) {
+					return $item;
+				}
+
+				return $carry;
+			} );
+
+		$token = r\uuid( $phone . $password )->run( $this->conn );
+
+		if ( $session ) {
+			$this->Fire( 'set_active_session', [
+				'id'    => $session['id'],
+				'token' => $token
+			] );
+		}
+	}
+
+	public function GetActiveToken() {
+		$activeSession = array_reduce(
+			$this->state['sessions'], function ( $carry, $item ) {
+			if ( $item['active'] ) {
+				return $item;
+			}
+
+			return $carry;
+		} );
+
+		return $activeSession['token'];
+	}
+
+	public function GetPlayerInfo() {
+		return [
+			'type'   => 'user',
+			'lives'  => $this->state['lives'],
+			'score'  => $this->state['score'],
+			'status' => $this->state['status']
+		];
 	}
 
 	/**

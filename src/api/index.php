@@ -700,41 +700,32 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		} else {
 			switch ( $request['command'] ) {
 				case 'login':
-					$phone = $this->cleanPhone( $request['phone'] );
-					$user  = new Model\User( $phone, $conn, $plivo );
+					$user  = new Model\User( $request['phone'], $conn, $plivo );
 					$user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
 					$user->Store();
-					unset($user);
-					/*print "Logging $clientId in with $phone\n";
+
 					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',
-						'phone' => $phone
+						'phone' => $user->Id()
 					] ) );
-					$number = $this->generateOneTimeCode();
-					$this->getOrCreateUser( $phone );
-					$this->createSession( $phone, $clientId, $number );
-					Amp\immediately( function () use ( $plivo, $phone, $number ) {
-						$plivo->send_message( [
-							'src'  => CALL,
-							'dst'  => $phone,
-							'text' => "${number} is your Converser login code."
-						] );
-						echo "Notified $phone of password\n";
-					} );*/
+
+					unset( $user );
 					break;
 				case 'verify':
-					echo "Verifying session of $clientId with password ${request['password']}\n";
-					$token = $this->verifySession( $clientId, $request['phone'], $request['password'] );
-					if ( $token !== false ) {
-						$user = $this->getOrCreateUser( $this->cleanPhone( $request['phone'] ) );
-						echo "${user['id']} is logged in and verified\n";
-						$this->send( $clientId, json_encode( [
-							'type'   => 'token',
-							'userId' => $user['id'],
-							'token'  => $token
-						] ) );
-						$this->send( $clientId, json_encode( $this->getPlayerInfo( $user['id'] ) ) );
-					}
+					$user = new Model\User( $request['phone'], $conn, $plivo );
+					$user->DoVerify($request['phone'], $request['password']);
+					$user->Store(function() use ($user, $clientId) {
+						$token = $user->GetActiveToken();
+						if ($token) {
+							$this->send($clientId, json_encode([
+								'type' => 'token',
+								'userId' => $user->Id(),
+								'token' => $token
+							]));
+							$this->send($clientId, json_encode($user->GetPlayerInfo()));
+						}
+					});
+					unset($user);
 					break;
 				case 'connect':
 					acquire( $request['campaign'] );
