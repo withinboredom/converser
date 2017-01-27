@@ -26,28 +26,30 @@ class User extends Actor {
 
 	/**
 	 * This event brings a user to life as a 'zombie', a non-paying, non-playing user
+	 *
 	 * @param $data array
 	 */
-	protected function zombie($data) {
+	protected function zombie( $data ) {
 		$this->state = [
-			'phone' => $data['phone'],
-			'lives' => 0,
-			'status' => 'not-playing',
+			'phone'    => $data['phone'],
+			'lives'    => 0,
+			'status'   => 'not-playing',
 			'opponent' => 'null',
-			'score' => '0',
-			'created' => new \DateTime('now'),
+			'score'    => '0',
+			'created'  => $data['at'],
 			'sessions' => []
 		];
 	}
 
 	/**
 	 * This event means a user is ready to verify!
+	 *
 	 * @param $data array
 	 */
-	protected function readied($data) {
+	protected function readied( $data ) {
 		$this->state['sessions'][] = [
 			'phone' => $data['phone'],
-			'ip' => $data['ip']
+			'ip'    => $data['ip']
 		];
 	}
 
@@ -55,12 +57,16 @@ class User extends Actor {
 		$phone    = self::cleanPhone( $phone );
 		$password = self::oneTimeCode();
 		if ( ! isset( $this->state['status'] ) ) {
-			$this->Fire('zombie', [ 'phone' => $phone ]);
+			$this->Fire( 'zombie', [
+				'phone' => $phone,
+				'at'    => new \DateTime()
+			] );
 		}
-		$this->Fire('readied', [
+		$this->Fire( 'readied', [
 			'password' => $password,
-			'ip' => $ip
-		]);
+			'ip'       => $ip,
+			'at'       => new \DateTime()
+		] );
 		// todo: send text
 		echo "Would have sent text here";
 	}

@@ -1,11 +1,17 @@
 version: '2'
 services:
+  api-volumes:
+    image: ubuntu:16.10
+    volumes:
+      - ./src/api:/app/api
+      - ./src/lib:/app/lib
+      - api_vendor:/app/api/vendor
+      - lib_vendor:/app/lib/vendor
   api-builder:
     image: withinboredom/composer:latest
-    volumes:
-      - ./src/api:/app
-      - api_vendor:/app/vendor
-    command: bash -c "cd /app && exec composer install"
+    volumes_from:
+      - api-volumes
+    command: bash -c "cd /app/lib && composer install && cd /app/api && exec composer install"
   api:
     image: withinboredom/api:latest
     environment:
@@ -15,14 +21,14 @@ services:
       - STRIPE_KEY
       - PLIVO_ID
       - PLIVO_TOKEN
-    volumes:
-      - ./src/api:/app
-      - api_vendor:/app/vendor
+    volumes_from:
+      - api-volumes
     depends_on:
       - rethunk
       - api-builder
     ports:
       - '1337:1337'
+    command: bash -c "cd /app/api && /app/api/vendor/amphp/aerys/bin/aerys -c /app/api/index.php"
   engine-builder:
     image: withinboredom/composer:latest
     volumes:
@@ -69,4 +75,5 @@ services:
 volumes:
   api_vendor:
   engine_vendor:
+  lib_vendor:
   node_modules:

@@ -1,14 +1,14 @@
 Arguments: 
-  /usr/local/bin/node /usr/local/bin/yarn
+  /usr/local/bin/node /home/robert/.yarn/bin/yarn.js upgrade
 
 PATH: 
-  /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  /home/robert/.yarn/bin:/home/robert/bin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/opt/bin:/usr/x86_64-pc-linux-gnu/gcc-bin/4.9.4
 
 Yarn version: 
   0.19.1
 
 Node version: 
-  7.4.0
+  6.9.4
 
 Platform: 
   linux x64
@@ -26,12 +26,12 @@ npm manifest:
       "react-stripe-checkout": "^2.2.5"
     },
     "devDependencies": {
-      "babel": "^6.22.2",
-      "babel-core": "^6.22.1",
+      "babel": "^6.5.2",
+      "babel-core": "^6.22.0",
       "babel-loader": "^6.2.10",
-      "babel-preset-es2015": "^6.22.2",
-      "babel-preset-react": "^6.22.2",
-      "babel-preset-stage-2": "^6.22.2",
+      "babel-preset-es2015": "^6.22.0",
+      "babel-preset-react": "^6.22.0",
+      "babel-preset-stage-2": "^6.22.0",
       "css-loader": "^0.26.1",
       "extract-text-webpack-plugin": "2.0.0-beta.5",
       "file-loader": "^0.9.0",
@@ -4121,4 +4121,5 @@ Lockfile:
       y18n "^3.2.0"
 
 Trace: 
-  Error: ENOENT: no such file or directory, utime '/app/js/node_modules/postcss-initial/README.md'
+  Error: EACCES: permission denied, mkdir '/home/robert/code/converser/src/site/js/node_modules/acorn-dynamic-import'
+      at Error (native)

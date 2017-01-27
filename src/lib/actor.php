@@ -35,16 +35,39 @@ class Actor {
 	 * @param $conn r\Connection A connection to a rql db
 	 */
 	public function __construct( $id, $conn ) {
-		$this->conn    = $conn;
-		$this->id      = $id;
+		$this->conn = $conn;
+		$this->id   = $id;
+		$this->Load();
+	}
+
+	public function Load( callable $callback = null ) {
 		$this->records = r\db( 'records' )
 			->table( 'events' )
-			->getAll( $id, [ 'index' => 'model_id' ] )
+			->getAll( $this->id, [ 'index' => 'model_id' ] )
 			->orderBy( 'version' )
-			->run( $conn )
-			->toArray();
+			->run( $this->conn );
 
 		$this->ReduceEvents();
+		if ( $callback ) {
+			$callback();
+		}
+	}
+
+	public function Store( callable $callback = null ) {
+		Amp\immediately( function () use ( $callback ) {
+			$toStore = array_filter( $this->records, function ( $record ) {
+				return ! $record['stored'];
+			} );
+
+			foreach ( $toStore as $event ) {
+				r\db( 'records' )
+					->table( 'events' )
+					->insert( $event )
+					->run( $this->conn );
+			}
+
+			$this->Load( $callback );
+		} );
 	}
 
 	public function Id() {
@@ -68,32 +91,30 @@ class Actor {
 				case 'event':
 					$func = $event['name'];
 					$this->$func( $event['data'] );
+					$counter = $event['version'];
 					break;
 				case 'memo':
 					$this->data = $event['data'];
-					$counter    = 0;
+					$counter    = $event['version'];
 					break;
 			}
-
-			if ( $counter >= $this->optimizeAt ) {
-				// todo: generate memo
-			}
 		}
+		$this->nextVersion = $counter + 1;
 	}
 
 	public function Fire( $name, $data ) {
-		if (method_exists($this, $name)) {
-			Amp\run(function() use ($name, $data) {
+		if ( method_exists( $this, $name ) ) {
+			Amp\immediately( function () use ( $name, $data ) {
 				$this->$name( $data );
 				$this->records[] = [
 					'model_id' => $this->id,
-					'version' => $this->nextVersion++,
-					'type' => 'event',
-					'name' => $name,
-					'data' => $data,
-					'stored' => false
+					'version'  => $this->nextVersion ++,
+					'type'     => 'event',
+					'name'     => $name,
+					'data'     => $data,
+					'stored'   => false
 				];
-			});
+			} );
 		}
 	}
 }

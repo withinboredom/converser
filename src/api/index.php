@@ -29,18 +29,49 @@ function prep() {
 		try {
 			r\dbCreate( DB_NAME )->run( $conn );
 			$db = r\db( DB_NAME );
-			$db->tableCreate( 'users' )->run( $conn );
-			$db->tableCreate( 'calls' )->run( $conn );
-			$db->tableCreate( 'sessions' )->run( $conn );
-			$db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
-			$db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
+
 			$db->tableCreate( 'version' )->run( $conn );
-			$db->table( 'users' )->wait()->run( $conn );
+			$db->table( 'version' )->insert( [
+				'id'    => 'db',
+				'value' => 0
+			] )->run( $conn );
+
+			$db->table( 'version' )->wait()->run( $conn );
+
+		} catch ( Exception $exception ) {
+			// nothing to do here
+		}
+	}
+
+	$currentVersion = r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn )['value'];
+
+	$db   = r\db( DB_NAME );
+	$rnad = rand();
+	$db->table( 'version' )->insert( [ 'id' => 'rlock', 'value' => $rnad ] )->run( $conn );
+	$hasLock = $db->table( 'version' )->get( 'rlock' )->run( $conn )['value'] == $rnad;
+
+	var_dump( $hasLock );
+
+	if ( ! $hasLock ) {
+		return $conn;
+	}
+
+	if ( $currentVersion == null ) {
+		$db->table( 'version' )->insert( [
+			'id'    => 'db',
+			'value' => 0
+		] )->run( $conn );
+		$currentVersion = 0;
+	}
+
+	$expectedVersion = 11;
+	// put migrations here
+	switch ( $currentVersion + 1 ) {
+		case 1:
+			$db->tableCreate( 'users' )->run( $conn );
+		case 2:
 			$db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
-			$db->table( 'sessions' )->wait()->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'phone' )->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'token' )->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'user_id' )->run( $conn );
+		case 3:
 			$db->table( 'users' )->insert( [
 				'phone'   => '19102974810',
 				'admin'   => true,
@@ -49,23 +80,24 @@ function prep() {
 				'status'  => 'not-playing',
 				'created' => r\now()
 			] )->run( $conn );
-			$db->table( 'version' )->wait()->run( $conn );
-			$db->table( 'version' )->insert( [
-				'id'    => 'db',
-				'value' => 1
-			] )->run( $conn );
-		} catch ( Exception $exception ) {
-			// nothing to do here
-		}
-	}
-
-	$expectedVersion = 2;
-	$currentVersion  = r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn )['value'];
-	// put migrations here
-	switch ( $currentVersion ) {
-		case 1:
-			r\db( DB_NAME )->tableCreate( 'leaderboard' )->run( $conn );
-			r\db( DB_NAME )->table( 'leaderboard' )->wait()->run( $conn );
+		case 4:
+			$db->tableCreate( 'calls' )->run( $conn );
+		case 5:
+			$db->tableCreate( 'sessions' )->run( $conn );
+		case 6:
+			$db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
+		case 7:
+			$db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
+		case 8:
+			$db->table( 'sessions' )->indexCreate( 'phone' )->run( $conn );
+			$db->table( 'sessions' )->indexCreate( 'token' )->run( $conn );
+			$db->table( 'sessions' )->indexCreate( 'user_id' )->run( $conn );
+		case 9:
+			r\dbCreate( 'records' )->run( $conn );
+		case 10:
+			r\db( 'records' )->tableCreate( 'events' )->run( $conn );
+		case 11:
+			r\db( 'records' )->table( 'events' )->indexCreate( 'model_id' )->run( $conn );
 	}
 
 	if ( $currentVersion != $expectedVersion ) {
@@ -74,6 +106,8 @@ function prep() {
 			'value' => $expectedVersion
 		] )->run( $conn );
 	}
+
+	$db->table( 'version' )->get( 'rlock' )->delete()->run( $conn );
 
 	return $conn;
 }
@@ -667,7 +701,9 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			switch ( $request['command'] ) {
 				case 'login':
 					$phone = $this->cleanPhone( $request['phone'] );
-					$user = new Model\User($phone, $conn);
+					$user  = new Model\User( $phone, $conn );
+					$user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
+					$user->Store();
 					/*print "Logging $clientId in with $phone\n";
 					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',

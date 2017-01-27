@@ -1,0 +1,278 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "382f962cfc9b38deca6ce08c26d2b6bf",
+    "packages": [
+        {
+            "name": "amphp/amp",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/amphp/amp.git",
+                "reference": "0631560c65057b2c4227287988232b61e559cb94"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/0631560c65057b2c4227287988232b61e559cb94",
+                "reference": "0631560c65057b2c4227287988232b61e559cb94",
+                "shasum": ""
+            },
+            "require": {
+                "async-interop/event-loop": "^0.5",
+                "async-interop/event-loop-implementation": "^0.5",
+                "async-interop/promise": "^0.4",
+                "php": ">=7"
+            },
+            "require-dev": {
+                "amphp/loop": "dev-master",
+                "async-interop/promise-test": "^0.4.1",
+                "friendsofphp/php-cs-fixer": "~1.9",
+                "humbug/humbug": "^1@dev",
+                "phpunit/phpunit": "^5.7"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Amp\\": "lib/"
+                },
+                "files": [
+                    "lib/bootstrap.php",
+                    "lib/functions.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Daniel Lowrey",
+                    "email": "rdlowrey@php.net",
+                    "role": "Creator / Lead Developer"
+                },
+                {
+                    "name": "Aaron Piotrowski",
+                    "email": "aaron@trowski.com",
+                    "role": "v2.0 Developer"
+                }
+            ],
+            "description": "A non-blocking concurrency framework for PHP applications",
+            "homepage": "https://github.com/amphp/amp",
+            "keywords": [
+                "async",
+                "asynchronous",
+                "awaitable",
+                "concurrency",
+                "event",
+                "future",
+                "non-blocking",
+                "promise"
+            ],
+            "time": "2017-01-15 14:49:11"
+        },
+        {
+            "name": "amphp/loop",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/amphp/loop.git",
+                "reference": "a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/amphp/loop/zipball/a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4",
+                "reference": "a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4",
+                "shasum": ""
+            },
+            "require": {
+                "async-interop/event-loop": "^0.5"
+            },
+            "provide": {
+                "async-interop/event-loop-implementation": "0.5"
+            },
+            "require-dev": {
+                "async-interop/event-loop-test": "^0.5",
+                "friendsofphp/php-cs-fixer": "~1.9"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Amp\\Loop\\": "lib"
+                },
+                "files": [
+                    "lib/bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "homepage": "http://amphp.org",
+            "keywords": [
+                "async",
+                "asynchronous",
+                "event",
+                "loop",
+                "reactor"
+            ],
+            "time": "2017-01-16 16:39:24"
+        },
+        {
+            "name": "async-interop/event-loop",
+            "version": "v0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/async-interop/event-loop.git",
+                "reference": "372272601b3f43064bd06e90fa1c8f3a009accd8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/async-interop/event-loop/zipball/372272601b3f43064bd06e90fa1c8f3a009accd8",
+                "reference": "372272601b3f43064bd06e90fa1c8f3a009accd8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "jakub-onderka/php-console-highlighter": "^0.3.2",
+                "jakub-onderka/php-parallel-lint": "^0.9.2",
+                "phpunit/phpunit": "^4|^5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "AsyncInterop\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "An event loop interface for interoperability.",
+            "keywords": [
+                "async",
+                "event",
+                "interop",
+                "loop"
+            ],
+            "time": "2017-01-05T10:19:16+00:00"
+        },
+        {
+            "name": "async-interop/promise",
+            "version": "v0.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/async-interop/promise.git",
+                "reference": "511ae43724719c2419712fa3ebeb020ab94633d0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/async-interop/promise/zipball/511ae43724719c2419712fa3ebeb020ab94633d0",
+                "reference": "511ae43724719c2419712fa3ebeb020ab94633d0",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "jakub-onderka/php-console-highlighter": "^0.3.2",
+                "jakub-onderka/php-parallel-lint": "^0.9.2",
+                "phpunit/phpunit": "^4|^5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "AsyncInterop\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A promise interface for interoperability in async operations.",
+            "keywords": [
+                "async",
+                "awaitable",
+                "future",
+                "interop",
+                "promise"
+            ],
+            "time": "2017-01-06T20:45:59+00:00"
+        },
+        {
+            "name": "danielmewes/php-rql",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/danielmewes/php-rql.git",
+                "reference": "393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/danielmewes/php-rql/zipball/393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd",
+                "reference": "393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "jakub-onderka/php-parallel-lint": "dev-master",
+                "phpunit/phpunit": "~4.8",
+                "squizlabs/php_codesniffer": "~2.5"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "rdb/rdb.php"
+                ],
+                "psr-4": {
+                    "r\\": "rdb/",
+                    "r\\Tests\\": "tests/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Daniel Mewes",
+                    "email": "danielmewes@onlinehome.de",
+                    "homepage": "http://dmewes.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A PHP client driver for the RethinkDB query language (ReQL)",
+            "homepage": "http://danielmewes.github.io/php-rql/",
+            "keywords": [
+                "database",
+                "driver",
+                "reql",
+                "rethinkdb"
+            ],
+            "time": "2016-05-31 01:55:32"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "dev",
+    "stability-flags": {
+        "danielmewes/php-rql": 20,
+        "amphp/amp": 20,
+        "amphp/loop": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": []
+}

@@ -80,13 +80,20 @@ FROM withinboredom/composer:latest
 
 MOUNT ~:/root
 
-COPY src/api/composer.lock /app/composer.lock
-COPY src/api/composer.json /app/composer.json
+COPY src/lib/composer.lock /app/lib/composer.lock
+COPY src/lib/composer.json /app/lib/composer.json
 
-WORKDIR /app
+WORKDIR /app/lib
 RUN composer install
 
-COPY src/api /app
+COPY src/api/composer.lock /app/api/composer.lock
+COPY src/api/composer.json /app/api/composer.json
+
+WORKDIR /app/api
+RUN composer install
+
+COPY src/lib /app/lib
+COPY src/api /app/api
 
 EXPORT /app/ /api
 
@@ -120,7 +127,7 @@ IMPORT /api/ /app
 
 USER nobody
 
-CMD ["/app/vendor/amphp/aerys/bin/aerys","-c","/app/index.php"]
+CMD ["/app/api/vendor/amphp/aerys/bin/aerys","-c","/app/api/index.php"]
 
 USER root
 
