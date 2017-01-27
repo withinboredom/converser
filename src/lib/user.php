@@ -7,14 +7,39 @@ use r;
 require_once 'actor.php';
 
 class User extends Actor {
-	public function __construct( $id, r\Connection $conn ) {
+	/**
+	 * @var Plivo\RestAPI The plivo client
+	 */
+	private $plivo;
+
+	/**
+	 * User constructor.
+	 *
+	 * @param string $id
+	 * @param r\Connection $conn
+	 * @param $plivo
+	 */
+	public function __construct( $id, r\Connection $conn, $plivo ) {
 		parent::__construct( $id, $conn );
+
+		$this->plivo = $plivo;
 	}
 
+	/**
+	 * Cleans a string containing a phone number
+	 *
+	 * @param $phone
+	 *
+	 * @return mixed
+	 */
 	public static function cleanPhone( $phone ) {
 		return preg_replace( '/\D+/', '', $phone );
 	}
 
+	/**
+	 * Generates a one time password
+	 * @return string
+	 */
 	public static function oneTimeCode() {
 		$number = '' . random_int( 1, 9 );
 		for ( $i = 0; $i < 4; $i ++ ) {
@@ -47,12 +72,25 @@ class User extends Actor {
 	 * @param $data array
 	 */
 	protected function readied( $data ) {
+		$begins                    = \DateTimeImmutable::createFromMutable( $data['at'] );
+		$ends                      = $begins->add( new \DateInterval( 'P1D' ) );
 		$this->state['sessions'][] = [
-			'phone' => $data['phone'],
-			'ip'    => $data['ip']
+			'id'       => $data['id'],
+			'phone'    => $data['phone'],
+			'ip'       => $data['ip'],
+			'password' => $data['password'],
+			'begins'   => $begins,
+			'ends'     => $ends,
+			'used'     => false
 		];
 	}
 
+	/**
+	 * Sets off the beginning of a login
+	 *
+	 * @param $phone
+	 * @param $ip
+	 */
 	public function DoLogin( $phone, $ip ) {
 		$phone    = self::cleanPhone( $phone );
 		$password = self::oneTimeCode();
@@ -63,11 +101,36 @@ class User extends Actor {
 			] );
 		}
 		$this->Fire( 'readied', [
+			'id'       => r\uuid()->run( $this->conn ),
 			'password' => $password,
 			'ip'       => $ip,
 			'at'       => new \DateTime()
 		] );
-		// todo: send text
-		echo "Would have sent text here";
+		$this->plivo->send_message( [
+			'src'  => CALL,
+			'dst'  => $phone,
+			'text' => "${password} is your Converser login code."
+		] );
+		$this->Fire( 'password_text', [
+			'text' => "${password} is your Converser login code."
+		] );
+	}
+
+	/**
+	 * Projects the current state
+	 */
+	protected function Project() {
+		r\db( DB_NAME )->table( 'users' )->replace( [
+			'id'      => $this->Id(),
+			'phone'   => $this->state['phone'],
+			'lives'   => $this->state['lives'],
+			'status'  => $this->state['status'],
+			'score'   => $this->state['score'],
+			'created' => $this->state['created']
+		] )->run( $this->conn );
+
+		foreach ( $this->state['sessions'] as $session ) {
+			r\db( DB_NAME )->table( 'sessions' )->replace( $session );
+		}
 	}
 }

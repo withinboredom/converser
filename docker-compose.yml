@@ -7,6 +7,7 @@ services:
       - ./src/lib:/app/lib
       - api_vendor:/app/api/vendor
       - lib_vendor:/app/lib/vendor
+      - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
   api-builder:
     image: withinboredom/composer:latest
     volumes_from:

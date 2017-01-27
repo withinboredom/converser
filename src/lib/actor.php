@@ -10,7 +10,7 @@ use r, Amp;
  *
  * Creates a managed actor
  */
-class Actor {
+abstract class Actor {
 
 	/**
 	 * @var \ArrayObject The records that represent this model
@@ -20,7 +20,7 @@ class Actor {
 	/**
 	 * @var r\Connection The connection to the db
 	 */
-	private $conn;
+	protected $conn;
 
 	private $optimizeAt = 100;
 	private $id;
@@ -40,6 +40,11 @@ class Actor {
 		$this->Load();
 	}
 
+	/**
+	 * Load events and recreate current state
+	 *
+	 * @param callable|null $callback Calls this function after a completed load
+	 */
 	public function Load( callable $callback = null ) {
 		$this->records = r\db( 'records' )
 			->table( 'events' )
@@ -53,6 +58,11 @@ class Actor {
 		}
 	}
 
+	/**
+	 * Projects the current state
+	 */
+	protected abstract function Project();
+
 	public function Store( callable $callback = null ) {
 		Amp\immediately( function () use ( $callback ) {
 			$toStore = array_filter( $this->records, function ( $record ) {
@@ -60,20 +70,30 @@ class Actor {
 			} );
 
 			foreach ( $toStore as $event ) {
+				$event['stored'] = true;
 				r\db( 'records' )
 					->table( 'events' )
 					->insert( $event )
 					->run( $this->conn );
 			}
 
+			$this->Project();
+
 			$this->Load( $callback );
 		} );
 	}
 
+	/**
+	 * Get's the id of the model
+	 * @return string The current id
+	 */
 	public function Id() {
 		return $this->id;
 	}
 
+	/**
+	 * Reduce the events to a stable state
+	 */
 	private function ReduceEvents() {
 		$counter = 0;
 		foreach ( $this->records as $event ) {
@@ -90,7 +110,9 @@ class Actor {
 			switch ( $event['type'] ) {
 				case 'event':
 					$func = $event['name'];
-					$this->$func( $event['data'] );
+					if ( method_exists( $this, $func ) ) {
+						$this->$func( $event['data'] );
+					}
 					$counter = $event['version'];
 					break;
 				case 'memo':
@@ -102,19 +124,25 @@ class Actor {
 		$this->nextVersion = $counter + 1;
 	}
 
+	/**
+	 * Fires an event
+	 *
+	 * @param $name string The name of this event
+	 * @param $data array The body of the event
+	 */
 	public function Fire( $name, $data ) {
-		if ( method_exists( $this, $name ) ) {
-			Amp\immediately( function () use ( $name, $data ) {
+		Amp\immediately( function () use ( $name, $data ) {
+			$this->records[] = [
+				'model_id' => $this->id,
+				'version'  => $this->nextVersion ++,
+				'type'     => 'event',
+				'name'     => $name,
+				'data'     => $data,
+				'stored'   => false
+			];
+			if ( method_exists( $this, $name ) ) {
 				$this->$name( $data );
-				$this->records[] = [
-					'model_id' => $this->id,
-					'version'  => $this->nextVersion ++,
-					'type'     => 'event',
-					'name'     => $name,
-					'data'     => $data,
-					'stored'   => false
-				];
-			} );
-		}
+			}
+		} );
 	}
 }

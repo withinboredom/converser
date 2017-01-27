@@ -701,9 +701,10 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			switch ( $request['command'] ) {
 				case 'login':
 					$phone = $this->cleanPhone( $request['phone'] );
-					$user  = new Model\User( $phone, $conn );
+					$user  = new Model\User( $phone, $conn, $plivo );
 					$user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
 					$user->Store();
+					unset($user);
 					/*print "Logging $clientId in with $phone\n";
 					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',
