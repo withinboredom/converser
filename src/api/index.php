@@ -492,30 +492,31 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		return false;
 	}
 
-	private function getRank($phone) {
+	private function getRank( $phone ) {
 		global $conn;
-		$rank = r\db(DB_NAME)
-			->table('events')
-			->filter([
+		$phone = $this->cleanPhone( $phone );
+		$rank  = r\db( DB_NAME )
+			->table( 'events' )
+			->filter( [
 				'type' => 'increase_score',
-			])
-			->group('player')
-			->map(function($row) {
-				return $row('amount');
-			})
+			] )
+			->group( 'player' )
+			->map( function ( $row ) {
+				return $row( 'amount' );
+			} )
 			->ungroup()
-			->map(function($res) {
-				return r\expr([
-					'player' => $res('group'),
-					'score' => $res('reduction')->sum()
-				]);
-			})
-			->orderBy(r\desc('score'))
-			->offsetsOf(function($row) use ($phone) {
-				return $row('player')->eq($phone);
-			})->run($conn)->toArray();
+			->map( function ( $res ) {
+				return r\expr( [
+					'player' => $res( 'group' ),
+					'score'  => $res( 'reduction' )->sum()
+				] );
+			} )
+			->orderBy( r\desc( 'score' ) )
+			->offsetsOf( function ( $row ) use ( $phone ) {
+				return $row( 'player' )->eq( $phone );
+			} )->run( $conn )->toArray();
 
-		if (empty($rank)) {
+		if ( empty( $rank ) ) {
 			return 'not ranked';
 		}
 
@@ -631,10 +632,10 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	public function onOpen( int $clientId, $handshakeData ) {
 		$this->connection[ $clientId ] = $handshakeData;
 	}
-	
+
 	private function send( $clientId, $data ) {
-	    $this->endpoint->send( $data, $clientId );
-    }
+		$this->endpoint->send( $data, $clientId );
+	}
 
 	public function onData( int $clientId, Websocket\Message $msg ) {
 		global $plivo, $conn;
@@ -674,7 +675,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					$this->createSession( $phone, $clientId, $number );
 					Amp\immediately( function () use ( $plivo, $phone, $number ) {
 						$plivo->send_message( [
-							'src'  => '18037143889',
+							'src'  => CALL,
 							'dst'  => $phone,
 							'text' => "Your converser login code is ${number}"
 						] );
