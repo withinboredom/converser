@@ -621,35 +621,6 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		] ) );
 	}
 
-	public function autoRefresh( $clientId, $userId ) {
-		global $conn;
-		echo "Waiting for changes\n";
-		$changes = r\db( DB_NAME )->table( 'users' )->get( $userId )->changes()->run( $conn );
-		echo "Pusher installed\n";
-		\Amp\repeat( function ( $watcherId ) use ( $clientId, $userId, $changes ) {
-			$sent = false;
-
-			echo "Looking for changes for $userId\n";
-
-			$client = array_filter( $this->endpoint->getClients(), function ( $item ) use ( $clientId ) {
-				return $clientId == $item;
-			} );
-
-			if ( count( $client ) == 0 ) {
-				echo "No longer sending changes to $userId\n";
-				Amp\cancel( $watcherId );
-
-				return;
-			}
-
-			var_dump( $changes->toArray() );
-			/*foreach($changes as $change) {
-				print_r($change);
-				break;
-			}*/
-		}, 1000 );
-	}
-
 	/**
 	 * Called when a websocket first connects
 	 *
@@ -676,8 +647,23 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	public function onData( int $clientId, Websocket\Message $msg ) {
 		global $plivo, $conn;
 		$request = json_decode( yield $msg, true );
-		if ( $request['token'] ) {
-			if ( $this->isVerified( $request['token']['userId'], $clientId, $request['token'] ) ) {
+		if ( $request['token'] && $request['userId'] ) {
+			$user = new Model\User( $request['userId'], $conn, $plivo );
+			if ( $user->GetActiveToken() === $request['token'] ) {
+				switch($request['command']) {
+					case 'refresh':
+						$this->send($clientId, json_encode($user->GetPlayerInfo()));
+						break;
+					case 'pay':
+						break;
+				}
+			}
+			else {
+				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
+			}
+
+			unset($user);
+			/*if ( $this->isVerified( $request['token']['userId'], $clientId, $request['token'] ) ) {
 				switch ( $request['command'] ) {
 					case 'logout':
 						$this->invalidate( $request['token'] );
@@ -696,11 +682,11 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			} else {
 				echo "Not verified\n";
 				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
-			}
+			}*/
 		} else {
 			switch ( $request['command'] ) {
 				case 'login':
-					$user  = new Model\User( $request['phone'], $conn, $plivo );
+					$user = new Model\User( $request['phone'], $conn, $plivo );
 					$user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
 					$user->Store();
 
@@ -713,19 +699,19 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					break;
 				case 'verify':
 					$user = new Model\User( $request['phone'], $conn, $plivo );
-					$user->DoVerify($request['phone'], $request['password']);
-					$user->Store(function() use ($user, $clientId) {
+					$user->DoVerify( $request['phone'], $request['password'] );
+					$user->Store( function () use ( $user, $clientId ) {
 						$token = $user->GetActiveToken();
-						if ($token) {
-							$this->send($clientId, json_encode([
-								'type' => 'token',
+						if ( $token ) {
+							$this->send( $clientId, json_encode( [
+								'type'   => 'token',
 								'userId' => $user->Id(),
-								'token' => $token
-							]));
-							$this->send($clientId, json_encode($user->GetPlayerInfo()));
+								'token'  => $token
+							] ) );
+							$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
 						}
-					});
-					unset($user);
+					} );
+					unset( $user );
 					break;
 				case 'connect':
 					acquire( $request['campaign'] );
