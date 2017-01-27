@@ -7,7 +7,7 @@ services:
       - api_vendor:/app/vendor
     command: bash -c "cd /app && exec composer install"
   api:
-    image: quay.io/withinboredom/api:latest
+    image: withinboredom/api:latest
     environment:
       - SMS
       - CALL
@@ -30,7 +30,7 @@ services:
       - engine_vendor:/var/www/html/vendor
     command: bash -c "cd /var/www/html && exec composer install"
   engine:
-    image: quay.io/withinboredom/engine:latest
+    image: withinboredom/engine:latest
     environment:
       - SMS
       - CALL
@@ -53,9 +53,9 @@ services:
     volumes:
       - ./src/site:/app
       - node_modules:/app/js/node_modules
-    command: bash -c "cd /app/js && yarn && node_modules/.bin/webpack"
+    command: bash -c "cd /app/js && yarn && node_modules/.bin/webpack -w"
   web:
-    image: quay.io/withinboredom/site:latest
+    image: withinboredom/site:latest
     extends: web-builder
     depends_on:
       - web-builder
