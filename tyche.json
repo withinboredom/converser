@@ -76,6 +76,15 @@
                   "working": "src/engine"
                 }
               }
+            },
+            {
+              "name": "install-lib",
+              "exec": {
+                "native": {
+                  "command": ["composer","install"],
+                  "working": "src/lib"
+                }
+              }
             }
           ]
         },
@@ -93,7 +102,7 @@
           ],
           "exec": {
             "native": {
-              "command": ["docker-compose","up","-d"]
+              "command": ["docker-compose","up"]
             }
           }
         },

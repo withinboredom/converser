@@ -1,0 +1,18 @@
+{
+  "name": "withinboredom/lib",
+  "description": "Models",
+  "type": "project",
+  "license": "GPLv3",
+  "authors": [
+    {
+      "name": "Rob Landers",
+      "email": "landers.robert@gmail.com"
+    }
+  ],
+  "require": {
+    "danielmewes/php-rql": "dev-master",
+    "amphp/amp": "dev-master",
+    "amphp/loop": "dev-master"
+  },
+  "minimum-stability": "dev"
+}

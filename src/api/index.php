@@ -1,5 +1,7 @@
 <?php
 
+require_once '../lib/user.php';
+
 use Aerys\{
 	Host, Request, Response, Router, Websocket, function root, function router, function websocket
 };
@@ -665,7 +667,8 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			switch ( $request['command'] ) {
 				case 'login':
 					$phone = $this->cleanPhone( $request['phone'] );
-					print "Logging $clientId in with $phone\n";
+					$user = new Model\User($phone, $conn);
+					/*print "Logging $clientId in with $phone\n";
 					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',
 						'phone' => $phone
@@ -677,10 +680,10 @@ $websocket = websocket( new class implements Aerys\Websocket {
 						$plivo->send_message( [
 							'src'  => CALL,
 							'dst'  => $phone,
-							'text' => "Your converser login code is ${number}"
+							'text' => "${number} is your Converser login code."
 						] );
 						echo "Notified $phone of password\n";
-					} );
+					} );*/
 					break;
 				case 'verify':
 					echo "Verifying session of $clientId with password ${request['password']}\n";
