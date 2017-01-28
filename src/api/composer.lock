@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "831511eaad403ab33cfb102eb10c0cd1",
+    "content-hash": "cdf2dc540030e0c12c8b56418a5eb5e8",
     "packages": [
         {
             "name": "amphp/aerys",
@@ -550,13 +550,13 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/danielmewes/php-rql.git",
-                "reference": "393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd"
+                "url": "https://github.com/withinboredom/php-rql.git",
+                "reference": "a40bd45b32d6fdbd23ece0ad9275d83ce8cdcdea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/danielmewes/php-rql/zipball/393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd",
-                "reference": "393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd",
+                "url": "https://api.github.com/repos/withinboredom/php-rql/zipball/a40bd45b32d6fdbd23ece0ad9275d83ce8cdcdea",
+                "reference": "a40bd45b32d6fdbd23ece0ad9275d83ce8cdcdea",
                 "shasum": ""
             },
             "require": {
@@ -577,7 +577,11 @@
                     "r\\Tests\\": "tests/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "scripts": {
+                "test": [
+                    "tests/phpunit.sh"
+                ]
+            },
             "license": [
                 "Apache-2.0"
             ],
@@ -597,7 +601,10 @@
                 "reql",
                 "rethinkdb"
             ],
-            "time": "2016-05-31 01:55:32"
+            "support": {
+                "source": "https://github.com/withinboredom/php-rql/tree/master"
+            },
+            "time": "2017-01-28 17:46:51"
         },
         {
             "name": "daverandom/libdns",

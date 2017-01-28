@@ -9,6 +9,12 @@
             "email": "landers.robert@gmail.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/withinboredom/php-rql.git"
+        }
+    ],
     "require": {
         "amphp/aerys": "dev-master",
         "danielmewes/php-rql": "dev-master",

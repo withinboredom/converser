@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "a5147661a6e047e47c25c453d7a94578",
+    "content-hash": "9044a9ddeca71f8a4091a8600937746d",
     "packages": [
         {
             "name": "amphp/amp",
@@ -213,13 +213,13 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/danielmewes/php-rql.git",
-                "reference": "393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd"
+                "url": "https://github.com/withinboredom/php-rql.git",
+                "reference": "a40bd45b32d6fdbd23ece0ad9275d83ce8cdcdea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/danielmewes/php-rql/zipball/393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd",
-                "reference": "393a49ab5c3ce2cb7f3fc5c985e612b77ce472cd",
+                "url": "https://api.github.com/repos/withinboredom/php-rql/zipball/a40bd45b32d6fdbd23ece0ad9275d83ce8cdcdea",
+                "reference": "a40bd45b32d6fdbd23ece0ad9275d83ce8cdcdea",
                 "shasum": ""
             },
             "require": {
@@ -240,7 +240,11 @@
                     "r\\Tests\\": "tests/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "scripts": {
+                "test": [
+                    "tests/phpunit.sh"
+                ]
+            },
             "license": [
                 "Apache-2.0"
             ],
@@ -260,7 +264,10 @@
                 "reql",
                 "rethinkdb"
             ],
-            "time": "2016-05-31 01:55:32"
+            "support": {
+                "source": "https://github.com/withinboredom/php-rql/tree/master"
+            },
+            "time": "2017-01-28 17:46:51"
         }
     ],
     "packages-dev": [
@@ -378,7 +385,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2017-01-16T17:41:59+00:00"
+            "time": "2017-01-16 17:41:59"
         },
         {
             "name": "guzzlehttp/promises",
@@ -429,7 +436,7 @@
             "keywords": [
                 "promise"
             ],
-            "time": "2016-12-20T10:07:11+00:00"
+            "time": "2016-12-20 10:07:11"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -494,7 +501,7 @@
                 "uri",
                 "url"
             ],
-            "time": "2016-11-02T14:11:11+00:00"
+            "time": "2016-11-02 14:11:11"
         },
         {
             "name": "myclabs/deep-copy",
@@ -1229,7 +1236,7 @@
                 "request",
                 "response"
             ],
-            "time": "2016-08-06T14:39:51+00:00"
+            "time": "2016-08-06 14:39:51"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",
