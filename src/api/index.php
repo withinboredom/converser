@@ -64,7 +64,8 @@ function prep() {
 		$currentVersion = 0;
 	}
 
-	$expectedVersion = 11;
+	// todo: increment this if you add a migration
+	$expectedVersion = 12;
 	// put migrations here
 	switch ( $currentVersion + 1 ) {
 		case 1:
@@ -98,6 +99,8 @@ function prep() {
 			r\db( 'records' )->tableCreate( 'events' )->run( $conn );
 		case 11:
 			r\db( 'records' )->table( 'events' )->indexCreate( 'model_id' )->run( $conn );
+		case 12:
+			r\db( 'records' )->tableCreate( 'snapshots' )->run( $conn );
 	}
 
 	if ( $currentVersion != $expectedVersion ) {

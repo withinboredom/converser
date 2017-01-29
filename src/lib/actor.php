@@ -51,9 +51,20 @@ abstract class Actor {
 	 * @param callable|null $callback Calls this function after a completed load
 	 */
 	public function Load( callable $callback = null ) {
+		$latestSnapshot = r\db( 'records' )
+			->table( 'snapshots' )
+			->get( $this->id );
+
+		if ( $latestSnapshot ) {
+			$this->state = $latestSnapshot['state'];
+		} else {
+			$latestSnapshot = [ 'version' => 0 ];
+		}
+
 		$this->records = r\db( 'records' )
 			->table( 'events' )
 			->getAll( $this->id, [ 'index' => 'model_id' ] )
+			->filter( r\row( 'version' )->gt( $latestSnapshot->version ) )
 			->orderBy( 'version' )
 			->run( $this->conn );
 
@@ -63,11 +74,11 @@ abstract class Actor {
 		}
 	}
 
-	public function ListenForId( $id, $callback ) {
+	protected function ListenForId( $id, $callback ) {
 		$listener = r\db( 'records' )
 			->table( 'events' )
 			->filter( [ 'model_id' => $id ] )
-			->changes()
+			->changes( [ 'includeInitial' => false, 'squash' => true ] )
 			->run( $this->conn );
 
 		$check = $listener->changes();
@@ -108,6 +119,19 @@ abstract class Actor {
 			}
 
 			$this->Project();
+
+			if ( count( $this->records ) >= $this->optimizeAt ) {
+				$snapshot = [
+					'id'      => $this->id,
+					'state'   => $this->Snapshot(),
+					'version' => $this->nextVersion - 1
+				];
+				r\db( 'records' )
+					->table( 'snapshots' )
+					->get( $this->id )
+					->replace( $snapshot )
+					->run( $this->conn );
+			}
 
 			$this->Load( $callback );
 		} );
