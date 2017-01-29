@@ -26,6 +26,8 @@ abstract class Actor {
 	private $id;
 	private $nextVersion = 0;
 
+	private $repeater = [];
+
 	/**
 	 * @var \ArrayObject
 	 */
@@ -39,7 +41,7 @@ abstract class Actor {
 	 */
 	public function __construct( $id, $conn ) {
 		$this->conn = $conn;
-		$this->id   = $id;
+		$this->id   = get_class( $this ) . '_' . $id;
 		$this->Load();
 	}
 
@@ -60,6 +62,31 @@ abstract class Actor {
 			$callback();
 		}
 	}
+
+	public function ListenForId( $id, $callback ) {
+		$listener = r\db( 'records' )
+			->table( 'events' )
+			->filter( [ 'model_id' => $id ] )
+			->changes()
+			->run( $this->conn );
+
+		$check = $listener->changes();
+
+		$isChanges      = $check->current();
+		$firstIteration = true;
+
+		$this->repeater[] = Amp\repeat( function () use ( $check, $listener, $callback, $isChanges, $firstIteration ) {
+			$isChanges = $check->current();
+			var_dump( $isChanges );
+			if ( $isChanges ) {
+				if ( $callback ) {
+					$callback( $isChanges->getArrayCopy() );
+				}
+			}
+			$check->next();
+		}, 1000 );
+	}
+
 
 	/**
 	 * Projects the current state

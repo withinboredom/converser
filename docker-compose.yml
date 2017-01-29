@@ -72,7 +72,8 @@ services:
   rethunk:
     image: rethinkdb:latest
     ports:
-      - '9000:8080'
+      - '8080:8080'
+      - '28015:28015'
 volumes:
   api_vendor:
   engine_vendor:

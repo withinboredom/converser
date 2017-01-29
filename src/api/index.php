@@ -7,7 +7,7 @@ use Aerys\{
 };
 
 define( 'DB_NAME', getenv( 'DB_NAME' ) ?: 'converser' );
-define( 'DB_HOST', getenv( 'DB_HOST' ) ?: 'rethunk' );
+define( 'DB_HOST', getenv( 'DB_HOST' ) ?: 'localhost' );
 define( 'SMS', getenv( 'SMS' ) ?: '18037143889' );
 define( 'CALL', getenv( 'CALL' ) ?: '18882660156' );
 define( 'HOST', getenv( 'CALL_HOST' ) ?: 'http://dev.converser.space:2200/' );
@@ -452,22 +452,21 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	public function onData( int $clientId, Websocket\Message $msg ) {
 		global $plivo, $conn;
 		$request = json_decode( yield $msg, true );
-		if ( $request['token'] && $request['userId'] ) {
+		if ( isset( $request['token'] ) && isset( $request['userId'] ) ) {
 			$user = new Model\User( $request['userId'], $conn, $plivo );
 			if ( $user->GetActiveToken() === $request['token'] ) {
-				switch($request['command']) {
+				switch ( $request['command'] ) {
 					case 'refresh':
-						$this->send($clientId, json_encode($user->GetPlayerInfo()));
+						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
 						break;
 					case 'pay':
 						break;
 				}
-			}
-			else {
+			} else {
 				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
 			}
 
-			unset($user);
+			unset( $user );
 			/*if ( $this->isVerified( $request['token']['userId'], $clientId, $request['token'] ) ) {
 				switch ( $request['command'] ) {
 					case 'logout':
