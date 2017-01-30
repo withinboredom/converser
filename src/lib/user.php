@@ -5,6 +5,7 @@ namespace Model;
 use r;
 
 require_once 'actor.php';
+require_once 'payment.php';
 
 class User extends Actor {
 	/**
@@ -63,7 +64,8 @@ class User extends Actor {
 			'opponent' => 'null',
 			'score'    => 0,
 			'created'  => $data['at'],
-			'sessions' => []
+			'sessions' => [],
+			'payments' => []
 		];
 	}
 
@@ -164,8 +166,26 @@ class User extends Actor {
 		}
 	}
 
-	public function DoPurchase( $payment, $packageId ) {
+	public function DoPurchase( $paymentToken, $packageId ) {
+		$payment = new Payment( r\uuid()->run( $this->conn ), $this->conn );
+		$this->ListenForId( $payment->Id( true ), function ( $changes ) {
+			foreach($changes as $change) {
+				$data = $change->getArrayCopy();
+				var_dump($data);
+			}
+		} );
+		$payment->DoPay( $this->Id( true ), $paymentToken, $packageId );
+		$payment->Store();
 
+		$this->Fire( 'attempt_payment', [
+			'paymentToken' => $paymentToken,
+			'packageId'    => $packageId,
+			'paymentId'    => $payment->Id()
+		] );
+	}
+
+	public function attempt_payment( $data ) {
+		$this->state['payments'][] = $data['paymentId'];
 	}
 
 	public function GetActiveToken() {
@@ -186,7 +206,8 @@ class User extends Actor {
 			'type'   => 'user',
 			'lives'  => $this->state['lives'],
 			'score'  => $this->state['score'],
-			'status' => $this->state['status']
+			'status' => $this->state['status'],
+			'userId' => $this->Id()
 		];
 	}
 
@@ -198,12 +219,13 @@ class User extends Actor {
 			->table( 'users' )
 			->get( $this->Id() )
 			->replace( [
-				'id'      => $this->Id(),
-				'phone'   => $this->state['phone'],
-				'lives'   => $this->state['lives'],
-				'status'  => $this->state['status'],
-				'score'   => $this->state['score'],
-				'created' => $this->state['created']
+				'id'       => $this->Id(),
+				'phone'    => $this->state['phone'],
+				'lives'    => $this->state['lives'],
+				'status'   => $this->state['status'],
+				'score'    => $this->state['score'],
+				'created'  => $this->state['created'],
+				'payments' => $this->state['payments']
 			] )->run( $this->conn );
 
 		foreach ( $this->state['sessions'] as $session ) {

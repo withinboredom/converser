@@ -21,7 +21,7 @@ MOUNT ~:/root
 
 COPY ./src/site /app
 
-RUN cd /app/js && yarn && STRIPE_P_KEY={{ .Env.STRIPE_P_KEY}} API_HOST={{ .Env.API_HOST }} NODE_ENV=production node_modules/.bin/webpack -p && rm -rf /app/js
+RUN cd /app/js && yarn && CALL={{ .Env.CALL }} STRIPE_P_KEY={{ .Env.STRIPE_P_KEY}} API_HOST={{ .Env.API_HOST }} NODE_ENV=production node_modules/.bin/webpack -p && rm -rf /app/js
 EXPORT /app
 
 ##############################

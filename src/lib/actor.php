@@ -53,7 +53,8 @@ abstract class Actor {
 	public function Load( callable $callback = null ) {
 		$latestSnapshot = r\db( 'records' )
 			->table( 'snapshots' )
-			->get( $this->id );
+			->get( $this->id )
+			->run( $this->conn );
 
 		if ( $latestSnapshot ) {
 			$this->state = $latestSnapshot['state'];
@@ -64,7 +65,7 @@ abstract class Actor {
 		$this->records = r\db( 'records' )
 			->table( 'events' )
 			->getAll( $this->id, [ 'index' => 'model_id' ] )
-			->filter( r\row( 'version' )->gt( $latestSnapshot->version ) )
+			->filter( r\row( 'version' )->gt( $latestSnapshot[ 'version' ] ) )
 			->orderBy( 'version' )
 			->run( $this->conn );
 
@@ -78,24 +79,26 @@ abstract class Actor {
 		$listener = r\db( 'records' )
 			->table( 'events' )
 			->filter( [ 'model_id' => $id ] )
-			->changes( [ 'includeInitial' => false, 'squash' => true ] )
+			->changes( [ 'include_initial' => false, 'squash' => true ] )
 			->run( $this->conn );
 
-		$check = $listener->changes();
+		Amp\immediately(function() use ($listener, $callback) {
+			$check = $listener->changes();
 
-		$isChanges      = $check->current();
-		$firstIteration = true;
+			$isChanges      = $check->current();
+			$firstIteration = true;
 
-		$this->repeater[] = Amp\repeat( function () use ( $check, $listener, $callback, $isChanges, $firstIteration ) {
-			$isChanges = $check->current();
-			var_dump( $isChanges );
-			if ( $isChanges ) {
-				if ( $callback ) {
-					$callback( $isChanges->getArrayCopy() );
+			$this->repeater[] = Amp\repeat( function () use ( $check, $listener, $callback, $isChanges, $firstIteration ) {
+				$isChanges = $check->current();
+				var_dump( $isChanges );
+				if ( $isChanges ) {
+					if ( $callback ) {
+						$callback( $isChanges );
+					}
 				}
-			}
-			$check->next();
-		}, 1000 );
+				$check->next();
+			}, 1000 );
+		});
 	}
 
 
@@ -104,7 +107,12 @@ abstract class Actor {
 	 */
 	protected abstract function Project();
 
+	public  function __destruct() {
+		$this->Store();
+	}
+
 	public function Store( callable $callback = null ) {
+		$this->Close();
 		Amp\immediately( function () use ( $callback ) {
 			$toStore = array_filter( $this->records, function ( $record ) {
 				return ! $record['stored'];
@@ -149,10 +157,26 @@ abstract class Actor {
 
 	/**
 	 * Get's the id of the model
+	 *
+	 * @param bool $raw True to return the raw id
+	 *
 	 * @return string The current id
 	 */
-	public function Id() {
-		return $this->id;
+	public function Id( $raw = false ) {
+		if ( $raw ) {
+			return $this->id;
+		}
+
+		return explode( '_', $this->id )[1];
+	}
+
+	/**
+	 * Close this model for writing
+	 */
+	public function Close() {
+		foreach ( $this->repeater as $watcherId ) {
+			Amp\cancel( $watcherId );
+		}
 	}
 
 	/**

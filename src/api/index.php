@@ -65,7 +65,7 @@ function prep() {
 	}
 
 	// todo: increment this if you add a migration
-	$expectedVersion = 12;
+	$expectedVersion = 13;
 	// put migrations here
 	switch ( $currentVersion + 1 ) {
 		case 1:
@@ -101,6 +101,8 @@ function prep() {
 			r\db( 'records' )->table( 'events' )->indexCreate( 'model_id' )->run( $conn );
 		case 12:
 			r\db( 'records' )->tableCreate( 'snapshots' )->run( $conn );
+		case 13:
+			$db->tableCreate( 'payments' )->run( $conn );
 	}
 
 	if ( $currentVersion != $expectedVersion ) {
@@ -463,6 +465,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
 						break;
 					case 'pay':
+						$user->DoPurchase($request['payToken'], $request['packageId']);
 						break;
 				}
 			} else {
