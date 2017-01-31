@@ -551,15 +551,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/withinboredom/php-rql.git",
-                "reference": "c001f24db2d3bbec3a681903a7254cc4c0cc5f8e"
+                "reference": "03916c69b797468ee312c16ef3772a800d0f2343"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/withinboredom/php-rql/zipball/c001f24db2d3bbec3a681903a7254cc4c0cc5f8e",
-                "reference": "c001f24db2d3bbec3a681903a7254cc4c0cc5f8e",
+                "url": "https://api.github.com/repos/withinboredom/php-rql/zipball/03916c69b797468ee312c16ef3772a800d0f2343",
+                "reference": "03916c69b797468ee312c16ef3772a800d0f2343",
                 "shasum": ""
             },
             "require": {
+                "amphp/amp": "^1",
                 "php": ">=5.3.0"
             },
             "require-dev": {
@@ -604,7 +605,7 @@
             "support": {
                 "source": "https://github.com/withinboredom/php-rql/tree/master"
             },
-            "time": "2017-01-31 03:52:16"
+            "time": "2017-01-31 07:14:21"
         },
         {
             "name": "daverandom/libdns",

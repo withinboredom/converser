@@ -22,33 +22,41 @@ $auth_token = getenv( 'PLIVO_TOKEN' ) ?: "MzA2M2UyMWViNTI5NjFmZjNjMmJiYmZlNmM5Ym
 function prep() {
 	$conn     = r\connect( DB_HOST );
 	$dbs      = r\dbList()->run( $conn );
-	$filtered = array_filter( $dbs, function ( $db ) {
-		return $db == DB_NAME;
-	} );
-	if ( count( $filtered ) == 0 ) {
-		try {
-			r\dbCreate( DB_NAME )->run( $conn );
-			$db = r\db( DB_NAME );
+	$filtered = $dbs->when(function($error, $dbs) {
+		return array_filter( $dbs, function ( $db ) {
+			return $db == DB_NAME;
+		} );
+	})->when(function($error, $filtered) use ($conn) {
+		if ( count( $filtered ) == 0 ) {
+			try {
+				return r\dbCreate( DB_NAME )->run( $conn )
+					->when(function() use ($conn) {
+						$db = r\db( DB_NAME );
 
-			$db->tableCreate( 'version' )->run( $conn );
-			$db->table( 'version' )->insert( [
-				'id'    => 'db',
-				'value' => 0
-			] )->run( $conn );
+						return $db->tableCreate( 'version' )->run( $conn )
+							->when(function() use ($conn, $db) {
+								return $db->table( 'version' )->insert( [
+									'id'    => 'db',
+									'value' => 0
+								] )->run( $conn );
+							})
+							->when(function() use ($db, $conn) {
+								return $db->table( 'version' )->wait()->run( $conn );
+							});
+					});
 
-			$db->table( 'version' )->wait()->run( $conn );
-
-		} catch ( Exception $exception ) {
-			// nothing to do here
+			} catch ( Exception $exception ) {
+				// nothing to do here
+			}
 		}
-	}
-
-	$currentVersion = r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn )['value'];
+	});
+/*
+	$currentVersion = yield r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn )['value'];
 
 	$db   = r\db( DB_NAME );
 	$rnad = rand();
-	$db->table( 'version' )->insert( [ 'id' => 'rlock', 'value' => $rnad ] )->run( $conn );
-	$hasLock = $db->table( 'version' )->get( 'rlock' )->run( $conn )['value'] == $rnad;
+	yield $db->table( 'version' )->insert( [ 'id' => 'rlock', 'value' => $rnad ] )->run( $conn );
+	yield $hasLock = $db->table( 'version' )->get( 'rlock' )->run( $conn )['value'] == $rnad;
 
 	var_dump( $hasLock );
 
@@ -57,7 +65,7 @@ function prep() {
 	}
 
 	if ( $currentVersion == null ) {
-		$db->table( 'version' )->insert( [
+		yield $db->table( 'version' )->insert( [
 			'id'    => 'db',
 			'value' => 0
 		] )->run( $conn );
@@ -69,11 +77,11 @@ function prep() {
 	// put migrations here
 	switch ( $currentVersion + 1 ) {
 		case 1:
-			$db->tableCreate( 'users' )->run( $conn );
+			yield $db->tableCreate( 'users' )->run( $conn );
 		case 2:
-			$db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
+			yield $db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
 		case 3:
-			$db->table( 'users' )->insert( [
+			yield $db->table( 'users' )->insert( [
 				'phone'   => '19102974810',
 				'admin'   => true,
 				'lives'   => 1000,
@@ -82,38 +90,38 @@ function prep() {
 				'created' => r\now()
 			] )->run( $conn );
 		case 4:
-			$db->tableCreate( 'calls' )->run( $conn );
+			yield $db->tableCreate( 'calls' )->run( $conn );
 		case 5:
-			$db->tableCreate( 'sessions' )->run( $conn );
+			yield $db->tableCreate( 'sessions' )->run( $conn );
 		case 6:
-			$db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
+			yield $db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
 		case 7:
-			$db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
+			yield $db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
 		case 8:
-			$db->table( 'sessions' )->indexCreate( 'phone' )->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'token' )->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'user_id' )->run( $conn );
+			yield $db->table( 'sessions' )->indexCreate( 'phone' )->run( $conn );
+			yield $db->table( 'sessions' )->indexCreate( 'token' )->run( $conn );
+			yield $db->table( 'sessions' )->indexCreate( 'user_id' )->run( $conn );
 		case 9:
-			r\dbCreate( 'records' )->run( $conn );
+			yield r\dbCreate( 'records' )->run( $conn );
 		case 10:
-			r\db( 'records' )->tableCreate( 'events' )->run( $conn );
+			yield r\db( 'records' )->tableCreate( 'events' )->run( $conn );
 		case 11:
-			r\db( 'records' )->table( 'events' )->indexCreate( 'model_id' )->run( $conn );
+			yield r\db( 'records' )->table( 'events' )->indexCreate( 'model_id' )->run( $conn );
 		case 12:
-			r\db( 'records' )->tableCreate( 'snapshots' )->run( $conn );
+			yield r\db( 'records' )->tableCreate( 'snapshots' )->run( $conn );
 		case 13:
-			$db->tableCreate( 'payments' )->run( $conn );
+			yield $db->tableCreate( 'payments' )->run( $conn );
 	}
 
 	if ( $currentVersion != $expectedVersion ) {
-		r\db( DB_NAME )->table( 'version' )->update( [
+		yield r\db( DB_NAME )->table( 'version' )->update( [
 			'id'    => 'db',
 			'value' => $expectedVersion
 		] )->run( $conn );
 	}
 
-	$db->table( 'version' )->get( 'rlock' )->delete()->run( $conn );
-
+	yield $db->table( 'version' )->get( 'rlock' )->delete()->run( $conn );
+*/
 	return $conn;
 }
 
@@ -162,8 +170,6 @@ function revenue( $userid, $amount ) {
 global $plivo;
 global $conn;
 
-$conn = prep();
-
 function event( $event ) {
 	$event['time'] = r\now();
 	$conn          = r\connect( DB_HOST );
@@ -203,6 +209,11 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 */
 	private $endpoint;
 	private $connection = [];
+
+	public function __construct() {
+		global $conn;
+		$conn = prep();
+	}
 
 	/**
 	 * Cleans a phone number
