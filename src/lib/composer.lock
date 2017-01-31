@@ -1345,7 +1345,7 @@
                 "compare",
                 "equality"
             ],
-            "time": "2017-01-29T09:51:01+00:00"
+            "time": "2017-01-29 09:51:01"
         },
         {
             "name": "sebastian/diff",

@@ -22,14 +22,28 @@ abstract class Actor {
 	 */
 	protected $conn;
 
+	/**
+	 * @var int When to automatically take a snapshot
+	 */
 	private $optimizeAt = 100;
+
+	/**
+	 * @var string The actor id
+	 */
 	private $id;
+
+	/**
+	 * @var int The next version to use when storing an event
+	 */
 	private $nextVersion = 0;
 
+	/**
+	 * @var array List of active 'Amp\Repeaters in use
+	 */
 	private $repeater = [];
 
 	/**
-	 * @var \ArrayObject
+	 * @var \ArrayObject The current state, which is serialized when taking a snapshot
 	 */
 	protected $state = [];
 
@@ -65,7 +79,7 @@ abstract class Actor {
 		$this->records = r\db( 'records' )
 			->table( 'events' )
 			->getAll( $this->id, [ 'index' => 'model_id' ] )
-			->filter( r\row( 'version' )->gt( $latestSnapshot[ 'version' ] ) )
+			->filter( r\row( 'version' )->gt( $latestSnapshot['version'] ) )
 			->orderBy( 'version' )
 			->run( $this->conn );
 
@@ -82,7 +96,7 @@ abstract class Actor {
 			->changes( [ 'include_initial' => false, 'squash' => true ] )
 			->run( $this->conn );
 
-		Amp\immediately(function() use ($listener, $callback) {
+		Amp\immediately( function () use ( $listener, $callback ) {
 			$check = $listener->changes();
 
 			$isChanges      = $check->current();
@@ -98,7 +112,7 @@ abstract class Actor {
 				}
 				$check->next();
 			}, 1000 );
-		});
+		} );
 	}
 
 
@@ -107,7 +121,7 @@ abstract class Actor {
 	 */
 	protected abstract function Project();
 
-	public  function __destruct() {
+	public function __destruct() {
 		$this->Store();
 	}
 
