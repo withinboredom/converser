@@ -66,14 +66,14 @@ let isRefreshing = false;
 const autoRefresh = () => {
     if (player && !isRefreshing) {
         isRefreshing = true;
-        setInterval(() => {
+        /*setInterval(() => {
             const t = getToken();
             send({
                 command: 'refresh',
                 token: t.token,
                 userId: t.userId
             });
-        }, 5000);
+        }, 5000);*/
     }
 };
 

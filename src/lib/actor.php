@@ -25,7 +25,7 @@ abstract class Actor {
 	/**
 	 * @var int When to automatically take a snapshot
 	 */
-	private $optimizeAt = 100;
+	private $optimizeAt = 10;
 
 	/**
 	 * @var string The actor id
@@ -56,16 +56,18 @@ abstract class Actor {
 	public function __construct( $id, $conn ) {
 		$this->conn = $conn;
 		$this->id   = get_class( $this ) . '_' . $id;
-		$this->Load();
+		//Amp\coroutine([ $this, 'Load'];
 	}
 
 	/**
 	 * Load events and recreate current state
 	 *
 	 * @param callable|null $callback Calls this function after a completed load
+	 *
+	 * @return \Generator
 	 */
 	public function Load( callable $callback = null ) {
-		$latestSnapshot = r\db( 'records' )
+		$latestSnapshot = yield r\db( 'records' )
 			->table( 'snapshots' )
 			->get( $this->id )
 			->run( $this->conn );
@@ -76,27 +78,37 @@ abstract class Actor {
 			$latestSnapshot = [ 'version' => 0 ];
 		}
 
-		$this->records = r\db( 'records' )
+		$this->records = yield r\db( 'records' )
 			->table( 'events' )
 			->getAll( $this->id, [ 'index' => 'model_id' ] )
 			->filter( r\row( 'version' )->gt( $latestSnapshot['version'] ) )
 			->orderBy( 'version' )
 			->run( $this->conn );
 
-		$this->ReduceEvents();
+		yield from $this->ReduceEvents();
 		if ( $callback ) {
 			$callback();
 		}
 	}
 
+	/**
+	 * @param $id
+	 * @param $callback
+	 *
+	 * @return \Generator
+	 */
 	protected function ListenForId( $id, $callback ) {
-		$listener = r\db( 'records' )
+		$listener = yield r\db( 'records' )
 			->table( 'events' )
 			->filter( [ 'model_id' => $id ] )
 			->changes( [ 'include_initial' => false, 'squash' => true ] )
 			->run( $this->conn );
 
-		Amp\immediately( function () use ( $listener, $callback ) {
+		foreach ( $listener as $change ) {
+			var_dump( $change );
+		}
+
+		/*Amp\immediately( function () use ( $listener, $callback ) {
 			$check = $listener->changes();
 
 			$isChanges      = $check->current();
@@ -112,7 +124,7 @@ abstract class Actor {
 				}
 				$check->next();
 			}, 1000 );
-		} );
+		} );*/
 	}
 
 
@@ -122,12 +134,21 @@ abstract class Actor {
 	protected abstract function Project();
 
 	public function __destruct() {
-		$this->Store();
+		foreach ( $this->Store() as $n ) {
+			;
+		}
 	}
 
+	/**
+	 * @param callable|null $callback
+	 *
+	 * @return \Generator
+	 */
 	public function Store( callable $callback = null ) {
 		$this->Close();
-		Amp\immediately( function () use ( $callback ) {
+		$deferred = new Amp\deferred();
+
+		Amp\immediately( function () use ( $callback, $deferred ) {
 			$toStore = array_filter( $this->records, function ( $record ) {
 				return ! $record['stored'];
 			} );
@@ -155,8 +176,12 @@ abstract class Actor {
 					->run( $this->conn );
 			}
 
-			$this->Load( $callback );
+			yield from $this->Load( $callback );
+
+			$deferred->succeed();
 		} );
+
+		return yield $deferred->promise();
 	}
 
 	/**
@@ -197,6 +222,7 @@ abstract class Actor {
 	 * Reduce the events to a stable state
 	 */
 	private function ReduceEvents() {
+
 		$counter = 0;
 		//if (!is_array($this->records)) return;
 		foreach ( $this->records as $event ) {
@@ -214,7 +240,7 @@ abstract class Actor {
 				case 'event':
 					$func = $event['name'];
 					if ( method_exists( $this, $func ) ) {
-						$this->$func( $event['data'] );
+						yield $this->$func( $event['data'] );
 					}
 					$counter = $event['version'];
 					break;
@@ -223,8 +249,8 @@ abstract class Actor {
 					$counter    = $event['version'];
 					break;
 			}
-		}
-		$this->nextVersion = $counter + 1;
+			$this->nextVersion = $counter + 1;
+		};
 	}
 
 	/**

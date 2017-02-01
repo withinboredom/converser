@@ -52,7 +52,7 @@ class Payment extends Actor {
 
 	public function DoPay( $userId, $payToken, $packageId ) {
 		$package = $this->buckets['packages'][ $packageId ];
-		$attempt = r\uuid()->run( $this->conn );
+		$attempt = yield r\uuid()->run( $this->conn );
 		$payment = [
 			'amount'      => $package['cost'],
 			'currency'    => 'usd',
@@ -101,7 +101,8 @@ class Payment extends Actor {
 					'data'       => json_decode( json_encode( $charge ) ),
 					'attempt_id' => $data['attempt_id'],
 					'user_id'    => $data['user_id'],
-					'package_id' => $data['package']
+					'package_id' => $data['package'],
+					'lives'      => $package['lives']
 				] );
 			} else if ( $charge->captured ) {
 				$this->Fire( 'payment_partial', [
@@ -128,12 +129,22 @@ class Payment extends Actor {
 		}
 	}
 
+	public function payment_attempt() {
+		$this->state['total_lives'] = isset( $this->state['total_lives'] )
+			? $this->state['total_lives']
+			: 0;
+	}
+
 	public function payment_fraud() {
 		$this->state['payment_status'] = 'too_risky';
 	}
 
-	public function payment_success() {
+	public function payment_success( $data ) {
 		$this->state['payment_status'] = 'success';
+		if ( ! isset( $this->state['total_lives'] ) ) {
+			$this->state['total_lives'] = 0;
+		}
+		$this->state['total_lives'] += $data['lives'];
 	}
 
 	public function payment_partial() {
@@ -146,6 +157,10 @@ class Payment extends Actor {
 
 	public function payment_exception() {
 		$this->state['payment_status'] = 'exception';
+	}
+
+	public function GetLives() {
+		return $this->state['total_lives'];
 	}
 
 	/**

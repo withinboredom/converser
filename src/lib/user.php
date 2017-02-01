@@ -3,6 +3,7 @@
 namespace Model;
 
 use r;
+use Amp;
 
 require_once 'actor.php';
 require_once 'payment.php';
@@ -105,7 +106,7 @@ class User extends Actor {
 			] );
 		}
 		$this->Fire( 'readied', [
-			'id'       => r\uuid()->run( $this->conn ),
+			'id'       => yield r\uuid()->run( $this->conn ),
 			'phone'    => $phone,
 			'password' => $password,
 			'ip'       => $ip,
@@ -156,7 +157,7 @@ class User extends Actor {
 				return $carry;
 			} );
 
-		$token = r\uuid( $phone . $password )->run( $this->conn );
+		$token = yield r\uuid( $phone . $password )->run( $this->conn );
 
 		if ( $session ) {
 			$this->Fire( 'set_active_session', [
@@ -167,15 +168,10 @@ class User extends Actor {
 	}
 
 	public function DoPurchase( $paymentToken, $packageId ) {
-		$payment = new Payment( r\uuid()->run( $this->conn ), $this->conn );
-		$this->ListenForId( $payment->Id( true ), function ( $changes ) {
-			foreach($changes as $change) {
-				$data = $change->getArrayCopy();
-				var_dump($data);
-			}
-		} );
-		$payment->DoPay( $this->Id( true ), $paymentToken, $packageId );
-		$payment->Store();
+		$payment = new Payment( yield r\uuid()->run( $this->conn ), $this->conn );
+		yield from $payment->Load();
+		yield from $payment->DoPay( $this->Id( true ), $paymentToken, $packageId );
+		yield from $payment->Store();
 
 		$this->Fire( 'attempt_payment', [
 			'paymentToken' => $paymentToken,
@@ -186,9 +182,15 @@ class User extends Actor {
 
 	public function attempt_payment( $data ) {
 		$this->state['payments'][] = $data['paymentId'];
+		$payment = new Payment($data['paymentId'], $this->conn);
+		$promise = Amp\resolve($payment->Load());
+		$promise = Amp\pipe($promise, function($result) use ($payment) {
+			$this->state['lives'] += $payment->GetLives();
+		});
+		return $promise;
 	}
 
-	public function GetActiveToken() {
+	public function GetActiveToken($password = null) {
 		$activeSession = array_reduce(
 			$this->state['sessions'], function ( $carry, $item ) {
 			if ( $item['active'] ) {
@@ -197,6 +199,12 @@ class User extends Actor {
 
 			return $carry;
 		} );
+
+		if ($password && $activeSession['password'] == $password) {
+			return $activeSession['token'];
+		} elseif ($password) {
+			return null;
+		}
 
 		return $activeSession['token'];
 	}

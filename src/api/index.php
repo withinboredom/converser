@@ -19,44 +19,32 @@ define( 'METRICS_DB', DB_NAME . '_metrics' );
 $auth_id    = getenv( 'PLIVO_ID' ) ?: "SANTC0YTLLZTFMMZA3MM";
 $auth_token = getenv( 'PLIVO_TOKEN' ) ?: "MzA2M2UyMWViNTI5NjFmZjNjMmJiYmZlNmM5YmZh";
 
+global $conn;
+$conn = r\connect( DB_HOST );
+
 function prep() {
-	$conn     = r\connect( DB_HOST );
-	$dbs      = r\dbList()->run( $conn );
-	$filtered = $dbs->when(function($error, $dbs) {
-		return array_filter( $dbs, function ( $db ) {
-			return $db == DB_NAME;
-		} );
-	})->when(function($error, $filtered) use ($conn) {
-		if ( count( $filtered ) == 0 ) {
-			try {
-				return r\dbCreate( DB_NAME )->run( $conn )
-					->when(function() use ($conn) {
-						$db = r\db( DB_NAME );
+	global $conn;
+	$dbs      = yield r\dbList()->run( $conn );
+	$filtered = array_filter( $dbs, function ( $db ) {
+		return $db == DB_NAME;
+	} );
 
-						return $db->tableCreate( 'version' )->run( $conn )
-							->when(function() use ($conn, $db) {
-								return $db->table( 'version' )->insert( [
-									'id'    => 'db',
-									'value' => 0
-								] )->run( $conn );
-							})
-							->when(function() use ($db, $conn) {
-								return $db->table( 'version' )->wait()->run( $conn );
-							});
-					});
+	if ( count( $filtered ) == 0 ) {
+		yield r\dbCreate( DB_NAME )->run( $conn );
+		$db = r\db( DB_NAME );
+		yield $db->tableCreate( 'version' )->run( $conn );
+		yield $db->table( 'version' )->insert( [
+			'id'    => 'db',
+			'value' => 0
+		] )->run( $conn );
+	}
 
-			} catch ( Exception $exception ) {
-				// nothing to do here
-			}
-		}
-	});
-/*
-	$currentVersion = yield r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn )['value'];
+	$currentVersion = ( yield r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn ) )['value'];
 
 	$db   = r\db( DB_NAME );
 	$rnad = rand();
 	yield $db->table( 'version' )->insert( [ 'id' => 'rlock', 'value' => $rnad ] )->run( $conn );
-	yield $hasLock = $db->table( 'version' )->get( 'rlock' )->run( $conn )['value'] == $rnad;
+	$hasLock = ( yield $db->table( 'version' )->get( 'rlock' )->run( $conn ) )['value'] == $rnad;
 
 	var_dump( $hasLock );
 
@@ -121,7 +109,7 @@ function prep() {
 	}
 
 	yield $db->table( 'version' )->get( 'rlock' )->delete()->run( $conn );
-*/
+
 	return $conn;
 }
 
@@ -168,7 +156,6 @@ function revenue( $userid, $amount ) {
 }
 
 global $plivo;
-global $conn;
 
 function event( $event ) {
 	$event['time'] = r\now();
@@ -212,7 +199,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 
 	public function __construct() {
 		global $conn;
-		$conn = prep();
+		$p = Amp\coroutine( 'prep' )();
 	}
 
 	/**
@@ -470,13 +457,15 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		$request = json_decode( yield $msg, true );
 		if ( isset( $request['token'] ) && isset( $request['userId'] ) ) {
 			$user = new Model\User( $request['userId'], $conn, $plivo );
+			yield from $user->Load();
 			if ( $user->GetActiveToken() === $request['token'] ) {
 				switch ( $request['command'] ) {
 					case 'refresh':
 						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
 						break;
 					case 'pay':
-						$user->DoPurchase($request['payToken'], $request['packageId']);
+						yield from $user->DoPurchase( $request['payToken'], $request['packageId'] );
+						yield from $user->Store();
 						break;
 				}
 			} else {
@@ -508,8 +497,9 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			switch ( $request['command'] ) {
 				case 'login':
 					$user = new Model\User( $request['phone'], $conn, $plivo );
-					$user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
-					$user->Store();
+					yield from $user->Load();
+					yield from $user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
+					yield from $user->Store();
 
 					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',
@@ -520,18 +510,20 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					break;
 				case 'verify':
 					$user = new Model\User( $request['phone'], $conn, $plivo );
-					$user->DoVerify( $request['phone'], $request['password'] );
-					$user->Store( function () use ( $user, $clientId ) {
-						$token = $user->GetActiveToken();
-						if ( $token ) {
-							$this->send( $clientId, json_encode( [
-								'type'   => 'token',
-								'userId' => $user->Id(),
-								'token'  => $token
-							] ) );
-							$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
-						}
-					} );
+					yield from $user->Load();
+					yield from $user->DoVerify( $request['phone'], $request['password'] );
+					yield from $user->Store();
+					$token = $user->GetActiveToken($request['password']);
+					if ( $token ) {
+						$this->send( $clientId, json_encode( [
+							'type'   => 'token',
+							'userId' => $user->Id(),
+							'token'  => $token
+						] ) );
+						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
+					} else {
+						$this->notify($clientId, "Please check your sms messages", "Invalid password");
+					}
 					unset( $user );
 					break;
 				case 'connect':
