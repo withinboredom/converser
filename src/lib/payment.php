@@ -102,7 +102,8 @@ class Payment extends Actor {
 					'attempt_id' => $data['attempt_id'],
 					'user_id'    => $data['user_id'],
 					'package_id' => $data['package'],
-					'lives'      => $package['lives']
+					'lives'      => $package['lives'],
+					'amount'     => $payment['amount']
 				] );
 			} else if ( $charge->captured ) {
 				$this->Fire( 'payment_partial', [
@@ -141,6 +142,7 @@ class Payment extends Actor {
 
 	public function payment_success( $data ) {
 		$this->state['payment_status'] = 'success';
+		$this->state['amount']         = $data['amount'];
 		if ( ! isset( $this->state['total_lives'] ) ) {
 			$this->state['total_lives'] = 0;
 		}
@@ -161,6 +163,10 @@ class Payment extends Actor {
 
 	public function GetLives() {
 		return $this->state['total_lives'];
+	}
+
+	public function GetAmount() {
+		return $this->state['amount'];
 	}
 
 	/**

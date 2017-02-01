@@ -48,6 +48,26 @@ abstract class Actor {
 	protected $state = [];
 
 	/**
+	 * @var bool Whether or not the actor is replaying
+	 */
+	protected $replaying = false;
+
+	/**
+	 * @var array Events to fire off
+	 */
+	private $firing = [];
+
+	/**
+	 * @var bool Whether the actor is firing events or not
+	 */
+	private $isFiring = false;
+
+	/**
+	 * @var null|Amp\Promisor Allow cojoining storages
+	 */
+	private $storagePromise = null;
+
+	/**
 	 * Actor constructor.
 	 *
 	 * @param $id string Id of actor to load
@@ -73,10 +93,10 @@ abstract class Actor {
 			->run( $this->conn );
 
 		if ( $latestSnapshot ) {
-			$this->state = $latestSnapshot['state'];
+			$this->state       = $latestSnapshot['state'];
 			$this->nextVersion = $latestSnapshot['version'] + 1;
 		} else {
-			$latestSnapshot = [ 'version' => -1 ];
+			$latestSnapshot    = [ 'version' => - 1 ];
 			$this->nextVersion = 0;
 		}
 
@@ -146,16 +166,29 @@ abstract class Actor {
 	 */
 	public function Store( callable $callback = null ) {
 		$this->Close();
+
+		if ( $this->storagePromise ) {
+			yield $this->storagePromise->promise();
+
+			return;
+		}
+
 		$deferred = new Amp\deferred();
 
-		Amp\immediately( function () use ( $callback, $deferred ) {
+		$this->storagePromise = $deferred;
+
+		$store = function () use ( $callback, $deferred ) {
+			while ( count( $this->firing ) > 0 || $this->isFiring ) {
+				yield;
+			}
+
 			$toStore = array_filter( $this->records, function ( $record ) {
 				return ! $record['stored'];
 			} );
 
 			foreach ( $toStore as $event ) {
 				$event['stored'] = true;
-				r\db( 'records' )
+				yield r\db( 'records' )
 					->table( 'events' )
 					->insert( $event )
 					->run( $this->conn );
@@ -178,10 +211,13 @@ abstract class Actor {
 
 			yield from $this->Load( $callback );
 
+			$this->storagePromise = null;
 			$deferred->succeed();
-		} );
+		};
 
-		return yield $deferred->promise();
+		Amp\immediately( $store );
+
+		yield $deferred->promise();
 	}
 
 	/**
@@ -222,6 +258,7 @@ abstract class Actor {
 	 * Reduce the events to a stable state
 	 */
 	private function ReduceEvents() {
+		$this->replaying = true;
 
 		$counter = $this->nextVersion - 1;
 		//if (!is_array($this->records)) return;
@@ -251,6 +288,8 @@ abstract class Actor {
 			}
 			$this->nextVersion = $counter + 1;
 		};
+
+		$this->replaying = false;
 	}
 
 	/**
@@ -260,18 +299,43 @@ abstract class Actor {
 	 * @param $data array The body of the event
 	 */
 	public function Fire( $name, $data ) {
-		Amp\immediately( function () use ( $name, $data ) {
-			$this->records[] = [
+		$fire = function () {
+			if ( $this->isFiring ) {
+				return;
+			}
+
+			$this->isFiring = true;
+			while ( true ) {
+				$toFire = array_shift( $this->firing );
+
+				if ( $toFire ) {
+					$name = $toFire['name'];
+					if ( method_exists( $this, $name ) ) {
+						yield $this->$name( $toFire['data'] );
+					}
+					$this->records[] = $toFire;
+				} else {
+					break;
+				}
+			}
+			$this->isFiring = false;
+			yield from $this->Store();
+		};
+
+		if ( ! $this->replaying ) {
+			if ( count( $this->firing ) == 0 ) {
+				Amp\immediately( $fire );
+			}
+
+			$this->firing[] = [
 				'model_id' => $this->id,
 				'version'  => $this->nextVersion ++,
 				'type'     => 'event',
 				'name'     => $name,
 				'data'     => $data,
-				'stored'   => false
+				'stored'   => false,
+				'at'       => new \DateTime()
 			];
-			if ( method_exists( $this, $name ) ) {
-				$this->$name( $data );
-			}
-		} );
+		}
 	}
 }

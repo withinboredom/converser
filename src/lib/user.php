@@ -182,15 +182,34 @@ class User extends Actor {
 
 	public function attempt_payment( $data ) {
 		$this->state['payments'][] = $data['paymentId'];
-		$payment = new Payment($data['paymentId'], $this->conn);
-		$promise = Amp\resolve($payment->Load());
-		$promise = Amp\pipe($promise, function($result) use ($payment) {
-			$this->state['lives'] += $payment->GetLives();
-		});
+
+		// no need to process the payment domain if we already got it.
+		if ( $this->replaying ) {
+			return;
+		}
+
+		$payment = new Payment( $data['paymentId'], $this->conn );
+		$promise = Amp\resolve( $payment->Load() );
+		$promise = Amp\pipe( $promise, function ( $result ) use ( $payment ) {
+			$lives = $payment->GetLives();
+			if ( $lives > 0 ) {
+				$this->Fire( 'set_lives', [
+					'lives'             => $this->state['lives'] + $lives,
+					'payment_for_lives' => $lives,
+					'from_payment'      => $payment->Id(),
+					'amount_paid'       => $payment->GetAmount()
+				] );
+			}
+		} );
+
 		return $promise;
 	}
 
-	public function GetActiveToken($password = null) {
+	public function set_lives( $data ) {
+		$this->state['lives'] = $data['lives'];
+	}
+
+	public function GetActiveToken( $password = null ) {
 		$activeSession = array_reduce(
 			$this->state['sessions'], function ( $carry, $item ) {
 			if ( $item['active'] ) {
@@ -200,9 +219,9 @@ class User extends Actor {
 			return $carry;
 		} );
 
-		if ($password && $activeSession['password'] == $password) {
+		if ( $password && $activeSession['password'] == $password ) {
 			return $activeSession['token'];
-		} elseif ($password) {
+		} elseif ( $password ) {
 			return null;
 		}
 

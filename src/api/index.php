@@ -477,7 +477,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 						break;
 					case 'pay':
 						yield from $user->DoPurchase( $request['payToken'], $request['packageId'] );
-						yield from $user->Store();
+						//yield from $user->Store();
 						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
 						break;
 				}
@@ -512,7 +512,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					$user = new Model\User( $request['phone'], $conn, $plivo );
 					yield from $user->Load();
 					yield from $user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
-					yield from $user->Store();
+					//yield from $user->Store();
 
 					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',
