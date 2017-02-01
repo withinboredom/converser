@@ -467,7 +467,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 						yield from $user->Load();
 						$this->send( $data['clientId'], json_encode( $user->GetPlayerInfo() ) );
 						unset ( $user );
-					}, 5000000, [ 'cb_data' => [ 'user' => $request['userId'], 'clientId' => $clientId ] ] );
+					}, 5000, [ 'cb_data' => [ 'user' => $request['userId'], 'clientId' => $clientId ] ] );
 					$this->watchers[ $clientId ] = $id;
 				}
 
@@ -478,6 +478,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					case 'pay':
 						yield from $user->DoPurchase( $request['payToken'], $request['packageId'] );
 						yield from $user->Store();
+						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
 						break;
 				}
 			} else {

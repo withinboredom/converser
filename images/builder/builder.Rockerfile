@@ -111,7 +111,6 @@ RUN echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sou
     make install && \
     cd .. && \
     rm -rf php-uv && \
-    docker-php-ext-enable uv && \
     docker-php-source delete
 
 IMPORT /api/ /app
