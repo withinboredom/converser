@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "0631560c65057b2c4227287988232b61e559cb94"
+                "reference": "5dade2443fc1b3deb549cfa513d963893122597c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/0631560c65057b2c4227287988232b61e559cb94",
-                "reference": "0631560c65057b2c4227287988232b61e559cb94",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/5dade2443fc1b3deb549cfa513d963893122597c",
+                "reference": "5dade2443fc1b3deb549cfa513d963893122597c",
                 "shasum": ""
             },
             "require": {
@@ -76,7 +76,7 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2017-01-15 14:49:11"
+            "time": "2017-01-31 23:30:05"
         },
         {
             "name": "amphp/loop",
@@ -214,12 +214,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/withinboredom/php-rql.git",
-                "reference": "f256261f904f396d4b5345abc87e99235f0d85fb"
+                "reference": "1754b1ea6139166709429f9397b245bdf37364bc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/withinboredom/php-rql/zipball/f256261f904f396d4b5345abc87e99235f0d85fb",
-                "reference": "f256261f904f396d4b5345abc87e99235f0d85fb",
+                "url": "https://api.github.com/repos/withinboredom/php-rql/zipball/1754b1ea6139166709429f9397b245bdf37364bc",
+                "reference": "1754b1ea6139166709429f9397b245bdf37364bc",
                 "shasum": ""
             },
             "require": {
@@ -240,11 +240,7 @@
                     "r\\Tests\\": "tests/"
                 }
             },
-            "scripts": {
-                "test": [
-                    "tests/phpunit.sh"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "Apache-2.0"
             ],
@@ -264,10 +260,7 @@
                 "reql",
                 "rethinkdb"
             ],
-            "support": {
-                "source": "https://github.com/withinboredom/php-rql/tree/master"
-            },
-            "time": "2017-01-29 04:45:56"
+            "time": "2016-05-31T01:55:32+00:00"
         }
     ],
     "packages-dev": [
