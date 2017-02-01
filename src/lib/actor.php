@@ -74,8 +74,10 @@ abstract class Actor {
 
 		if ( $latestSnapshot ) {
 			$this->state = $latestSnapshot['state'];
+			$this->nextVersion = $latestSnapshot['version'] + 1;
 		} else {
-			$latestSnapshot = [ 'version' => 0 ];
+			$latestSnapshot = [ 'version' => -1 ];
+			$this->nextVersion = 0;
 		}
 
 		$this->records = yield r\db( 'records' )
@@ -134,9 +136,7 @@ abstract class Actor {
 	protected abstract function Project();
 
 	public function __destruct() {
-		foreach ( $this->Store() as $n ) {
-			;
-		}
+		$this->Close();
 	}
 
 	/**
@@ -223,7 +223,7 @@ abstract class Actor {
 	 */
 	private function ReduceEvents() {
 
-		$counter = 0;
+		$counter = $this->nextVersion - 1;
 		//if (!is_array($this->records)) return;
 		foreach ( $this->records as $event ) {
 			/**
