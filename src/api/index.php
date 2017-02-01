@@ -196,6 +196,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 */
 	private $endpoint;
 	private $connection = [];
+	private $watchers = [];
 
 	public function __construct() {
 		global $conn;
@@ -459,6 +460,17 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			$user = new Model\User( $request['userId'], $conn, $plivo );
 			yield from $user->Load();
 			if ( $user->GetActiveToken() === $request['token'] ) {
+				if ( ! $this->watchers[ $clientId ] ) {
+					$id                          = Amp\repeat( function ( $watcherId, $data ) {
+						global $conn, $plivo;
+						$user = new Model\User( $data['user'], $conn, $plivo );
+						yield from $user->Load();
+						$this->send( $data['clientId'], json_encode( $user->GetPlayerInfo() ) );
+						unset ( $user );
+					}, 5000000, [ 'cb_data' => [ 'user' => $request['userId'], 'clientId' => $clientId ] ] );
+					$this->watchers[ $clientId ] = $id;
+				}
+
 				switch ( $request['command'] ) {
 					case 'refresh':
 						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
@@ -513,7 +525,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					yield from $user->Load();
 					yield from $user->DoVerify( $request['phone'], $request['password'] );
 					yield from $user->Store();
-					$token = $user->GetActiveToken($request['password']);
+					$token = $user->GetActiveToken( $request['password'] );
 					if ( $token ) {
 						$this->send( $clientId, json_encode( [
 							'type'   => 'token',
@@ -522,7 +534,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 						] ) );
 						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
 					} else {
-						$this->notify($clientId, "Please check your sms messages", "Invalid password");
+						$this->notify( $clientId, "Please check your sms messages", "Invalid password" );
 					}
 					unset( $user );
 					break;
@@ -534,7 +546,9 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	}
 
 	public function onClose( int $clientId, int $code, string $reason ) {
-
+		if ( $this->watchers[ $clientId ] ) {
+			Amp\cancel( $this->watchers[ $clientId ] );
+		}
 	}
 
 	public function onStop() {
