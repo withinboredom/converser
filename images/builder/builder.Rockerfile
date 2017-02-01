@@ -4,8 +4,6 @@
 
 FROM node:latest
 
-MOUNT ~:/root
-
 ENV YARN_VER=0.19.1
 RUN npm install -g yarn@$YARN_VER
 
@@ -17,7 +15,6 @@ PUSH withinboredom/yarn:latest
 
 FROM withinboredom/yarn:latest
 
-MOUNT ~:/root
 
 COPY ./src/site /app
 
@@ -58,8 +55,6 @@ PUSH withinboredom/site:latest
 
 FROM php:cli
 
-MOUNT ~:/root
-
 COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
 RUN apt-get update && \
@@ -78,19 +73,17 @@ PUSH withinboredom/composer:latest
 
 FROM withinboredom/composer:latest
 
-MOUNT ~:/root
-
 COPY src/lib/composer.lock /app/lib/composer.lock
 COPY src/lib/composer.json /app/lib/composer.json
 
 WORKDIR /app/lib
-RUN composer install
+RUN composer install --no-dev
 
 COPY src/api/composer.lock /app/api/composer.lock
 COPY src/api/composer.json /app/api/composer.json
 
 WORKDIR /app/api
-RUN composer install
+RUN composer install --no-dev
 
 COPY src/lib /app/lib
 COPY src/api /app/api
@@ -102,8 +95,6 @@ EXPORT /app/ /api
 ##############################
 
 FROM php:cli
-
-MOUNT ~:/root
 
 COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
@@ -140,12 +131,10 @@ PUSH withinboredom/api:latest
 
 FROM withinboredom/composer:latest
 
-MOUNT ~:/root
-
 COPY src/engine/composer.lock /var/www/html/composer.lock
 COPY src/engine/composer.json /var/www/html/composer.json
 
-RUN cd /var/www/html && composer install
+RUN cd /var/www/html && composer install --no-dev
 
 COPY src/engine /var/www/html
 
