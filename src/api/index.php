@@ -1,6 +1,6 @@
 <?php
 
-require_once '../lib/user.php';
+require_once 'lib/user.php';
 
 use Aerys\{
 	Host, Request, Response, Router, Websocket, function root, function router, function websocket
