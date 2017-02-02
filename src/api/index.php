@@ -197,6 +197,8 @@ $container->snapshots = r\db( 'records' )->table( 'snapshots' );
 $container->records   = r\db( 'records' )->table( 'events' );
 $container->conn      = $conn;
 $container->plivo     = $plivo;
+$container->uuid      = r\uuid();
+$container->R         = r\db( DB_NAME );
 
 $websocket = websocket( new class implements Aerys\Websocket {
 	/**
@@ -434,7 +436,7 @@ $router->get( "/sms", function ( Aerys\Request $request, Aerys\Response $respons
 	$to   = $request->getParam( 'To' );
 	$text = $request->getParam( 'Text' );
 
-	$response->end("");
+	$response->end( "" );
 
 	$user = new \Model\User( $from, $container );
 	yield from $user->Load();

@@ -109,7 +109,7 @@ class User extends Actor {
 			] );
 		}
 		$this->Fire( 'readied', [
-			'id'       => yield r\uuid()->run( $this->conn ),
+			'id'       => yield $this->container->uuid->run( $this->conn ),
 			'phone'    => $phone,
 			'password' => $password,
 			'ip'       => $ip,
@@ -274,7 +274,7 @@ class User extends Actor {
 	 * Projects the current state
 	 */
 	protected function Project() {
-		r\db( DB_NAME )
+		$this->container->R
 			->table( 'users' )
 			->get( $this->Id() )
 			->replace( [
@@ -288,7 +288,7 @@ class User extends Actor {
 			] )->run( $this->conn );
 
 		foreach ( $this->state['sessions'] as $session ) {
-			r\db( DB_NAME )
+			$this->container->R
 				->table( 'sessions' )
 				->get( $session['id'] )
 				->replace( $session )

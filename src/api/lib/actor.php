@@ -89,9 +89,9 @@ abstract class Actor {
 	 * @param Container $container The injection container
 	 */
 	public function __construct( $id, Container $container ) {
-		$this->r = $container->records;
+		$this->r          = $container->records;
 		$this->rSnapshots = $container->snapshots;
-		$this->container = $container;
+		$this->container  = $container;
 
 		$this->conn = $container->conn;
 		$this->id   = get_class( $this ) . '_' . $id;
@@ -117,8 +117,7 @@ abstract class Actor {
 			$this->nextVersion = 0;
 		}
 
-		$this->records = yield r\db( 'records' )
-			->table( 'events' )
+		$this->records = yield $this->r
 			->getAll( $this->id, [ 'index' => 'model_id' ] )
 			->filter( r\row( 'version' )->gt( $latestSnapshot['version'] ) )
 			->orderBy( 'version' )
@@ -137,8 +136,7 @@ abstract class Actor {
 	 * @return \Generator
 	 */
 	protected function ListenForId( $id, $callback ) {
-		$listener = yield r\db( 'records' )
-			->table( 'events' )
+		$listener = yield $this->r
 			->filter( [ 'model_id' => $id ] )
 			->changes( [ 'include_initial' => false, 'squash' => true ] )
 			->run( $this->conn );
@@ -187,8 +185,7 @@ abstract class Actor {
 
 			foreach ( $toStore as $event ) {
 				$event['stored'] = true;
-				yield r\db( 'records' )
-					->table( 'events' )
+				yield $this->r
 					->insert( $event )
 					->run( $this->conn );
 			}
@@ -201,8 +198,7 @@ abstract class Actor {
 					'state'   => $this->Snapshot(),
 					'version' => $this->nextVersion - 1
 				];
-				r\db( 'records' )
-					->table( 'snapshots' )
+				$this->rSnapshots
 					->get( $this->id )
 					->replace( $snapshot )
 					->run( $this->conn );
@@ -211,12 +207,12 @@ abstract class Actor {
 			yield from $this->Load( $callback );
 
 			$this->storagePromise = null;
-			$deferred->succeed();
+			$deferred->succeed( $toStore );
 		};
 
 		Amp\immediately( $store );
 
-		yield $deferred->promise();
+		return yield $deferred->promise();
 	}
 
 	/**

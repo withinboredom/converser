@@ -3,6 +3,7 @@
 namespace Model;
 
 use r;
+use Plivo;
 
 /**
  * Class Container
@@ -23,9 +24,19 @@ class Container {
 	public $snapshots;
 
 	/**
+	 * @var r\Queries\Dbs\Db
+	 */
+	public $R;
+
+	/**
 	 * @var r\Connection
 	 */
 	public $conn;
 
+	/**
+	 * @var Plivo\RestAPI
+	 */
 	public $plivo;
+
+	public $uuid;
 }
