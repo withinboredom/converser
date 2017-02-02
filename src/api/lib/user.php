@@ -160,7 +160,7 @@ class User extends Actor {
 				return $carry;
 			} );
 
-		$token = yield r\uuid( $phone . $password )->run( $this->conn );
+		$token = yield $this->container->uuid->run( $this->conn );
 
 		if ( $session ) {
 			$this->Fire( 'set_active_session', [
@@ -171,7 +171,7 @@ class User extends Actor {
 	}
 
 	public function DoPurchase( $paymentToken, $packageId ) {
-		$payment = new Payment( yield r\uuid()->run( $this->conn ), $this->conn );
+		$payment = new Payment( yield $this->container->uuid->run( $this->conn ), $this->container );
 		yield from $payment->Load();
 		yield from $payment->DoPay( $this->Id( true ), $paymentToken, $packageId );
 		yield from $payment->Store();
@@ -191,7 +191,7 @@ class User extends Actor {
 			return;
 		}
 
-		$payment = new Payment( $data['paymentId'], $this->conn );
+		$payment = new Payment( $data['paymentId'], $this->container );
 		$promise = Amp\resolve( $payment->Load() );
 		$promise = Amp\pipe( $promise, function ( $result ) use ( $payment ) {
 			$lives = $payment->GetLives();

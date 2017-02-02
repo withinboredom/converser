@@ -2,6 +2,7 @@
 
 require_once 'lib/user.php';
 require_once 'lib/container.php';
+require_once 'lib/rqlStorage.php';
 
 use Aerys\{
 	Host, Request, Response, Router, Websocket, function root, function router, function websocket
@@ -199,6 +200,10 @@ $container->conn      = $conn;
 $container->plivo     = $plivo;
 $container->uuid      = r\uuid();
 $container->R         = r\db( DB_NAME );
+$container->charge    = 'Stripe\Charge';
+$container->storage   = new \Model\RqlStorage( $container );
+
+Stripe\Stripe::setApiKey( STRIPE_KEY );
 
 $websocket = websocket( new class implements Aerys\Websocket {
 	/**

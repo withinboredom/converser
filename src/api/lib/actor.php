@@ -58,11 +58,6 @@ abstract class Actor {
 	private $firing = [];
 
 	/**
-	 * @var bool Whether the actor is firing events or not
-	 */
-	private $isFiring = false;
-
-	/**
 	 * @var null|Amp\Promisor Allow cojoining storages
 	 */
 	private $storagePromise = null;
@@ -105,9 +100,8 @@ abstract class Actor {
 	 * @return \Generator
 	 */
 	public function Load( callable $callback = null ) {
-		$latestSnapshot = yield $this->rSnapshots
-			->get( $this->id )
-			->run( $this->conn );
+
+		$latestSnapshot = yield $this->container->storage->LoadSnapshot( $this->id );
 
 		if ( $latestSnapshot ) {
 			$this->state       = $latestSnapshot['state'];
@@ -117,11 +111,7 @@ abstract class Actor {
 			$this->nextVersion = 0;
 		}
 
-		$this->records = yield $this->r
-			->getAll( $this->id, [ 'index' => 'model_id' ] )
-			->filter( r\row( 'version' )->gt( $latestSnapshot['version'] ) )
-			->orderBy( 'version' )
-			->run( $this->conn );
+		$this->records = yield $this->container->storage->LoadEvents( $this->id, $latestSnapshot['version'] );
 
 		yield from $this->ReduceEvents();
 		if ( $callback ) {
@@ -174,43 +164,15 @@ abstract class Actor {
 
 		$this->storagePromise = $deferred;
 
-		$store = function () use ( $callback, $deferred ) {
-			while ( count( $this->firing ) > 0 || $this->isFiring ) {
-				yield;
-			}
-
-			$toStore = array_filter( $this->records, function ( $record ) {
-				return ! $record['stored'];
-			} );
-
-			foreach ( $toStore as $event ) {
-				$event['stored'] = true;
-				yield $this->r
-					->insert( $event )
-					->run( $this->conn );
-			}
-
+		$this->container->storage->SetProjector( $this->id, function () {
 			$this->Project();
+		} );
+		$this->container->storage->SetSnapshot( $this->id, function() {
+			yield from $this->Snapshot();
+		} );
+		$store = $this->container->storage->Store( $this->id, $this->records, $callback, $deferred );
 
-			if ( count( $this->records ) >= $this->optimizeAt ) {
-				$snapshot = [
-					'id'      => $this->id,
-					'state'   => $this->Snapshot(),
-					'version' => $this->nextVersion - 1
-				];
-				$this->rSnapshots
-					->get( $this->id )
-					->replace( $snapshot )
-					->run( $this->conn );
-			}
-
-			yield from $this->Load( $callback );
-
-			$this->storagePromise = null;
-			$deferred->succeed( $toStore );
-		};
-
-		Amp\immediately( $store );
+		yield from $store;
 
 		return yield $deferred->promise();
 	}
@@ -295,11 +257,11 @@ abstract class Actor {
 	 */
 	public function Fire( $name, $data ) {
 		$fire = function () {
-			if ( $this->isFiring === 1 ) {
+			if ( $this->container->storage->isHardLocked( $this->id ) ) {
 				return;
 			}
 
-			$this->isFiring = 1;
+			$this->container->storage->HardLock( $this->id );
 
 			while ( true ) {
 				$toFire = array_shift( $this->firing );
@@ -314,14 +276,14 @@ abstract class Actor {
 					break;
 				}
 			}
-			$this->isFiring = false;
+			$this->container->storage->Unlock( $this->id );
 			yield from $this->Store();
 		};
 
 		if ( ! $this->replaying ) {
 			if ( count( $this->firing ) == 0 ) {
-				if ( $this->isFiring === false ) {
-					$this->isFiring = true;
+				if ( ! $this->container->storage->isLocked( $this->id ) ) {
+					$this->container->storage->SoftLock( $this->id );
 					Amp\immediately( $fire );
 				}
 			}

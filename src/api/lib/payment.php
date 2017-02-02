@@ -52,7 +52,7 @@ class Payment extends Actor {
 
 	public function DoPay( $userId, $payToken, $packageId ) {
 		$package = $this->buckets['packages'][ $packageId ];
-		$attempt = yield r\uuid()->run( $this->conn );
+		$attempt = yield $this->container->uuid->run( $this->conn );
 		$payment = [
 			'amount'      => $package['cost'],
 			'currency'    => 'usd',
@@ -77,15 +77,15 @@ class Payment extends Actor {
 
 		$this->Fire( 'payment_attempt', $data );
 
-		Stripe\Stripe::setApiKey( STRIPE_KEY );
-
 		$this->state['payment_status'] = 'attempt';
 		$this->state['attempt_id']     = $attempt;
 		$this->state['package_id']     = $packageId;
 		$this->state['amount']         = $package['cost'];
 
 		try {
-			$charge = Stripe\Charge::create( $payment );
+			$stripe = $this->container->charge;
+			$charge = $stripe::create( $payment );
+
 			// breaks for good reasons
 			if ( $charge->outcome->risk_level == 'elevated' ) {
 				//$this->notify( $clientId, 'Please try a different card', 'Payment Failed' );
@@ -173,7 +173,7 @@ class Payment extends Actor {
 	 * Projects the current state
 	 */
 	protected function Project() {
-		r\db( DB_NAME )
+		$this->container->R
 			->table( 'payments' )
 			->get( $this->Id() )
 			->replace( [

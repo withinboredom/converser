@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="PhpDebugIgnoredPathsSettings">
+    <skipped_paths>
+      <skipped_path path="$PROJECT_DIR$/src/api/vendor" />
+    </skipped_paths>
+  </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.1" />
   <component name="PhpStepFilterConfiguration">
     <option name="skippedFunctions">
@@ -8,6 +13,45 @@
         <option value="Composer\Autoload\ClassLoader-&gt;findFile" />
         <option value="Composer\Autoload\ClassLoader-&gt;findFileWithExtension" />
         <option value="Composer\Autoload\includeFile" />
+        <option value="Amp\UvReactor-&gt;tryImmediate" />
+        <option value="Amp\resolve" />
+        <option value="Amp\run" />
+        <option value="Amp\reactor" />
+        <option value="Amp\driver" />
+        <option value="Amp\UvReactor-&gt;run" />
+        <option value="Amp\__coroutineSend" />
+        <option value="Amp\__coroutineAdvance" />
+        <option value="Amp\UvReactor-&gt;immediately" />
+        <option value="Amp\Deferred-&gt;when" />
+        <option value="Amp\__coroutineNextTick" />
+        <option value="Amp\Success-&gt;__construct" />
+        <option value="Amp\pipe" />
+        <option value="Aerys\Ticker-&gt;updateTime" />
+        <option value="Amp\UvReactor-&gt;Amp\{closure}" />
+        <option value="Aerys\Server-&gt;timeoutKeepAlives" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;timeout" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;onWritable" />
+        <option value="Aerys\Ticker-&gt;tryUseCallback" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;sendHeartbeatPing" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;onReadable" />
+        <option value="Amp\UvReactor-&gt;disable" />
+        <option value="r\Connection-&gt;run" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;write" />
+        <option value="Amp\UvReactor-&gt;disablePollFromWatcher" />
+        <option value="r\Connection-&gt;parseHeader" />
+        <option value="r\Connection-&gt;parseBody" />
+        <option value="Amp\{closure}" />
+        <option value="Amp\UvReactor-&gt;enable" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint::parser" />
+        <option value="r\Connection-&gt;checkResponse" />
+        <option value="r\Query-&gt;encodeServerRequest" />
+        <option value="r\Connection-&gt;sendQuery" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;compile" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;onParse" />
+        <option value="Amp\Deferred-&gt;resolve" />
+        <option value="Amp\UvReactor-&gt;enablePollFromWatcher" />
+        <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;onParsedControlFrame" />
+        <option value="r\Connection-&gt;sendStr" />
       </list>
     </option>
   </component>

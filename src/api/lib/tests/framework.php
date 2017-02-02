@@ -10,9 +10,12 @@ namespace Model\Test;
 
 require_once 'vendor/autoload.php';
 require_once 'lib/container.php';
+require_once 'lib/rqlStorage.php';
 
 use Model\Container;
 use Amp;
+use Model\RqlStorage;
+use r\Exceptions\RqlDriverError;
 
 class DB {
 	private $output;
@@ -30,46 +33,68 @@ class DB {
 	}
 }
 
+class Charge {
+	static function create( $payment ) {
+		$response                      = new \stdClass();
+		$response->outcome             = new \stdClass();
+		$response->outcome->risk_level = 'normal';
+		$response->amount              = $payment['amount'];
+
+		return $response;
+	}
+}
+
 class When {
 	private $action;
 	private $previous;
 	private $model;
 	private $parameters;
+	private $story;
 
-	public function __construct( $model, $previous, $action, $params ) {
+	public function __construct( $model, $previous, $action, $params, $story ) {
 		$this->previous   = $previous;
 		$this->action     = $action;
 		$this->model      = $model;
 		$this->parameters = $params;
+		$this->story      = $story;
 	}
 
 	public function Then( $expected ) {
 		$container            = new Container();
 		$container->snapshots = new DB();
 		$container->records   = new DB( $this->previous );
-		$container->uuid      = new DB( [ '123' ] );
+		$container->uuid      = new DB( 'uuid' );
 		$container->plivo     = new DB();
 		$container->R         = new Db();
+		$container->charge    = 'Model\Test\Charge';
+		$container->storage   = new RqlStorage( $container );
 		$model                = $this->model;
 		$UT                   = new $model( 'FAKE', $container );
 
 		$action = $this->action;
 		Amp\Run( function () use ( $UT, $action, $expected ) {
-			Amp\immediately( function () use ( $UT, $action, $expected ) {
-				$t = $UT->$action( ...$this->parameters );
-				if ( $t instanceof \Generator ) {
-					yield from $t;
-				} else {
-					yield $t;
-				}
-				$results = yield from $UT->Store();
-				$this->test( $expected, $results );
-			} );
+			yield from $UT->Load();
+			$t = $UT->$action( ...$this->parameters );
+			if ( $t instanceof \Generator ) {
+				yield from $t;
+			} else {
+				yield $t;
+			}
+			$results = yield from $UT->Store();
+			$this->test( $expected, $results );
 		} );
 	}
 
 	private function test( $expected, $results ) {
 		$climate = new \League\CLImate\CLImate();
+		$climate->underline()->bold()->out( "\n" . $this->story );
+		$climate->blue()->out( "Given `$this->model`, with" );
+
+		$climate->blue()->out( print_r( array_map( function ( $event ) {
+			return $event['data'];
+		}, $this->previous ), true ) );
+
+		$climate->blue()->out( "When `$this->action`, Then," );
 		foreach ( $results as $event ) {
 			if ( ! isset( $expected[ $event['name'] ] ) ) {
 				$climate->red()->out( "Event '<light_blue>" . $event['name'] . "</light_blue>' appears to be unexpected" );
@@ -88,7 +113,7 @@ class When {
 				}
 
 				if ( empty( $flags ) ) {
-					$climate->green()->out( "    Event " . $event['name'] . " is good" );
+					$climate->green()->out( "    Event " . $event['name'] . " is expected" );
 				} else {
 					$climate->out( "[" );
 					$output = [];
@@ -136,13 +161,33 @@ function ofType( $type ) {
 class Given {
 	private $events;
 	private $model;
+	private $story;
 
-	public function __construct( $object, $events = [] ) {
-		$this->events = $events;
+	public function __construct( $story, $object, $events = [] ) {
+		$this->story  = $story;
+		$this->events = $this->TransformEvents( $events );
 		$this->model  = $object;
 	}
 
+	private function TransformEvents( $events ) {
+		$ret     = [];
+		$version = 0;
+		foreach ( $events as $name => $data ) {
+			$ret[] = [
+				'model_id' => 'FAKE',
+				'version'  => $version ++,
+				'type'     => 'event',
+				'name'     => $name,
+				'data'     => $data,
+				'stored'   => true,
+				'at'       => new \DateTime()
+			];
+		}
+
+		return $ret;
+	}
+
 	public function When( $action, ...$parameters ) {
-		return new When( $this->model, $this->events, $action, $parameters );
+		return new When( $this->model, $this->events, $action, $parameters, $this->story );
 	}
 }

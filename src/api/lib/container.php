@@ -38,5 +38,16 @@ class Container {
 	 */
 	public $plivo;
 
+
 	public $uuid;
+
+	/**
+	 * @var Stripe\Charge
+	 */
+	public $charge;
+
+	/**
+	 * @var iStore
+	 */
+	public $storage;
 }
