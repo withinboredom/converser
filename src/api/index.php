@@ -1,11 +1,13 @@
 <?php
 
+require_once '../lib/user.php';
+
 use Aerys\{
 	Host, Request, Response, Router, Websocket, function root, function router, function websocket
 };
 
 define( 'DB_NAME', getenv( 'DB_NAME' ) ?: 'converser' );
-define( 'DB_HOST', getenv( 'DB_HOST' ) ?: 'rethunk' );
+define( 'DB_HOST', getenv( 'DB_HOST' ) ?: 'localhost' );
 define( 'SMS', getenv( 'SMS' ) ?: '18037143889' );
 define( 'CALL', getenv( 'CALL' ) ?: '18882660156' );
 define( 'HOST', getenv( 'CALL_HOST' ) ?: 'http://dev.converser.space:2200/' );
@@ -17,29 +19,57 @@ define( 'METRICS_DB', DB_NAME . '_metrics' );
 $auth_id    = getenv( 'PLIVO_ID' ) ?: "SANTC0YTLLZTFMMZA3MM";
 $auth_token = getenv( 'PLIVO_TOKEN' ) ?: "MzA2M2UyMWViNTI5NjFmZjNjMmJiYmZlNmM5YmZh";
 
+global $conn;
+$conn = r\connect( DB_HOST );
+
 function prep() {
-	$conn     = r\connect( DB_HOST );
-	$dbs      = r\dbList()->run( $conn );
+	global $conn;
+	$dbs      = yield r\dbList()->run( $conn );
 	$filtered = array_filter( $dbs, function ( $db ) {
 		return $db == DB_NAME;
 	} );
+
 	if ( count( $filtered ) == 0 ) {
-		try {
-			r\dbCreate( DB_NAME )->run( $conn );
-			$db = r\db( DB_NAME );
-			$db->tableCreate( 'users' )->run( $conn );
-			$db->tableCreate( 'calls' )->run( $conn );
-			$db->tableCreate( 'sessions' )->run( $conn );
-			$db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
-			$db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
-			$db->tableCreate( 'version' )->run( $conn );
-			$db->table( 'users' )->wait()->run( $conn );
-			$db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
-			$db->table( 'sessions' )->wait()->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'phone' )->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'token' )->run( $conn );
-			$db->table( 'sessions' )->indexCreate( 'user_id' )->run( $conn );
-			$db->table( 'users' )->insert( [
+		yield r\dbCreate( DB_NAME )->run( $conn );
+		$db = r\db( DB_NAME );
+		yield $db->tableCreate( 'version' )->run( $conn );
+		yield $db->table( 'version' )->insert( [
+			'id'    => 'db',
+			'value' => 0
+		] )->run( $conn );
+	}
+
+	$currentVersion = ( yield r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn ) )['value'];
+
+	$db   = r\db( DB_NAME );
+	$rnad = rand();
+	yield $db->table( 'version' )->insert( [ 'id' => 'rlock', 'value' => $rnad ] )->run( $conn );
+	$hasLock = ( yield $db->table( 'version' )->get( 'rlock' )->run( $conn ) )['value'] == $rnad;
+
+	var_dump( $hasLock );
+
+	if ( ! $hasLock ) {
+		return $conn;
+	}
+
+	if ( $currentVersion == null ) {
+		yield $db->table( 'version' )->insert( [
+			'id'    => 'db',
+			'value' => 0
+		] )->run( $conn );
+		$currentVersion = 0;
+	}
+
+	// todo: increment this if you add a migration
+	$expectedVersion = 13;
+	// put migrations here
+	switch ( $currentVersion + 1 ) {
+		case 1:
+			yield $db->tableCreate( 'users' )->run( $conn );
+		case 2:
+			yield $db->table( 'users' )->indexCreate( 'phone' )->run( $conn );
+		case 3:
+			yield $db->table( 'users' )->insert( [
 				'phone'   => '19102974810',
 				'admin'   => true,
 				'lives'   => 1000,
@@ -47,31 +77,38 @@ function prep() {
 				'status'  => 'not-playing',
 				'created' => r\now()
 			] )->run( $conn );
-			$db->table( 'version' )->wait()->run( $conn );
-			$db->table( 'version' )->insert( [
-				'id'    => 'db',
-				'value' => 1
-			] )->run( $conn );
-		} catch ( Exception $exception ) {
-			// nothing to do here
-		}
-	}
-
-	$expectedVersion = 2;
-	$currentVersion  = r\db( DB_NAME )->table( 'version' )->get( 'db' )->run( $conn )['value'];
-	// put migrations here
-	switch ( $currentVersion ) {
-		case 1:
-			r\db( DB_NAME )->tableCreate( 'leaderboard' )->run( $conn );
-			r\db( DB_NAME )->table( 'leaderboard' )->wait()->run( $conn );
+		case 4:
+			yield $db->tableCreate( 'calls' )->run( $conn );
+		case 5:
+			yield $db->tableCreate( 'sessions' )->run( $conn );
+		case 6:
+			yield $db->tableCreate( 'events', [ 'durability' => 'soft' ] )->run( $conn );
+		case 7:
+			yield $db->tableCreate( 'sms', [ 'durability' => 'soft' ] )->run( $conn );
+		case 8:
+			yield $db->table( 'sessions' )->indexCreate( 'phone' )->run( $conn );
+			yield $db->table( 'sessions' )->indexCreate( 'token' )->run( $conn );
+			yield $db->table( 'sessions' )->indexCreate( 'user_id' )->run( $conn );
+		case 9:
+			yield r\dbCreate( 'records' )->run( $conn );
+		case 10:
+			yield r\db( 'records' )->tableCreate( 'events' )->run( $conn );
+		case 11:
+			yield r\db( 'records' )->table( 'events' )->indexCreate( 'model_id' )->run( $conn );
+		case 12:
+			yield r\db( 'records' )->tableCreate( 'snapshots' )->run( $conn );
+		case 13:
+			yield $db->tableCreate( 'payments' )->run( $conn );
 	}
 
 	if ( $currentVersion != $expectedVersion ) {
-		r\db( DB_NAME )->table( 'version' )->update( [
+		yield r\db( DB_NAME )->table( 'version' )->update( [
 			'id'    => 'db',
 			'value' => $expectedVersion
 		] )->run( $conn );
 	}
+
+	yield $db->table( 'version' )->get( 'rlock' )->delete()->run( $conn );
 
 	return $conn;
 }
@@ -119,9 +156,6 @@ function revenue( $userid, $amount ) {
 }
 
 global $plivo;
-global $conn;
-
-$conn = prep();
 
 function event( $event ) {
 	$event['time'] = r\now();
@@ -162,134 +196,11 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 */
 	private $endpoint;
 	private $connection = [];
+	private $watchers = [];
 
-	/**
-	 * Generates a one-time code for logging in
-	 * @return string The code
-	 */
-	private function generateOneTimeCode(): string {
-		$number = '' . random_int( 1, 9 );
-		for ( $i = 0; $i < 4; $i ++ ) {
-			$number .= random_int( 0, 9 );
-		}
-
-		return $number;
-	}
-
-	/**
-	 * Gets or creates a user given a phone number
-	 *
-	 * @param $phone string The phone number
-	 *
-	 * @return array The user object (may or may not contain a user id
-	 */
-	private function getOrCreateUser( string $phone ) {
+	public function __construct() {
 		global $conn;
-		$phone = $this->cleanPhone( $phone );
-
-		$user = r\db( DB_NAME )
-			->table( 'users' )
-			->filter( [ 'phone' => $phone ] )
-			->limit( 1 )
-			->run( $conn )->toArray();
-
-		if ( count( $user ) == 1 ) {
-			return $user[0];
-		}
-
-		$user = [
-			'phone'    => $phone,
-			'lives'    => 0,
-			'status'   => 'not-playing',
-			'opponent' => null,
-			'score'    => 0,
-			'created'  => r\now()
-		];
-
-		$data = r\db( DB_NAME )->table( 'users' )->insert( $user )->run( $conn );
-		event( [
-			'type'  => 'signup',
-			'phone' => $phone,
-			'data'  => $data
-		] );
-
-		return $user;
-	}
-
-	/**
-	 * Creates a session for a user, which still requires verification
-	 *
-	 * @param $phone string The phone number to create the session for
-	 * @param $client int The client id
-	 * @param $password string The password to use to create the session
-	 */
-	private function createSession( string $phone, int $client, string $password ) {
-		global $conn;
-		$user = $this->getOrCreateUser( $phone );
-
-		$session = [
-			'user_id'  => $user['id'],
-			'clientId' => $client,
-			'password' => $password,
-			'verified' => false,
-			'valid'    => true
-		];
-
-		echo "Created new session for with password: $password\n";
-
-		$data = r\db( DB_NAME )->table( 'sessions' )->insert( $session )->run( $conn );
-		event( [
-			'type'          => 'session-created',
-			'user_id'       => $user['id'],
-			'with_password' => $password,
-			'data'          => $data
-		] );
-	}
-
-	/**
-	 * Verifies a session for use, completing the login process
-	 *
-	 * @param $client int The client id
-	 * @param $password string The password
-	 *
-	 * @return bool|string false if verification wasn't successful, otherwise the auth token
-	 */
-	private function verifySession( int $client, string $phone, string $password ) {
-		global $conn;
-		$user = $this->getOrCreateUser( $phone );
-
-		$sessions = r\db( DB_NAME )->table( 'sessions' )->filter( [
-			'user_id'  => $user['id'],
-			'password' => $password,
-			'verified' => false
-		] )->limit( 1 )->run( $conn );
-
-		$sessions = $sessions->toArray();
-
-		foreach ( $sessions as $session ) {
-			$token = r\uuid( $client . $password )->run( $conn );
-			r\db( DB_NAME )->table( 'sessions' )->filter( [
-				'user_id'  => $user['id'],
-				'password' => $password,
-				'verified' => false
-			] )->limit( 1 )->update( [ 'verified' => true, 'token' => $token ] )->run( $conn );
-
-			event( [
-				'type'    => 'session-verified',
-				'user_id' => $user['id']
-			] );
-
-			activate( $user['id'], null ); //todo: collect campaign
-
-			return $token;
-		}
-
-		event( [
-			'type'    => 'session-invalid',
-			'user_id' => $user['id']
-		] );
-
-		return false;
+		$p = Amp\coroutine( 'prep' )();
 	}
 
 	/**
@@ -301,72 +212,6 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 */
 	private function cleanPhone( string $phone ): string {
 		return preg_replace( '/\D+/', '', $phone );
-	}
-
-	/**
-	 * Verifies a request's session
-	 *
-	 * @param string $userID The user id
-	 * @param int $client The client id
-	 * @param string $token The token from the request
-	 *
-	 * @return bool Whether the session is valid
-	 */
-	private function isVerified( $userID, $client, $token = false ): bool {
-		global $conn;
-		$check = [
-			'user_id'  => $userID,
-			'verified' => true,
-			'valid'    => true,
-			'token'    => $token['token']
-		];
-
-		$session = r\db( DB_NAME )->table( 'sessions' )->filter( $check )->limit( 1 )->run( $conn );
-
-		foreach ( $session as $sess ) {
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Invalidates a token
-	 *
-	 * @param string $token The token to invalidate
-	 */
-	private function invalidate( $token ): void {
-		global $conn;
-		r\db( DB_NAME )->table( 'sessions' )->filter( [ 'token' => $token ] )->update( [
-			'valid' => false
-		] )->run( $conn );
-
-		event( [
-			'type'  => 'invalidated-token',
-			'token' => $token
-		] );
-	}
-
-	/**
-	 * Get a player's information
-	 *
-	 * @param string $userId The user's id
-	 *
-	 * @return array The player information
-	 */
-	private function getPlayerInfo( $userId ) {
-		global $conn;
-		echo "Refreshing $userId\n";
-		$user    = r\db( DB_NAME )->table( 'users' )->get( $userId )->run( $conn );
-		$display = [
-			'type'     => 'user',
-			'lives'    => $user['lives'],
-			'score'    => $user['score'],
-			'status'   => $user['status'],
-			'opponent' => $user['opponent']
-		];
-
-		return $display;
 	}
 
 	/**
@@ -492,30 +337,31 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		return false;
 	}
 
-	private function getRank($phone) {
+	private function getRank( $phone ) {
 		global $conn;
-		$rank = r\db(DB_NAME)
-			->table('events')
-			->filter([
+		$phone = $this->cleanPhone( $phone );
+		$rank  = r\db( DB_NAME )
+			->table( 'events' )
+			->filter( [
 				'type' => 'increase_score',
-			])
-			->group('player')
-			->map(function($row) {
-				return $row('amount');
-			})
+			] )
+			->group( 'player' )
+			->map( function ( $row ) {
+				return $row( 'amount' );
+			} )
 			->ungroup()
-			->map(function($res) {
-				return r\expr([
-					'player' => $res('group'),
-					'score' => $res('reduction')->sum()
-				]);
-			})
-			->orderBy(r\desc('score'))
-			->offsetsOf(function($row) use ($phone) {
-				return $row('player')->eq($phone);
-			})->run($conn)->toArray();
+			->map( function ( $res ) {
+				return r\expr( [
+					'player' => $res( 'group' ),
+					'score'  => $res( 'reduction' )->sum()
+				] );
+			} )
+			->orderBy( r\desc( 'score' ) )
+			->offsetsOf( function ( $row ) use ( $phone ) {
+				return $row( 'player' )->eq( $phone );
+			} )->run( $conn )->toArray();
 
-		if (empty($rank)) {
+		if ( empty( $rank ) ) {
 			return 'not ranked';
 		}
 
@@ -584,35 +430,6 @@ $websocket = websocket( new class implements Aerys\Websocket {
 		] ) );
 	}
 
-	public function autoRefresh( $clientId, $userId ) {
-		global $conn;
-		echo "Waiting for changes\n";
-		$changes = r\db( DB_NAME )->table( 'users' )->get( $userId )->changes()->run( $conn );
-		echo "Pusher installed\n";
-		\Amp\repeat( function ( $watcherId ) use ( $clientId, $userId, $changes ) {
-			$sent = false;
-
-			echo "Looking for changes for $userId\n";
-
-			$client = array_filter( $this->endpoint->getClients(), function ( $item ) use ( $clientId ) {
-				return $clientId == $item;
-			} );
-
-			if ( count( $client ) == 0 ) {
-				echo "No longer sending changes to $userId\n";
-				Amp\cancel( $watcherId );
-
-				return;
-			}
-
-			var_dump( $changes->toArray() );
-			/*foreach($changes as $change) {
-				print_r($change);
-				break;
-			}*/
-		}, 1000 );
-	}
-
 	/**
 	 * Called when a websocket first connects
 	 *
@@ -631,16 +448,45 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	public function onOpen( int $clientId, $handshakeData ) {
 		$this->connection[ $clientId ] = $handshakeData;
 	}
-	
+
 	private function send( $clientId, $data ) {
-	    $this->endpoint->send( $data, $clientId );
-    }
+		$this->endpoint->send( $data, $clientId );
+	}
 
 	public function onData( int $clientId, Websocket\Message $msg ) {
 		global $plivo, $conn;
 		$request = json_decode( yield $msg, true );
-		if ( $request['token'] ) {
-			if ( $this->isVerified( $request['token']['userId'], $clientId, $request['token'] ) ) {
+		if ( isset( $request['token'] ) && isset( $request['userId'] ) ) {
+			$user = new Model\User( $request['userId'], $conn, $plivo );
+			yield from $user->Load();
+			if ( $user->GetActiveToken() === $request['token'] ) {
+				if ( ! isset($this->watchers[ $clientId ]) ) {
+					$id                          = Amp\repeat( function ( $watcherId, $data ) {
+						global $conn, $plivo;
+						$user = new Model\User( $data['user'], $conn, $plivo );
+						yield from $user->Load();
+						$this->send( $data['clientId'], json_encode( $user->GetPlayerInfo() ) );
+						unset ( $user );
+					}, 5000, [ 'cb_data' => [ 'user' => $request['userId'], 'clientId' => $clientId ] ] );
+					$this->watchers[ $clientId ] = $id;
+				}
+
+				switch ( $request['command'] ) {
+					case 'refresh':
+						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
+						break;
+					case 'pay':
+						yield from $user->DoPurchase( $request['payToken'], $request['packageId'] );
+						yield from $user->Store();
+						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
+						break;
+				}
+			} else {
+				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
+			}
+
+			unset( $user );
+			/*if ( $this->isVerified( $request['token']['userId'], $clientId, $request['token'] ) ) {
 				switch ( $request['command'] ) {
 					case 'logout':
 						$this->invalidate( $request['token'] );
@@ -659,41 +505,39 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			} else {
 				echo "Not verified\n";
 				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
-			}
+			}*/
 		} else {
 			switch ( $request['command'] ) {
 				case 'login':
-					$phone = $this->cleanPhone( $request['phone'] );
-					print "Logging $clientId in with $phone\n";
+					$user = new Model\User( $request['phone'], $conn, $plivo );
+					yield from $user->Load();
+					yield from $user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
+					//yield from $user->Store();
+
 					$this->send( $clientId, json_encode( [
 						'type'  => 'logging_in',
-						'phone' => $phone
+						'phone' => $user->Id()
 					] ) );
-					$number = $this->generateOneTimeCode();
-					$this->getOrCreateUser( $phone );
-					$this->createSession( $phone, $clientId, $number );
-					Amp\immediately( function () use ( $plivo, $phone, $number ) {
-						$plivo->send_message( [
-							'src'  => '18037143889',
-							'dst'  => $phone,
-							'text' => "Your converser login code is ${number}"
-						] );
-						echo "Notified $phone of password\n";
-					} );
+
+					unset( $user );
 					break;
 				case 'verify':
-					echo "Verifying session of $clientId with password ${request['password']}\n";
-					$token = $this->verifySession( $clientId, $request['phone'], $request['password'] );
-					if ( $token !== false ) {
-						$user = $this->getOrCreateUser( $this->cleanPhone( $request['phone'] ) );
-						echo "${user['id']} is logged in and verified\n";
+					$user = new Model\User( $request['phone'], $conn, $plivo );
+					yield from $user->Load();
+					yield from $user->DoVerify( $request['phone'], $request['password'] );
+					yield from $user->Store();
+					$token = $user->GetActiveToken( $request['password'] );
+					if ( $token ) {
 						$this->send( $clientId, json_encode( [
 							'type'   => 'token',
-							'userId' => $user['id'],
+							'userId' => $user->Id(),
 							'token'  => $token
 						] ) );
-						$this->send( $clientId, json_encode( $this->getPlayerInfo( $user['id'] ) ) );
+						$this->send( $clientId, json_encode( $user->GetPlayerInfo() ) );
+					} else {
+						$this->notify( $clientId, "Please check your sms messages", "Invalid password" );
 					}
+					unset( $user );
 					break;
 				case 'connect':
 					acquire( $request['campaign'] );
@@ -703,7 +547,9 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	}
 
 	public function onClose( int $clientId, int $code, string $reason ) {
-
+		if ( $this->watchers[ $clientId ] ) {
+			Amp\cancel( $this->watchers[ $clientId ] );
+		}
 	}
 
 	public function onStop() {

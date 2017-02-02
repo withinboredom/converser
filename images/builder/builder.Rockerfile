@@ -4,8 +4,6 @@
 
 FROM node:latest
 
-MOUNT ~:/root
-
 ENV YARN_VER=0.19.1
 RUN npm install -g yarn@$YARN_VER
 
@@ -17,11 +15,10 @@ PUSH withinboredom/yarn:latest
 
 FROM withinboredom/yarn:latest
 
-MOUNT ~:/root
 
 COPY ./src/site /app
 
-RUN cd /app/js && yarn && STRIPE_P_KEY={{ .Env.STRIPE_P_KEY}} API_HOST={{ .Env.API_HOST }} NODE_ENV=production node_modules/.bin/webpack -p && rm -rf /app/js
+RUN cd /app/js && yarn && CALL={{ .Env.CALL }} STRIPE_P_KEY={{ .Env.STRIPE_P_KEY}} API_HOST={{ .Env.API_HOST }} NODE_ENV=production node_modules/.bin/webpack -p && rm -rf /app/js
 EXPORT /app
 
 ##############################
@@ -58,8 +55,6 @@ PUSH withinboredom/site:latest
 
 FROM php:cli
 
-MOUNT ~:/root
-
 COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
 RUN apt-get update && \
@@ -78,15 +73,20 @@ PUSH withinboredom/composer:latest
 
 FROM withinboredom/composer:latest
 
-MOUNT ~:/root
+COPY src/lib/composer.lock /app/lib/composer.lock
+COPY src/lib/composer.json /app/lib/composer.json
 
-COPY src/api/composer.lock /app/composer.lock
-COPY src/api/composer.json /app/composer.json
+WORKDIR /app/lib
+RUN composer install --no-dev
 
-WORKDIR /app
-RUN composer install
+COPY src/api/composer.lock /app/api/composer.lock
+COPY src/api/composer.json /app/api/composer.json
 
-COPY src/api /app
+WORKDIR /app/api
+RUN composer install --no-dev
+
+COPY src/lib /app/lib
+COPY src/api /app/api
 
 EXPORT /app/ /api
 
@@ -95,8 +95,6 @@ EXPORT /app/ /api
 ##############################
 
 FROM php:cli
-
-MOUNT ~:/root
 
 COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
 
@@ -112,15 +110,15 @@ RUN echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sou
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf php-uv && \
     docker-php-ext-enable uv && \
+    rm -rf php-uv && \
     docker-php-source delete
 
 IMPORT /api/ /app
 
 USER nobody
 
-CMD ["/app/vendor/amphp/aerys/bin/aerys","-c","/app/index.php"]
+CMD ["/app/api/vendor/amphp/aerys/bin/aerys","-c","/app/api/index.php"]
 
 USER root
 
@@ -133,12 +131,10 @@ PUSH withinboredom/api:latest
 
 FROM withinboredom/composer:latest
 
-MOUNT ~:/root
-
 COPY src/engine/composer.lock /var/www/html/composer.lock
 COPY src/engine/composer.json /var/www/html/composer.json
 
-RUN cd /var/www/html && composer install
+RUN cd /var/www/html && composer install --no-dev
 
 COPY src/engine /var/www/html
 

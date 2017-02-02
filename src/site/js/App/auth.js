@@ -22,9 +22,11 @@ websocket.onopen = (event) => {
     }
 
     if (getToken()) {
+        const t = getToken();
         send({
             command: 'refresh',
-            token: getToken()
+            token: t.token,
+            userId: t.userId
         });
     }
     else {
@@ -64,12 +66,14 @@ let isRefreshing = false;
 const autoRefresh = () => {
     if (player && !isRefreshing) {
         isRefreshing = true;
-        setInterval(() => {
+        /*setInterval(() => {
+            const t = getToken();
             send({
                 command: 'refresh',
-                token: getToken()
+                token: t.token,
+                userId: t.userId
             });
-        }, 5000);
+        }, 5000);*/
     }
 };
 
@@ -200,9 +204,11 @@ const loggedIn = () => {
 };
 
 const makePayment = (packageId, payToken) => {
+    const t = getToken();
     send({
         command: 'pay',
-        token: getToken(),
+        token: t.token,
+        userId: t.userId,
         packageId,
         payToken
     });

@@ -1,13 +1,20 @@
 version: '2'
 services:
+  api-volumes:
+    image: ubuntu:16.10
+    volumes:
+      - ./src/api:/app/api
+      - ./src/lib:/app/lib
+      - api_vendor:/app/api/vendor
+      - lib_vendor:/app/lib/vendor
+      - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
   api-builder:
     image: withinboredom/composer:latest
-    volumes:
-      - ./src/api:/app
-      - api_vendor:/app/vendor
-    command: bash -c "cd /app && exec composer install"
+    volumes_from:
+      - api-volumes
+    command: bash -c "cd /app/lib && composer install && cd /app/api && exec composer install"
   api:
-    image: quay.io/withinboredom/api:latest
+    image: withinboredom/api:latest
     environment:
       - SMS
       - CALL
@@ -15,14 +22,15 @@ services:
       - STRIPE_KEY
       - PLIVO_ID
       - PLIVO_TOKEN
-    volumes:
-      - ./src/api:/app
-      - api_vendor:/app/vendor
+      - DB_HOST
+    volumes_from:
+      - api-volumes
     depends_on:
       - rethunk
       - api-builder
     ports:
       - '1337:1337'
+    command: bash -c "cd /app/api && /app/api/vendor/amphp/aerys/bin/aerys -c /app/api/index.php"
   engine-builder:
     image: withinboredom/composer:latest
     volumes:
@@ -30,7 +38,7 @@ services:
       - engine_vendor:/var/www/html/vendor
     command: bash -c "cd /var/www/html && exec composer install"
   engine:
-    image: quay.io/withinboredom/engine:latest
+    image: withinboredom/engine:latest
     environment:
       - SMS
       - CALL
@@ -50,12 +58,13 @@ services:
     environment:
       - STRIPE_P_KEY
       - API_HOST
+      - CALL
     volumes:
       - ./src/site:/app
       - node_modules:/app/js/node_modules
-    command: bash -c "cd /app/js && yarn && node_modules/.bin/webpack"
+    command: bash -c "cd /app/js && yarn && node_modules/.bin/webpack -w"
   web:
-    image: quay.io/withinboredom/site:latest
+    image: withinboredom/site:latest
     extends: web-builder
     depends_on:
       - web-builder
@@ -65,8 +74,10 @@ services:
   rethunk:
     image: rethinkdb:latest
     ports:
-      - '9000:8080'
+      - '8080:8080'
+      - '28015:28015'
 volumes:
   api_vendor:
   engine_vendor:
+  lib_vendor:
   node_modules:
