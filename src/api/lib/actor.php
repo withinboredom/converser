@@ -68,15 +68,33 @@ abstract class Actor {
 	private $storagePromise = null;
 
 	/**
+	 * @var r\Queries\Tables\Table
+	 */
+	private $r;
+
+	/**
+	 * @var r\Queries\Tables\Table
+	 */
+	private $rSnapshots;
+
+	/**
+	 * @var Container
+	 */
+	protected $container;
+
+	/**
 	 * Actor constructor.
 	 *
 	 * @param $id string Id of actor to load
-	 * @param $conn r\Connection A connection to a rql db
+	 * @param Container $container The injection container
 	 */
-	public function __construct( $id, $conn ) {
-		$this->conn = $conn;
+	public function __construct( $id, Container $container ) {
+		$this->r = $container->records;
+		$this->rSnapshots = $container->snapshots;
+		$this->container = $container;
+
+		$this->conn = $container->conn;
 		$this->id   = get_class( $this ) . '_' . $id;
-		//Amp\coroutine([ $this, 'Load'];
 	}
 
 	/**
@@ -87,8 +105,7 @@ abstract class Actor {
 	 * @return \Generator
 	 */
 	public function Load( callable $callback = null ) {
-		$latestSnapshot = yield r\db( 'records' )
-			->table( 'snapshots' )
+		$latestSnapshot = yield $this->rSnapshots
 			->get( $this->id )
 			->run( $this->conn );
 
@@ -129,24 +146,6 @@ abstract class Actor {
 		foreach ( $listener as $change ) {
 			var_dump( $change );
 		}
-
-		/*Amp\immediately( function () use ( $listener, $callback ) {
-			$check = $listener->changes();
-
-			$isChanges      = $check->current();
-			$firstIteration = true;
-
-			$this->repeater[] = Amp\repeat( function () use ( $check, $listener, $callback, $isChanges, $firstIteration ) {
-				$isChanges = $check->current();
-				var_dump( $isChanges );
-				if ( $isChanges ) {
-					if ( $callback ) {
-						$callback( $isChanges );
-					}
-				}
-				$check->next();
-			}, 1000 );
-		} );*/
 	}
 
 

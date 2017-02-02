@@ -1,6 +1,7 @@
 <?php
 
 require_once 'lib/user.php';
+require_once 'lib/container.php';
 
 use Aerys\{
 	Host, Request, Response, Router, Websocket, function root, function router, function websocket
@@ -190,6 +191,13 @@ $router = router()
 		$res->end( "<html><body><h1>Hello, world. yo...</h1></body></html>" );
 	} );
 
+global $container;
+$container            = new \Model\Container();
+$container->snapshots = r\db( 'records' )->table( 'snapshots' );
+$container->records   = r\db( 'records' )->table( 'events' );
+$container->conn      = $conn;
+$container->plivo     = $plivo;
+
 $websocket = websocket( new class implements Aerys\Websocket {
 	/**
 	 * @var Websocket\Endpoint;
@@ -198,9 +206,15 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	private $connection = [];
 	private $watchers = [];
 
+	/**
+	 * @var Model\Container
+	 */
+	private $container;
+
 	public function __construct() {
-		global $conn;
+		global $container;
 		$p = Amp\coroutine( 'prep' )();
+		$this->container = $container;
 	}
 
 	/**
@@ -331,16 +345,14 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	}
 
 	public function onData( int $clientId, Websocket\Message $msg ) {
-		global $plivo, $conn;
 		$request = json_decode( yield $msg, true );
 		if ( isset( $request['token'] ) && isset( $request['userId'] ) ) {
-			$user = new Model\User( $request['userId'], $conn, $plivo );
+			$user = new Model\User( $request['userId'], $this->container );
 			yield from $user->Load();
 			if ( $user->GetActiveToken() === $request['token'] ) {
 				if ( ! isset( $this->watchers[ $clientId ] ) ) {
 					$id                          = Amp\repeat( function ( $watcherId, $data ) {
-						global $conn, $plivo;
-						$user = new Model\User( $data['user'], $conn, $plivo );
+						$user = new Model\User( $data['user'], $this->container );
 						yield from $user->Load();
 						$this->send( $data['clientId'], json_encode( $user->GetPlayerInfo() ) );
 						unset ( $user );
@@ -363,30 +375,10 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			}
 
 			unset( $user );
-			/*if ( $this->isVerified( $request['token']['userId'], $clientId, $request['token'] ) ) {
-				switch ( $request['command'] ) {
-					case 'logout':
-						$this->invalidate( $request['token'] );
-						break;
-					case 'refresh':
-						$this->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
-						break;
-					case 'pay':
-						$userId = $request['token']['userId'];
-						echo "Preparing to accept payment from $userId for ${request['packageId']}\n";
-						if ( $this->pay( $request['token']['userId'], $request['payToken'], $request['packageId'], $clientId ) ) {
-							$this->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
-						}
-						break;
-				}
-			} else {
-				echo "Not verified\n";
-				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
-			}*/
 		} else {
 			switch ( $request['command'] ) {
 				case 'login':
-					$user = new Model\User( $request['phone'], $conn, $plivo );
+					$user = new Model\User( $request['phone'], $this->container );
 					yield from $user->Load();
 					yield from $user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
 					//yield from $user->Store();
@@ -399,7 +391,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					unset( $user );
 					break;
 				case 'verify':
-					$user = new Model\User( $request['phone'], $conn, $plivo );
+					$user = new Model\User( $request['phone'], $this->container );
 					yield from $user->Load();
 					yield from $user->DoVerify( $request['phone'], $request['password'] );
 					yield from $user->Store();
@@ -436,8 +428,16 @@ $websocket = websocket( new class implements Aerys\Websocket {
 
 $router->get( "/ws", $websocket );
 
-$router->get( "/sms.php", function ( Aerys\Request $request, Aerys\Response $response, $args ) {
+$router->get( "/sms", function ( Aerys\Request $request, Aerys\Response $response, $args ) {
+	global $container;
+	$from = $request->getParam( 'From' );
+	$to   = $request->getParam( 'To' );
+	$text = $request->getParam( 'Text' );
 
+	$user = new \Model\User( $from, $container );
+	yield from $user->Load();
+	yield $user->DoRecordSms( $from, $to, $text );
+	$response->end("");
 } );
 
 $router->get( "/health", function ( Aerys\Request $request, Aerys\Response $response ) {
@@ -460,9 +460,5 @@ $router->get( "/health", function ( Aerys\Request $request, Aerys\Response $resp
 $fallback = function ( Request $req, Response $res ) {
 	$res->end( "{\"hello\": \"I don't know! \\o/\"}" );
 };
-
-const AERYS_OPTIONS = [
-	'maxConcurrentStreams' => 100,
-];
 
 ( new Host )->expose( "*", 1337 )->use( $router )->use( $fallback );

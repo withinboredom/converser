@@ -4,6 +4,7 @@ namespace Model;
 
 use r;
 use Amp;
+use Plivo;
 
 require_once 'actor.php';
 require_once 'payment.php';
@@ -18,14 +19,16 @@ class User extends Actor {
 	 * User constructor.
 	 *
 	 * @param string $id
-	 * @param r\Connection $conn
+	 * @param Container $container
 	 * @param $plivo
+	 *
+	 * @internal param r\Connection $conn
 	 */
-	public function __construct( $id, $conn, $plivo ) {
+	public function __construct( $id, Container $container ) {
 		$id = self::cleanPhone( $id );
-		parent::__construct( $id, $conn );
+		parent::__construct( $id, $container );
 
-		$this->plivo = $plivo;
+		$this->plivo = $container->plivo;
 	}
 
 	/**
@@ -180,7 +183,7 @@ class User extends Actor {
 		] );
 	}
 
-	public function attempt_payment( $data ) {
+	protected function attempt_payment( $data ) {
 		$this->state['payments'][] = $data['paymentId'];
 
 		// no need to process the payment domain if we already got it.
@@ -205,7 +208,7 @@ class User extends Actor {
 		return $promise;
 	}
 
-	public function set_lives( $data ) {
+	protected function set_lives( $data ) {
 		$this->state['lives'] = $data['lives'];
 	}
 
@@ -236,6 +239,26 @@ class User extends Actor {
 			'status' => $this->state['status'],
 			'userId' => $this->Id()
 		];
+	}
+
+	public function DoRecordSms( $from, $to, $text ) {
+		$response = "Thank you for your message, it has been stored. We will review it and get back to you as soon as possible.";
+
+		$this->plivo->send_message( [
+			'src'  => $to,
+			'dst'  => $from,
+			'text' => $response
+		] );
+
+		$this->Fire('received_message', [
+			'from' => $from,
+			'to' => $to,
+			'text' => $text
+		]);
+
+		$this->Fire('sent_message', [
+			'text' => $response
+		]);
 	}
 
 	/**
