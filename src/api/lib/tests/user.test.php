@@ -116,5 +116,11 @@ $loggedInUser = [
 			],
 			'packageId' => 1,
 			'paymentId' => 'uuid'
+		],
+		'set_lives' => [
+			'lives' => 1,
+			'payment_for_lives' => 1,
+			'from_payment' => 'uuid',
+			'amount_paid' => 136
 		]
 	]);

@@ -8,12 +8,27 @@
 
 namespace Model\Test;
 
+error_reporting(E_ALL);
+
+function errHandle($errNo, $errStr, $errFile, $errLine) {
+	$msg = "$errStr in $errFile on line $errLine";
+	if ($errNo == E_NOTICE || $errNo == E_WARNING) {
+		throw new \ErrorException($msg, $errNo);
+	} else {
+		echo $msg;
+	}
+}
+
+set_error_handler('Model\Test\errHandle');
+
 require_once 'vendor/autoload.php';
 require_once 'lib/container.php';
 require_once 'lib/rqlStorage.php';
+require_once 'lib/memStorage.php';
 
 use Model\Container;
 use Amp;
+use Model\MemStorage;
 use Model\RqlStorage;
 use r\Exceptions\RqlDriverError;
 
@@ -67,9 +82,10 @@ class When {
 		$container->plivo     = new DB();
 		$container->R         = new Db();
 		$container->charge    = 'Model\Test\Charge';
-		$container->storage   = new RqlStorage( $container );
+		$container->storage   = new MemStorage( $container );
 		$model                = $this->model;
-		$UT                   = new $model( 'FAKE', $container );
+		$UT                   = new $model( '123456789', $container );
+		$container->storage->Inject( $UT->Id( true ), $this->previous );
 
 		$action = $this->action;
 		Amp\Run( function () use ( $UT, $action, $expected ) {
@@ -95,6 +111,7 @@ class When {
 		}, $this->previous ), true ) );
 
 		$climate->blue()->out( "When `$this->action`, Then," );
+		$failed = false;
 		foreach ( $results as $event ) {
 			if ( ! isset( $expected[ $event['name'] ] ) ) {
 				$climate->red()->out( "Event '<light_blue>" . $event['name'] . "</light_blue>' appears to be unexpected" );
@@ -120,6 +137,7 @@ class When {
 					foreach ( $expected[ $event['name'] ] as $key => $value ) {
 						if ( isset( $flags[ $key ] ) ) {
 							$climate->red()->out( "  <blue>'$key'</blue> => ($value != ${flags[$key]})" );
+							$failed = true;
 							$output[ $key ] = true;
 						} else {
 							$climate->green()->out( "  <blue>'$key'</blue> => " . \print_r( $value, true ) );
@@ -131,6 +149,7 @@ class When {
 						if ( isset( $flags[ $key ] ) ) {
 							if ( ! isset( $output[ $key ] ) ) {
 								$climate->red()->out( "  <blue>'$key'</blue> => (unset != " . \print_r( $flags[ $key ], true ) . ' )' );
+								$failed = true;
 								$output[ $key ] = true;
 							}
 						}
@@ -139,6 +158,10 @@ class When {
 					$climate->out( "]" );
 				}
 			}
+		}
+		if ($failed) {
+			$climate->red()->out("\nTest Failed");
+			throw new \Exception("Test Failed");
 		}
 	}
 }
@@ -174,7 +197,7 @@ class Given {
 		$version = 0;
 		foreach ( $events as $name => $data ) {
 			$ret[] = [
-				'model_id' => 'FAKE',
+				'model_id' => '123456789',
 				'version'  => $version ++,
 				'type'     => 'event',
 				'name'     => $name,

@@ -155,9 +155,9 @@ abstract class Actor {
 		$this->Close();
 
 		if ( $this->storagePromise ) {
-			yield $this->storagePromise->promise();
+			$result = yield $this->storagePromise->promise();
 
-			return;
+			return $result;
 		}
 
 		$deferred = new Amp\deferred();
@@ -174,7 +174,11 @@ abstract class Actor {
 
 		yield from $store;
 
-		return yield $deferred->promise();
+		$result = yield $deferred->promise();
+
+		yield from $this->Load();
+
+		return $result;
 	}
 
 	/**
