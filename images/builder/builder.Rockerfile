@@ -112,7 +112,7 @@ IMPORT /api/ /app
 USER nobody
 
 # Run tests
-RUN cd /app/api && php/lib/tests/run_all.php
+RUN cd /app/api && php lib/tests/run_all.php
 
 CMD ["/app/api/vendor/amphp/aerys/bin/aerys","-c","/app/api/index.php"]
 
