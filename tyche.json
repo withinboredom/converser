@@ -76,15 +76,6 @@
                   "working": "src/engine"
                 }
               }
-            },
-            {
-              "name": "install-lib",
-              "exec": {
-                "native": {
-                  "command": ["composer","install"],
-                  "working": "src/lib"
-                }
-              }
             }
           ]
         },

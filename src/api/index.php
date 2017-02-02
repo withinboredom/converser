@@ -1,6 +1,8 @@
 <?php
 
-require_once '../lib/user.php';
+require_once 'lib/user.php';
+require_once 'lib/container.php';
+require_once 'lib/rqlStorage.php';
 
 use Aerys\{
 	Host, Request, Response, Router, Websocket, function root, function router, function websocket
@@ -190,6 +192,19 @@ $router = router()
 		$res->end( "<html><body><h1>Hello, world. yo...</h1></body></html>" );
 	} );
 
+global $container;
+$container            = new \Model\Container();
+$container->snapshots = r\db( 'records' )->table( 'snapshots' );
+$container->records   = r\db( 'records' )->table( 'events' );
+$container->conn      = $conn;
+$container->plivo     = $plivo;
+$container->uuid      = r\uuid();
+$container->R         = r\db( DB_NAME );
+$container->charge    = 'Stripe\Charge';
+$container->storage   = new \Model\RqlStorage( $container );
+
+Stripe\Stripe::setApiKey( STRIPE_KEY );
+
 $websocket = websocket( new class implements Aerys\Websocket {
 	/**
 	 * @var Websocket\Endpoint;
@@ -198,9 +213,15 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	private $connection = [];
 	private $watchers = [];
 
+	/**
+	 * @var Model\Container
+	 */
+	private $container;
+
 	public function __construct() {
-		global $conn;
+		global $container;
 		$p = Amp\coroutine( 'prep' )();
+		$this->container = $container;
 	}
 
 	/**
@@ -212,129 +233,6 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	 */
 	private function cleanPhone( string $phone ): string {
 		return preg_replace( '/\D+/', '', $phone );
-	}
-
-	/**
-	 * Takes money from people
-	 *
-	 * @param string $userId The user's id
-	 * @param string $payToken The payment token from the request
-	 * @param int $packageId The package to purchase
-	 *
-	 * @return bool Whether or not the charge was successful
-	 */
-	private function pay( $userId, $payToken, $packageId, $clientId ) {
-		global $conn;
-		//todo: make these not hard coded
-		$packages = [
-			1 => [
-				'cost'        => 100,
-				'description' => '1 life',
-				'lives'       => 1
-			],
-			2 => [
-				'cost'        => 300,
-				'description' => '3 lives',
-				'lives'       => 3
-			],
-			3 => [
-				'cost'        => 2000,
-				'description' => '25 lives',
-				'lives'       => 25
-			]
-		];
-
-		$package = $packages[ $packageId ];
-
-		$attempt = r\uuid()->run( $conn );
-
-		$payment = [
-			'amount'      => $package['cost'],
-			'currency'    => 'usd',
-			'source'      => $payToken['id'],
-			'description' => $package['description'],
-			'metadata'    => [
-				'user_id'    => $userId,
-				'attempt_id' => $attempt
-			]
-		];
-
-		Stripe\Stripe::setApiKey( STRIPE_KEY );
-
-		event( [
-			'type'        => 'payment_attempt',
-			'amount'      => $package['cost'],
-			'currency'    => 'usd',
-			'source'      => $payToken['id'],
-			'description' => $package['description'],
-			'user_id'     => $userId,
-			'attempt_id'  => $attempt,
-			'request'     => $this->connection[ $clientId ]
-		] );
-
-		try {
-			$charge = Stripe\Charge::create( $payment );
-
-			// breaks for good reasons
-			if ( $charge->outcome->risk_level == 'elevated' ) {
-				$this->notify( $clientId, 'Please try a different card', 'Payment Failed' );
-				event( [
-					'type'       => 'payment_fraud',
-					'data'       => json_decode( json_encode( $charge ) ),
-					'attempt_id' => $attempt,
-					'user_id'    => $userId
-				] );
-
-				return false;
-			}
-
-			if ( $charge->amount === $payment['amount'] ) {
-				echo "Increasing ${userId} lives by ${package['lives']}\n";
-				// update the user object
-				r\db( DB_NAME )->table( 'users' )->get( $userId )->update( [
-					'lives' => r\row( 'lives' )->add( $package['lives'] )->rDefault( 0 )
-				] )->run( $conn );
-
-				event( [
-					'type'       => 'payment_success',
-					'data'       => json_decode( json_encode( $charge ) ),
-					'attempt_id' => $attempt,
-					'user_id'    => $userId
-				] );
-
-				return true;
-			} else if ( $charge->captured ) {
-				echo "$userId charge was partial, refunding\n";
-				event( [
-					'type'       => 'payment_partial',
-					'data'       => json_decode( json_encode( $charge ) ),
-					'attempt_id' => $attempt,
-					'user_id'    => $userId
-				] );
-				//todo: refund & fail;
-			} else {
-				echo "$userId charge failed\n";
-				event( [
-					'type'       => 'payment_failure',
-					'data'       => json_decode( json_encode( $charge ) ),
-					'attempt_id' => $attempt,
-					'user_id'    => $userId
-				] );
-				//todo: fail
-			}
-		} catch ( Exception $exception ) {
-			//todo: fail
-			echo "$userId Charge failed for reason: (${payToken})\n";
-			echo $exception->getMessage() . "\n";
-			event( [
-				'type'       => 'payment_exception',
-				'data'       => $exception->getMessage(),
-				'attempt_id' => $attempt,
-				'user_id'    => $userId
-			] );
-		}
-
-		return false;
 	}
 
 	private function getRank( $phone ) {
@@ -454,16 +352,14 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	}
 
 	public function onData( int $clientId, Websocket\Message $msg ) {
-		global $plivo, $conn;
 		$request = json_decode( yield $msg, true );
 		if ( isset( $request['token'] ) && isset( $request['userId'] ) ) {
-			$user = new Model\User( $request['userId'], $conn, $plivo );
+			$user = new Model\User( $request['userId'], $this->container );
 			yield from $user->Load();
 			if ( $user->GetActiveToken() === $request['token'] ) {
-				if ( ! isset($this->watchers[ $clientId ]) ) {
+				if ( ! isset( $this->watchers[ $clientId ] ) ) {
 					$id                          = Amp\repeat( function ( $watcherId, $data ) {
-						global $conn, $plivo;
-						$user = new Model\User( $data['user'], $conn, $plivo );
+						$user = new Model\User( $data['user'], $this->container );
 						yield from $user->Load();
 						$this->send( $data['clientId'], json_encode( $user->GetPlayerInfo() ) );
 						unset ( $user );
@@ -486,30 +382,10 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			}
 
 			unset( $user );
-			/*if ( $this->isVerified( $request['token']['userId'], $clientId, $request['token'] ) ) {
-				switch ( $request['command'] ) {
-					case 'logout':
-						$this->invalidate( $request['token'] );
-						break;
-					case 'refresh':
-						$this->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
-						break;
-					case 'pay':
-						$userId = $request['token']['userId'];
-						echo "Preparing to accept payment from $userId for ${request['packageId']}\n";
-						if ( $this->pay( $request['token']['userId'], $request['payToken'], $request['packageId'], $clientId ) ) {
-							$this->send( $clientId, json_encode( $this->getPlayerInfo( $request['token']['userId'] ) ) );
-						}
-						break;
-				}
-			} else {
-				echo "Not verified\n";
-				$this->send( $clientId, json_encode( [ 'type' => 'logout' ] ) );
-			}*/
 		} else {
 			switch ( $request['command'] ) {
 				case 'login':
-					$user = new Model\User( $request['phone'], $conn, $plivo );
+					$user = new Model\User( $request['phone'], $this->container );
 					yield from $user->Load();
 					yield from $user->DoLogin( $request['phone'], $this->connection[ $clientId ] );
 					//yield from $user->Store();
@@ -522,7 +398,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 					unset( $user );
 					break;
 				case 'verify':
-					$user = new Model\User( $request['phone'], $conn, $plivo );
+					$user = new Model\User( $request['phone'], $this->container );
 					yield from $user->Load();
 					yield from $user->DoVerify( $request['phone'], $request['password'] );
 					yield from $user->Store();
@@ -559,12 +435,38 @@ $websocket = websocket( new class implements Aerys\Websocket {
 
 $router->get( "/ws", $websocket );
 
+$router->get( "/sms", function ( Aerys\Request $request, Aerys\Response $response, $args ) {
+	global $container;
+	$from = $request->getParam( 'From' );
+	$to   = $request->getParam( 'To' );
+	$text = $request->getParam( 'Text' );
+
+	$response->end( "" );
+
+	$user = new \Model\User( $from, $container );
+	yield from $user->Load();
+	yield $user->DoRecordSms( $from, $to, $text );
+} );
+
+$router->get( "/health", function ( Aerys\Request $request, Aerys\Response $response ) {
+	global $conn;
+	// determine the health of this node
+	$code    = 200;
+	$message = "I'm OK!";
+	if ( ! $conn->isOpen() ) {
+		$code    = 500;
+		$message = "I can't see!";
+	}
+	$response->setStatus( $code );
+	$response->end( $message );
+} );
+
 // If none of our routes match try to serve a static file
 //$root = root( $docrootPath = __DIR__ );
 
 // If no static files match fallback to this
 $fallback = function ( Request $req, Response $res ) {
-	$res->end( "<html><body><h1>I don't know! \o/</h1></body></html>" );
+	$res->end( "{\"hello\": \"I don't know! \\o/\"}" );
 };
 
 ( new Host )->expose( "*", 1337 )->use( $router )->use( $fallback );

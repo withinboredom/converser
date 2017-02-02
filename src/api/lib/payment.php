@@ -11,7 +11,7 @@ class Payment extends Actor {
 
 	private $buckets;
 
-	public function __construct( $id, r\Connection $conn ) {
+	public function __construct( $id, Container $conn ) {
 		parent::__construct( $id, $conn );
 
 		$this->buckets = [
@@ -52,7 +52,7 @@ class Payment extends Actor {
 
 	public function DoPay( $userId, $payToken, $packageId ) {
 		$package = $this->buckets['packages'][ $packageId ];
-		$attempt = yield r\uuid()->run( $this->conn );
+		$attempt = yield $this->container->uuid->run( $this->conn );
 		$payment = [
 			'amount'      => $package['cost'],
 			'currency'    => 'usd',
@@ -77,15 +77,15 @@ class Payment extends Actor {
 
 		$this->Fire( 'payment_attempt', $data );
 
-		Stripe\Stripe::setApiKey( STRIPE_KEY );
-
 		$this->state['payment_status'] = 'attempt';
 		$this->state['attempt_id']     = $attempt;
 		$this->state['package_id']     = $packageId;
 		$this->state['amount']         = $package['cost'];
 
 		try {
-			$charge = Stripe\Charge::create( $payment );
+			$stripe = $this->container->charge;
+			$charge = $stripe::create( $payment );
+
 			// breaks for good reasons
 			if ( $charge->outcome->risk_level == 'elevated' ) {
 				//$this->notify( $clientId, 'Please try a different card', 'Payment Failed' );
@@ -130,17 +130,17 @@ class Payment extends Actor {
 		}
 	}
 
-	public function payment_attempt() {
+	protected function payment_attempt() {
 		$this->state['total_lives'] = isset( $this->state['total_lives'] )
 			? $this->state['total_lives']
 			: 0;
 	}
 
-	public function payment_fraud() {
+	protected function payment_fraud() {
 		$this->state['payment_status'] = 'too_risky';
 	}
 
-	public function payment_success( $data ) {
+	protected function payment_success( $data ) {
 		$this->state['payment_status'] = 'success';
 		$this->state['amount']         = $data['amount'];
 		if ( ! isset( $this->state['total_lives'] ) ) {
@@ -149,15 +149,15 @@ class Payment extends Actor {
 		$this->state['total_lives'] += $data['lives'];
 	}
 
-	public function payment_partial() {
+	protected function payment_partial() {
 		$this->state['payment_status'] = 'partial_success';
 	}
 
-	public function payment_failed() {
+	protected function payment_failed() {
 		$this->state['payment_status'] = 'failed';
 	}
 
-	public function payment_exception() {
+	protected function payment_exception() {
 		$this->state['payment_status'] = 'exception';
 	}
 
@@ -173,7 +173,7 @@ class Payment extends Actor {
 	 * Projects the current state
 	 */
 	protected function Project() {
-		r\db( DB_NAME )
+		$this->container->R
 			->table( 'payments' )
 			->get( $this->Id() )
 			->replace( [

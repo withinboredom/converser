@@ -58,25 +58,38 @@ abstract class Actor {
 	private $firing = [];
 
 	/**
-	 * @var bool Whether the actor is firing events or not
-	 */
-	private $isFiring = false;
-
-	/**
 	 * @var null|Amp\Promisor Allow cojoining storages
 	 */
 	private $storagePromise = null;
 
 	/**
+	 * @var r\Queries\Tables\Table
+	 */
+	private $r;
+
+	/**
+	 * @var r\Queries\Tables\Table
+	 */
+	private $rSnapshots;
+
+	/**
+	 * @var Container
+	 */
+	protected $container;
+
+	/**
 	 * Actor constructor.
 	 *
 	 * @param $id string Id of actor to load
-	 * @param $conn r\Connection A connection to a rql db
+	 * @param Container $container The injection container
 	 */
-	public function __construct( $id, $conn ) {
-		$this->conn = $conn;
+	public function __construct( $id, Container $container ) {
+		$this->r          = $container->records;
+		$this->rSnapshots = $container->snapshots;
+		$this->container  = $container;
+
+		$this->conn = $container->conn;
 		$this->id   = get_class( $this ) . '_' . $id;
-		//Amp\coroutine([ $this, 'Load'];
 	}
 
 	/**
@@ -87,10 +100,8 @@ abstract class Actor {
 	 * @return \Generator
 	 */
 	public function Load( callable $callback = null ) {
-		$latestSnapshot = yield r\db( 'records' )
-			->table( 'snapshots' )
-			->get( $this->id )
-			->run( $this->conn );
+
+		$latestSnapshot = yield $this->container->storage->LoadSnapshot( $this->id );
 
 		if ( $latestSnapshot ) {
 			$this->state       = $latestSnapshot['state'];
@@ -100,12 +111,7 @@ abstract class Actor {
 			$this->nextVersion = 0;
 		}
 
-		$this->records = yield r\db( 'records' )
-			->table( 'events' )
-			->getAll( $this->id, [ 'index' => 'model_id' ] )
-			->filter( r\row( 'version' )->gt( $latestSnapshot['version'] ) )
-			->orderBy( 'version' )
-			->run( $this->conn );
+		$this->records = yield $this->container->storage->LoadEvents( $this->id, $latestSnapshot['version'] );
 
 		yield from $this->ReduceEvents();
 		if ( $callback ) {
@@ -120,8 +126,7 @@ abstract class Actor {
 	 * @return \Generator
 	 */
 	protected function ListenForId( $id, $callback ) {
-		$listener = yield r\db( 'records' )
-			->table( 'events' )
+		$listener = yield $this->r
 			->filter( [ 'model_id' => $id ] )
 			->changes( [ 'include_initial' => false, 'squash' => true ] )
 			->run( $this->conn );
@@ -129,24 +134,6 @@ abstract class Actor {
 		foreach ( $listener as $change ) {
 			var_dump( $change );
 		}
-
-		/*Amp\immediately( function () use ( $listener, $callback ) {
-			$check = $listener->changes();
-
-			$isChanges      = $check->current();
-			$firstIteration = true;
-
-			$this->repeater[] = Amp\repeat( function () use ( $check, $listener, $callback, $isChanges, $firstIteration ) {
-				$isChanges = $check->current();
-				var_dump( $isChanges );
-				if ( $isChanges ) {
-					if ( $callback ) {
-						$callback( $isChanges );
-					}
-				}
-				$check->next();
-			}, 1000 );
-		} );*/
 	}
 
 
@@ -168,56 +155,30 @@ abstract class Actor {
 		$this->Close();
 
 		if ( $this->storagePromise ) {
-			yield $this->storagePromise->promise();
+			$result = yield $this->storagePromise->promise();
 
-			return;
+			return $result;
 		}
 
 		$deferred = new Amp\deferred();
 
 		$this->storagePromise = $deferred;
 
-		$store = function () use ( $callback, $deferred ) {
-			while ( count( $this->firing ) > 0 || $this->isFiring ) {
-				yield;
-			}
-
-			$toStore = array_filter( $this->records, function ( $record ) {
-				return ! $record['stored'];
-			} );
-
-			foreach ( $toStore as $event ) {
-				$event['stored'] = true;
-				yield r\db( 'records' )
-					->table( 'events' )
-					->insert( $event )
-					->run( $this->conn );
-			}
-
+		$this->container->storage->SetProjector( $this->id, function () {
 			$this->Project();
+		} );
+		$this->container->storage->SetSnapshot( $this->id, function() {
+			yield from $this->Snapshot();
+		} );
+		$store = $this->container->storage->Store( $this->id, $this->records, $callback, $deferred );
 
-			if ( count( $this->records ) >= $this->optimizeAt ) {
-				$snapshot = [
-					'id'      => $this->id,
-					'state'   => $this->Snapshot(),
-					'version' => $this->nextVersion - 1
-				];
-				r\db( 'records' )
-					->table( 'snapshots' )
-					->get( $this->id )
-					->replace( $snapshot )
-					->run( $this->conn );
-			}
+		yield from $store;
 
-			yield from $this->Load( $callback );
+		$result = yield $deferred->promise();
 
-			$this->storagePromise = null;
-			$deferred->succeed();
-		};
+		yield from $this->Load();
 
-		Amp\immediately( $store );
-
-		yield $deferred->promise();
+		return $result;
 	}
 
 	/**
@@ -300,11 +261,11 @@ abstract class Actor {
 	 */
 	public function Fire( $name, $data ) {
 		$fire = function () {
-			if ( $this->isFiring === 1 ) {
+			if ( $this->container->storage->isHardLocked( $this->id ) ) {
 				return;
 			}
 
-			$this->isFiring = 1;
+			$this->container->storage->HardLock( $this->id );
 
 			while ( true ) {
 				$toFire = array_shift( $this->firing );
@@ -319,14 +280,14 @@ abstract class Actor {
 					break;
 				}
 			}
-			$this->isFiring = false;
+			$this->container->storage->Unlock( $this->id );
 			yield from $this->Store();
 		};
 
 		if ( ! $this->replaying ) {
 			if ( count( $this->firing ) == 0 ) {
-				if ( $this->isFiring === false ) {
-					$this->isFiring = true;
+				if ( ! $this->container->storage->isLocked( $this->id ) ) {
+					$this->container->storage->SoftLock( $this->id );
 					Amp\immediately( $fire );
 				}
 			}
