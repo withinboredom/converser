@@ -327,8 +327,8 @@ abstract class Actor {
 			if ( count( $this->firing ) == 0 ) {
 				if ( $this->isFiring === false ) {
 					$this->isFiring = true;
+					Amp\immediately( $fire );
 				}
-				Amp\immediately( $fire );
 			}
 
 			$this->firing[] = [
