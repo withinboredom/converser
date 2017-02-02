@@ -213,7 +213,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	private function cleanPhone( string $phone ): string {
 		return preg_replace( '/\D+/', '', $phone );
 	}
-	
+
 	private function getRank( $phone ) {
 		global $conn;
 		$phone = $this->cleanPhone( $phone );
@@ -337,7 +337,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 			$user = new Model\User( $request['userId'], $conn, $plivo );
 			yield from $user->Load();
 			if ( $user->GetActiveToken() === $request['token'] ) {
-				if ( ! isset($this->watchers[ $clientId ]) ) {
+				if ( ! isset( $this->watchers[ $clientId ] ) ) {
 					$id                          = Amp\repeat( function ( $watcherId, $data ) {
 						global $conn, $plivo;
 						$user = new Model\User( $data['user'], $conn, $plivo );
@@ -436,12 +436,33 @@ $websocket = websocket( new class implements Aerys\Websocket {
 
 $router->get( "/ws", $websocket );
 
+$router->get( "/sms.php", function ( Aerys\Request $request, Aerys\Response $response, $args ) {
+
+} );
+
+$router->get( "/health", function ( Aerys\Request $request, Aerys\Response $response ) {
+	global $conn;
+	// determine the health of this node
+	$code    = 200;
+	$message = "I'm OK!";
+	if ( ! $conn->isOpen() ) {
+		$code    = 500;
+		$message = "I can't see!";
+	}
+	$response->setStatus( $code );
+	$response->end( $message );
+} );
+
 // If none of our routes match try to serve a static file
 //$root = root( $docrootPath = __DIR__ );
 
 // If no static files match fallback to this
 $fallback = function ( Request $req, Response $res ) {
-	$res->end( "<html><body><h1>I don't know! \o/</h1></body></html>" );
+	$res->end( "{\"hello\": \"I don't know! \\o/\"}" );
 };
+
+const AERYS_OPTIONS = [
+	'maxConcurrentStreams' => 100,
+];
 
 ( new Host )->expose( "*", 1337 )->use( $router )->use( $fallback );
