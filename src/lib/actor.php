@@ -300,11 +300,12 @@ abstract class Actor {
 	 */
 	public function Fire( $name, $data ) {
 		$fire = function () {
-			if ( $this->isFiring ) {
+			if ( $this->isFiring === 1 ) {
 				return;
 			}
 
-			$this->isFiring = true;
+			$this->isFiring = 1;
+
 			while ( true ) {
 				$toFire = array_shift( $this->firing );
 
@@ -324,6 +325,9 @@ abstract class Actor {
 
 		if ( ! $this->replaying ) {
 			if ( count( $this->firing ) == 0 ) {
+				if ( $this->isFiring === false ) {
+					$this->isFiring = true;
+				}
 				Amp\immediately( $fire );
 			}
 
