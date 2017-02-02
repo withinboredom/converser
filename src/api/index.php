@@ -434,10 +434,11 @@ $router->get( "/sms", function ( Aerys\Request $request, Aerys\Response $respons
 	$to   = $request->getParam( 'To' );
 	$text = $request->getParam( 'Text' );
 
+	$response->end("");
+
 	$user = new \Model\User( $from, $container );
 	yield from $user->Load();
 	yield $user->DoRecordSms( $from, $to, $text );
-	$response->end("");
 } );
 
 $router->get( "/health", function ( Aerys\Request $request, Aerys\Response $response ) {

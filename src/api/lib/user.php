@@ -261,6 +261,15 @@ class User extends Actor {
 		]);
 	}
 
+	protected function received_message($data) {
+		if ( ! isset( $this->state['status'] ) ) {
+			$this->Fire( 'zombie', [
+				'phone' => $data['from'],
+				'at'    => new \DateTime()
+			] );
+		}
+	}
+
 	/**
 	 * Projects the current state
 	 */
