@@ -44,6 +44,9 @@ class MemStorage implements iStore {
 
 		foreach ( $toStore as $event ) {
 			$event['stored'] = true;
+			yield;
+			yield;
+			yield;
 			$this->events[$id][] = $event;
 		}
 

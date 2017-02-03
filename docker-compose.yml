@@ -1,16 +1,15 @@
-version: '2'
+version: '3'
 services:
-  api-volumes:
-    image: ubuntu:16.10
+  api-builder:
+    image: withinboredom/composer:latest
     volumes:
       - ./src/api:/app/api
       - api_vendor:/app/api/vendor
       - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
-  api-builder:
-    image: withinboredom/composer:latest
-    volumes_from:
-      - api-volumes
     command: bash -c "cd /app/api && exec composer install"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
   api:
     image: withinboredom/api:latest
     environment:
@@ -21,14 +20,21 @@ services:
       - PLIVO_ID
       - PLIVO_TOKEN
       - DB_HOST
-    volumes_from:
-      - api-volumes
+    volumes:
+      - ./src/api:/app/api
+      - api_vendor:/app/api/vendor
+      - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
     depends_on:
       - rethunk
       - api-builder
     ports:
       - '1337:1337'
     command: bash -c "cd /app/api && /app/api/vendor/amphp/aerys/bin/aerys -c /app/api/index.php"
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints: [ node.role == worker ]
   engine-builder:
     image: withinboredom/composer:latest
     volumes:
@@ -44,7 +50,9 @@ services:
       - STRIPE_KEY
       - PLIVO_ID
       - PLIVO_TOKEN
-    extends: engine-builder
+    volumes:
+      - ./src/engine:/var/www/html
+      - engine_vendor:/var/www/html/vendor
     depends_on:
       - engine-builder
       - rethunk
@@ -63,12 +71,28 @@ services:
     command: bash -c "cd /app/js && yarn && node_modules/.bin/webpack -w"
   web:
     image: withinboredom/site:latest
-    extends: web-builder
+    volumes:
+      - ./src/site:/app
+      - node_modules:/app/js/node_modules
     depends_on:
       - web-builder
     command: /caddy -conf /Caddyfile
     ports:
       - '8090:8080'
+    deploy:
+      mode: replicated
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
   rethunk:
     image: rethinkdb:latest
     ports:
@@ -78,3 +102,7 @@ volumes:
   api_vendor:
   engine_vendor:
   node_modules:
+
+networks:
+  public:
+  private:

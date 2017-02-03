@@ -154,7 +154,7 @@ abstract class Actor {
 	public function Store( callable $callback = null ) {
 		$this->Close();
 
-		if ( $this->storagePromise ) {
+		if ( $this->storagePromise && ! $this->container->storage->isLocked( $this->id ) ) {
 			$result = yield $this->storagePromise->promise();
 
 			return $result;
@@ -167,7 +167,7 @@ abstract class Actor {
 		$this->container->storage->SetProjector( $this->id, function () {
 			$this->Project();
 		} );
-		$this->container->storage->SetSnapshot( $this->id, function() {
+		$this->container->storage->SetSnapshot( $this->id, function () {
 			yield from $this->Snapshot();
 		} );
 		$store = $this->container->storage->Store( $this->id, $this->records, $callback, $deferred );
@@ -175,8 +175,6 @@ abstract class Actor {
 		yield from $store;
 
 		$result = yield $deferred->promise();
-
-		yield from $this->Load();
 
 		return $result;
 	}

@@ -114,7 +114,8 @@ USER nobody
 # Run tests
 RUN cd /app/api && php lib/tests/run_all.php
 
-CMD ["/app/api/vendor/amphp/aerys/bin/aerys","-c","/app/api/index.php"]
+WORKDIR /app/api
+CMD ["vendor/bin/aerys","-c","index.php"]
 
 USER root
 

@@ -108,6 +108,8 @@ class User extends Actor {
 				'at'    => new \DateTime()
 			] );
 		}
+		yield;
+		yield;
 		$this->Fire( 'readied', [
 			'id'       => yield $this->container->uuid->run( $this->conn ),
 			'phone'    => $phone,
