@@ -1,13 +1,33 @@
-version: '2'
+version: '3'
 services:
   api:
     image: withinboredom/api:latest
+    environment:
+      - SMS
+      - CALL
+      - CALL_HOST
+      - STRIPE_KEY
+      - PLIVO_ID
+      - PLIVO_TOKEN
+      - DB_HOST
     depends_on:
       - rethunk
     ports:
       - '1337:1337'
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints: [ node.role == worker ]
   engine:
     image: withinboredom/engine:latest
+    environment:
+      - SMS
+      - CALL
+      - CALL_HOST
+      - STRIPE_KEY
+      - PLIVO_ID
+      - PLIVO_TOKEN
     depends_on:
       - rethunk
     ports:
@@ -16,6 +36,20 @@ services:
     image: withinboredom/site:latest
     ports:
       - '8090:8080'
+    deploy:
+      mode: replicated
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
   rethunk:
     image: rethinkdb:latest
     ports:
