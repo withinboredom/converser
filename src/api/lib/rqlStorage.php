@@ -14,6 +14,7 @@ class RqlStorage implements iStore {
 	private $projectors = [];
 	private $locks = [];
 	private $snaps = [];
+	private $inProgress = [];
 
 	public function __construct( Container $container ) {
 		$this->container = $container;
@@ -56,13 +57,16 @@ class RqlStorage implements iStore {
 	 * @return \Generator
 	 */
 	public function Store( $id, array &$events, $callback, $deferred ): \Generator {
-		while ( $this->isLocked($id) ) {
+		while ( $this->isLocked( $id ) ) {
 			yield;
 		}
 
-		$lastVersion = -1;
-		$toStore = array_filter( $events, function ( $record ) use (&$lastVersion) {
-			$lastVersion = max($lastVersion, $record['version']);
+		$this->inProgress[ $id ] = true;
+
+		$lastVersion = - 1;
+		$toStore     = array_filter( $events, function ( $record ) use ( &$lastVersion ) {
+			$lastVersion = max( $lastVersion, $record['version'] );
+
 			return ! $record['stored'];
 		} );
 
@@ -73,11 +77,11 @@ class RqlStorage implements iStore {
 				->run( $this->container->conn );
 		}
 
-		$projector = $this->projectors[$id];
+		$projector = $this->projectors[ $id ];
 		$projector();
 
 		if ( count( $events ) >= $this->optimizeAt ) {
-			$snapshot = $this->snaps[$id];
+			$snapshot = $this->snaps[ $id ];
 			$snapshot = [
 				'id'      => $id,
 				'state'   => $snapshot(),
@@ -91,48 +95,55 @@ class RqlStorage implements iStore {
 
 		//yield from $this->Load( $callback );
 
+		unset( $this->inProgress[ $id ] );
+
 		yield $deferred->succeed( $toStore );
 
-		$this->UnsetProjector($id);
-		$this->UnsetSnapshot($id);
+		$this->UnsetProjector( $id );
+		$this->UnsetSnapshot( $id );
 	}
 
 	public function SetProjector( $id, $callback ) {
-		$this->projectors[$id] = $callback;
+		$this->projectors[ $id ] = $callback;
 	}
 
 	public function UnsetProjector( $id ) {
-		unset($this->projectors[$id]);
+		unset( $this->projectors[ $id ] );
 	}
 
 	public function SetSnapshot( $id, $callback ) {
-		$this->snaps[$id] = $callback;
+		$this->snaps[ $id ] = $callback;
 	}
 
 	public function UnsetSnapshot( $id ) {
-		unset($this->snaps[$id]);
+		unset( $this->snaps[ $id ] );
 	}
 
 	public function SoftLock( $id ) {
-		$this->locks[$id] = true;
+		$this->locks[ $id ] = true;
 	}
 
 	public function HardLock( $id ) {
-		$this->locks[$id] = 1;
+		$this->locks[ $id ] = 1;
 	}
 
 	public function Unlock( $id ) {
-		unset($this->locks[$id]);
+		unset( $this->locks[ $id ] );
 	}
 
 	public function isHardLocked( $id ) {
-		if (isset($this->locks[$id])) {
-			return $this->locks[$id] === 1;
+		if ( isset( $this->locks[ $id ] ) ) {
+			return $this->locks[ $id ] === 1;
 		}
+
 		return false;
 	}
 
 	public function isLocked( $id ) {
-		return isset($this->locks[$id]);
+		return isset( $this->locks[ $id ] );
+	}
+
+	public function isStoring( $id ) {
+		return isset( $this->inProgress[ $id ] );
 	}
 }
