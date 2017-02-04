@@ -2,6 +2,8 @@ version: '3'
 services:
   api:
     image: withinboredom/api:latest
+    networks:
+      - converser
     environment:
       - SMS
       - CALL
@@ -9,18 +11,17 @@ services:
       - STRIPE_KEY
       - PLIVO_ID
       - PLIVO_TOKEN
-      - DB_HOST
+      - DB_HOST=rethunk
     depends_on:
       - rethunk
-    ports:
-      - '1337:1337'
+    command: vendor/bin/aerys -d -c index.php
     deploy:
       mode: replicated
-      replicas: 2
-      placement:
-        constraints: [ node.role == worker ]
+      replicas: 1
   engine:
     image: withinboredom/engine:latest
+    networks:
+      - converser
     environment:
       - SMS
       - CALL
@@ -34,6 +35,8 @@ services:
       - '2200:80'
   web:
     image: withinboredom/site:latest
+    networks:
+      - converser
     ports:
       - '8090:8080'
     deploy:
@@ -50,12 +53,38 @@ services:
         failure_action: continue
         monitor: 60s
         max_failure_ratio: 0.3
-
+  lb:
+    image: traefik:latest
+    ports:
+      - '80:80'
+      - '1337:1337'
+      - '8080:8080'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - converser
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role==manager
+    command:
+      - --docker
+      - --docker.swarmmode
+      - --docker.domain=traefik
+      - --docker.watch
+      - --web
   rethunk:
     image: rethinkdb:latest
-    ports:
-      - '9000:8080'
-    command: rethinkdb --join rethunk
+    networks:
+      - converser
+    labels:
+      - traefik.port=8080
+    command:
+      - bash
+      - -c
+      - rethinkdb create && exec rethinkdb --bind all --join rethunk
     deploy:
       mode: replicated
       replicas: 3
@@ -73,3 +102,5 @@ services:
         condition: any
         delay: 10s
         window: 10s
+networks:
+  converser:
