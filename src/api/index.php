@@ -185,6 +185,10 @@ $router->get( "/sms", function ( Aerys\Request $request, Aerys\Response $respons
 	yield $user->DoRecordSms( $from, $to, $text );
 } );
 
+$router->get( "/call", function ( Aerys\Request $request, Aerys\Response $response, $args ) {
+
+} );
+
 $router->get( "/health", function ( Aerys\Request $request, Aerys\Response $response ) {
 	global $conn;
 	// determine the health of this node
