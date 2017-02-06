@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/aerys.git",
-                "reference": "6372c32ec20683cf578f7a4d8bdb8a8b30c9705c"
+                "reference": "c0dcff7700d155b4a7b448ced2bbb01aaf022c3f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/aerys/zipball/6372c32ec20683cf578f7a4d8bdb8a8b30c9705c",
-                "reference": "6372c32ec20683cf578f7a4d8bdb8a8b30c9705c",
+                "url": "https://api.github.com/repos/amphp/aerys/zipball/c0dcff7700d155b4a7b448ced2bbb01aaf022c3f",
+                "reference": "c0dcff7700d155b4a7b448ced2bbb01aaf022c3f",
                 "shasum": ""
             },
             "require": {
@@ -84,7 +84,7 @@
                 "server",
                 "websocket"
             ],
-            "time": "2017-01-25 16:49:38"
+            "time": "2017-02-06 07:46:25"
         },
         {
             "name": "amphp/amp",
@@ -193,16 +193,16 @@
         },
         {
             "name": "amphp/dns",
-            "version": "v0.8.13",
+            "version": "v0.8.14",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/dns.git",
-                "reference": "fc4621dfb74b36784ac482fd77d8f8f49c6bf2c7"
+                "reference": "5fc1cde2d29e94d731ab96d5ef5f9f20958315cc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/dns/zipball/fc4621dfb74b36784ac482fd77d8f8f49c6bf2c7",
-                "reference": "fc4621dfb74b36784ac482fd77d8f8f49c6bf2c7",
+                "url": "https://api.github.com/repos/amphp/dns/zipball/5fc1cde2d29e94d731ab96d5ef5f9f20958315cc",
+                "reference": "5fc1cde2d29e94d731ab96d5ef5f9f20958315cc",
                 "shasum": ""
             },
             "require": {
@@ -259,7 +259,7 @@
                 "dns",
                 "resolve"
             ],
-            "time": "2017-01-25T15:25:41+00:00"
+            "time": "2017-02-05T22:17:40+00:00"
         },
         {
             "name": "amphp/file",
@@ -646,12 +646,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "443ca656dec18f3e5ea7751d2429fc2aeacf3ca2"
+                "reference": "01324c2fbc7994bca00d10323bc3826a41426a9b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/443ca656dec18f3e5ea7751d2429fc2aeacf3ca2",
-                "reference": "443ca656dec18f3e5ea7751d2429fc2aeacf3ca2",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/01324c2fbc7994bca00d10323bc3826a41426a9b",
+                "reference": "01324c2fbc7994bca00d10323bc3826a41426a9b",
                 "shasum": ""
             },
             "require": {
@@ -663,6 +663,9 @@
                 "ext-curl": "*",
                 "phpunit/phpunit": "^4.0",
                 "psr/log": "^1.0"
+            },
+            "suggest": {
+                "psr/log": "Required for using the Log middleware"
             },
             "type": "library",
             "extra": {
@@ -700,7 +703,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2017-01-16 17:41:59"
+            "time": "2017-02-05 02:32:13"
         },
         {
             "name": "guzzlehttp/promises",
@@ -871,16 +874,16 @@
         },
         {
             "name": "nikic/fast-route",
-            "version": "v1.1.0",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/FastRoute.git",
-                "reference": "f3dcf5130e634b6123d40727d612ec6aa4f61fb3"
+                "reference": "b5f95749071c82a8e0f58586987627054400cdf6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/FastRoute/zipball/f3dcf5130e634b6123d40727d612ec6aa4f61fb3",
-                "reference": "f3dcf5130e634b6123d40727d612ec6aa4f61fb3",
+                "url": "https://api.github.com/repos/nikic/FastRoute/zipball/b5f95749071c82a8e0f58586987627054400cdf6",
+                "reference": "b5f95749071c82a8e0f58586987627054400cdf6",
                 "shasum": ""
             },
             "require": {
@@ -910,7 +913,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2016-10-20T17:36:47+00:00"
+            "time": "2017-01-19T11:35:12+00:00"
         },
         {
             "name": "plivo/plivo-php",
