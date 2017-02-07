@@ -85,18 +85,18 @@ define( 'CALL', 'CALL' );
 	] );
 
 $loggedInUser = [
-	'zombie'        => [
+	'zombie'             => [
 		'phone' => '910297',
 		'at'    => new \DateTime()
 	],
-	'readied'       => [
+	'readied'            => [
 		'id'       => 'uuid',
 		'phone'    => 'phone',
 		'password' => 'password',
 		'ip'       => 123,
 		'at'       => new \DateTime()
 	],
-	'password_text' => [
+	'password_text'      => [
 		'text' => 'text'
 	],
 	'set_active_session' => [
@@ -105,22 +105,22 @@ $loggedInUser = [
 	]
 ];
 
-(new Given('A logged in user makes a payment', 'Model\User', $loggedInUser))
-	->When('DoPurchase', [
+( new Given( 'A logged in user makes a payment', 'Model\User', $loggedInUser ) )
+	->When( 'DoPurchase', [
 		'id' => 'payToken'
-	], 1)
-	->Then([
+	], 1 )
+	->Then( [
 		'attempt_payment' => [
 			'paymentToken' => [
 				'id' => 'payToken'
 			],
-			'packageId' => 1,
-			'paymentId' => 'uuid'
+			'packageId'    => 1,
+			'paymentId'    => 'uuid'
 		],
-		'set_lives' => [
-			'lives' => 1,
+		'set_lives'       => [
+			'lives'             => 1,
 			'payment_for_lives' => 1,
-			'from_payment' => 'uuid',
-			'amount_paid' => 136
+			'from_payment'      => 'uuid',
+			'amount_paid'       => 136
 		]
-	]);
+	] );

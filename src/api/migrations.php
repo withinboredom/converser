@@ -8,7 +8,6 @@ function prep() {
 	} );
 
 
-
 	if ( count( $filtered ) == 0 ) {
 		yield r\dbCreate( DB_NAME )->run( $conn );
 		$db = r\db( DB_NAME );
