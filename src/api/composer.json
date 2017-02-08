@@ -20,7 +20,8 @@
         "danielmewes/php-rql": "dev-master",
         "plivo/plivo-php": "v1.1.5",
         "stripe/stripe-php": "4.*",
-        "amphp/loop": "dev-master"
+        "amphp/loop": "dev-master",
+        "amphp/beanstalk": "dev-master"
     },
     "minimum-stability": "dev"
 }

@@ -77,9 +77,8 @@ class RqlStorage implements iStore {
 				->run( $this->container->conn );
 			if ($result['errors'] > 0) {
 				// we've got a concurrency issue ... we need to reload and re-apply events
-
+				throw new ConcurrencyError();
 			}
-			$result = $result->getArrayCopy();
 		}
 
 		$projector = $this->projectors[ $instanceId ];

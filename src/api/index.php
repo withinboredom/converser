@@ -160,7 +160,7 @@ $websocket = websocket( new class implements Aerys\Websocket {
 	}
 
 	public function onClose( int $clientId, int $code, string $reason ) {
-		if ( $this->watchers[ $clientId ] ) {
+		if ( isset($this->watchers[ $clientId ]) ) {
 			Amp\cancel( $this->watchers[ $clientId ] );
 		}
 	}

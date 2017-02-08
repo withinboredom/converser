@@ -90,8 +90,8 @@ abstract class Actor {
 		$this->rSnapshots = $container->snapshots;
 		$this->container  = $container;
 
-		$this->conn = $container->conn;
-		$this->id   = get_class( $this ) . '_' . $id;
+		$this->conn       = $container->conn;
+		$this->id         = get_class( $this ) . '_' . $id;
 		$this->instanceId = uniqid();
 	}
 
@@ -175,7 +175,24 @@ abstract class Actor {
 		} );
 		$store = $this->container->storage->Store( $this->id, $this->instanceId, $this->records, $callback, $deferred );
 
-		yield from $store;
+		try {
+			yield from $store;
+		} catch ( ConcurrencyError $error ) {
+			// we have to reload and re-apply un-stored events
+			$toStore = array_filter( $this->records, function ( $record ) {
+				return ! $record['stored'];
+			} );
+
+			yield from $this->Load();
+
+			foreach ($toStore as $event) {
+				$this->Fire($event['name'], $event['data']);
+			}
+
+			$result = yield from $this->Store();
+
+			return $result;
+		}
 
 		$result = yield $deferred->promise();
 

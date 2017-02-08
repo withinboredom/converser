@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/site/build" isTestSource="false" generated="true" />
       <excludeFolder url="file://$MODULE_DIR$/src/api/vendor/amphp/aerys" />
       <excludeFolder url="file://$MODULE_DIR$/src/api/vendor/amphp/amp" />
+      <excludeFolder url="file://$MODULE_DIR$/src/api/vendor/amphp/beanstalk" />
       <excludeFolder url="file://$MODULE_DIR$/src/api/vendor/amphp/cache" />
       <excludeFolder url="file://$MODULE_DIR$/src/api/vendor/amphp/dns" />
       <excludeFolder url="file://$MODULE_DIR$/src/api/vendor/amphp/file" />

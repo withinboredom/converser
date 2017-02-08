@@ -4,6 +4,10 @@ namespace Model;
 
 use Amp;
 
+class ConcurrencyError extends \Exception {
+	protected $message = "General Concurrency Error";
+}
+
 interface iStore {
 	/**
 	 * Stores all unstored events in an array

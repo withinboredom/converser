@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "cdf2dc540030e0c12c8b56418a5eb5e8",
+    "content-hash": "b316edd1a4c69f679e0ef6f75e9db8da",
     "packages": [
         {
             "name": "amphp/aerys",
@@ -142,6 +142,43 @@
                 "promise"
             ],
             "time": "2016-09-04 12:46:12"
+        },
+        {
+            "name": "amphp/beanstalk",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/amphp/beanstalk.git",
+                "reference": "f4e762f50ef4eb45f694f4e07fb51318473c95b8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/amphp/beanstalk/zipball/f4e762f50ef4eb45f694f4e07fb51318473c95b8",
+                "reference": "f4e762f50ef4eb45f694f4e07fb51318473c95b8",
+                "shasum": ""
+            },
+            "require": {
+                "amphp/amp": "^1.1",
+                "amphp/socket": "^0.9.7"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Amp\\Beanstalk\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Niklas Keller",
+                    "email": "me@kelunik.com"
+                }
+            ],
+            "description": "Async beanstalk driver.",
+            "time": "2016-10-29 11:31:06"
         },
         {
             "name": "amphp/cache",
@@ -1170,7 +1207,8 @@
     "stability-flags": {
         "amphp/aerys": 20,
         "danielmewes/php-rql": 20,
-        "amphp/loop": 20
+        "amphp/loop": 20,
+        "amphp/beanstalk": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
