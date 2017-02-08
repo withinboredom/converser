@@ -23,7 +23,7 @@ class RqlStorage implements iStore {
 	/**
 	 * Loads the latest snapshot of an id
 	 *
-	 * @param $id
+	 * @param string $id
 	 *
 	 * @return Amp\Success
 	 */
@@ -36,7 +36,7 @@ class RqlStorage implements iStore {
 	/**
 	 * Loads events from a specific version
 	 *
-	 * @param $id
+	 * @param string $id
 	 * @param int $from
 	 *
 	 * @return Amp\Success
@@ -56,12 +56,12 @@ class RqlStorage implements iStore {
 	 *
 	 * @return \Generator
 	 */
-	public function Store( $id, array &$events, $callback, $deferred ): \Generator {
+	public function Store( $id, $instanceId, array &$events, $callback, $deferred ): \Generator {
 		while ( $this->isLocked( $id ) ) {
 			yield;
 		}
 
-		$this->inProgress[ $id ] = true;
+		$this->inProgress[ $instanceId ] = true;
 
 		$lastVersion = - 1;
 		$toStore     = array_filter( $events, function ( $record ) use ( &$lastVersion ) {
@@ -72,16 +72,21 @@ class RqlStorage implements iStore {
 
 		foreach ( $toStore as $event ) {
 			$event['stored'] = true;
-			yield $this->container->records
+			$result          = yield $this->container->records
 				->insert( $event )
 				->run( $this->container->conn );
+			if ($result['errors'] > 0) {
+				// we've got a concurrency issue ... we need to reload and re-apply events
+
+			}
+			$result = $result->getArrayCopy();
 		}
 
-		$projector = $this->projectors[ $id ];
+		$projector = $this->projectors[ $instanceId ];
 		$projector();
 
 		if ( count( $events ) >= $this->optimizeAt ) {
-			$snapshot = $this->snaps[ $id ];
+			$snapshot = $this->snaps[ $instanceId ];
 			$snapshot = [
 				'id'      => $id,
 				'state'   => $snapshot(),
@@ -95,12 +100,12 @@ class RqlStorage implements iStore {
 
 		//yield from $this->Load( $callback );
 
-		unset( $this->inProgress[ $id ] );
+		unset( $this->inProgress[ $instanceId ] );
 
 		yield $deferred->succeed( $toStore );
 
-		$this->UnsetProjector( $id );
-		$this->UnsetSnapshot( $id );
+		$this->UnsetProjector( $instanceId );
+		$this->UnsetSnapshot( $instanceId );
 	}
 
 	public function SetProjector( $id, $callback ) {

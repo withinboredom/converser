@@ -12,7 +12,7 @@ interface iStore {
 	 *
 	 * @return \Generator
 	 */
-	public function Store( $id, array &$events, $callback, $deferred ): \Generator;
+	public function Store( $id, $instanceId, array &$events, $callback, $deferred ): \Generator;
 
 	/**
 	 * Loads the latest snapshot of an id

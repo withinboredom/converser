@@ -71,12 +71,7 @@ function prep() {
 		case 9:
 			yield r\dbCreate( 'records' )->run( $conn );
 		case 10:
-			yield r\db( 'records' )->tableCreate( 'events', [
-				'primaryKey' => [
-					r\row( 'model_id' ),
-					r\row( 'version' )
-				]
-			] )->run( $conn );
+			yield r\db( 'records' )->tableCreate( 'events' )->run( $conn );
 		case 11:
 			yield r\db( 'records' )->table( 'events' )->indexCreate( 'model_id' )->run( $conn );
 		case 12:

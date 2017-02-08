@@ -98,7 +98,7 @@ services:
     ports:
       - '8080:8080'
       - '28015:28015'
-    command: rethinkdb --join rethunk
+    command: rethinkdb --bind all
 volumes:
   api_vendor:
   engine_vendor:

@@ -77,6 +77,8 @@ abstract class Actor {
 	 */
 	protected $container;
 
+	private $instanceId;
+
 	/**
 	 * Actor constructor.
 	 *
@@ -90,6 +92,7 @@ abstract class Actor {
 
 		$this->conn = $container->conn;
 		$this->id   = get_class( $this ) . '_' . $id;
+		$this->instanceId = uniqid();
 	}
 
 	/**
@@ -154,7 +157,7 @@ abstract class Actor {
 	public function Store( callable $callback = null ) {
 		$this->Close();
 
-		if ( $this->storagePromise && ! $this->container->storage->isLocked( $this->id ) ) {
+		if ( $this->storagePromise && ! $this->container->storage->isLocked( $this->instanceId ) ) {
 			$result = yield $this->storagePromise->promise();
 
 			return $result;
@@ -164,13 +167,13 @@ abstract class Actor {
 
 		$this->storagePromise = $deferred;
 
-		$this->container->storage->SetProjector( $this->id, function () {
+		$this->container->storage->SetProjector( $this->instanceId, function () {
 			$this->Project();
 		} );
-		$this->container->storage->SetSnapshot( $this->id, function () {
+		$this->container->storage->SetSnapshot( $this->instanceId, function () {
 			yield from $this->Snapshot();
 		} );
-		$store = $this->container->storage->Store( $this->id, $this->records, $callback, $deferred );
+		$store = $this->container->storage->Store( $this->id, $this->instanceId, $this->records, $callback, $deferred );
 
 		yield from $store;
 
@@ -259,11 +262,11 @@ abstract class Actor {
 	 */
 	public function Fire( $name, $data ) {
 		$fire = function () {
-			if ( $this->container->storage->isHardLocked( $this->id ) ) {
+			if ( $this->container->storage->isHardLocked( $this->instanceId ) ) {
 				return;
 			}
 
-			$this->container->storage->HardLock( $this->id );
+			$this->container->storage->HardLock( $this->instanceId );
 
 			while ( true ) {
 				$toFire = array_shift( $this->firing );
@@ -278,27 +281,30 @@ abstract class Actor {
 					break;
 				}
 			}
-			$this->container->storage->Unlock( $this->id );
+			$this->container->storage->Unlock( $this->instanceId );
 			yield from $this->Store();
 		};
 
 		if ( ! $this->replaying ) {
 			if ( count( $this->firing ) == 0 ) {
-				if ( ! $this->container->storage->isLocked( $this->id ) ) {
-					$this->container->storage->SoftLock( $this->id );
+				if ( ! $this->container->storage->isLocked( $this->instanceId ) ) {
+					$this->container->storage->SoftLock( $this->instanceId );
 					Amp\immediately( $fire );
 				}
 			}
 
 			$this->firing[] = [
+				'id'       => [ $this->id, $this->nextVersion ],
 				'model_id' => $this->id,
-				'version'  => $this->nextVersion ++,
+				'version'  => $this->nextVersion,
 				'type'     => 'event',
 				'name'     => $name,
 				'data'     => $data,
 				'stored'   => false,
 				'at'       => new \DateTime()
 			];
+
+			$this->nextVersion += 1;
 		}
 	}
 }
