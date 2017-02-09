@@ -27,7 +27,7 @@ class MemStorage implements iStore {
 	 *
 	 * @return \Generator
 	 */
-	public function Store( $id, array &$events, $callback, $deferred ): \Generator {
+	public function Store( $id, $instanceId, array &$events, $callback, $deferred ): \Generator {
 		while($this->isLocked($id)) {
 			yield;
 		}

@@ -1,6 +1,7 @@
+import io from 'socket.io-client';
 
 let token = false;
-let websocket = new WebSocket(process.env.API_HOST);
+let websocket = io.connect(process.env.API_HOST);
 
 const tokenResp = [];
 
@@ -13,7 +14,7 @@ const ret = {
     onNotify: null
 };
 
-websocket.onopen = (event) => {
+websocket.on('connect', () => {
     if ( sendCache.length > 0 ) {
         let s;
         while(s = sendCache.pop()) {
@@ -45,7 +46,7 @@ websocket.onopen = (event) => {
             campaign: urlParams
         });
     }
-};
+});
 
 const logout = () => {
     try {
@@ -77,7 +78,7 @@ const autoRefresh = () => {
     }
 };
 
-websocket.onmessage = (event) => {
+websocket.on('message', (event) => {
     const msg = JSON.parse(event.data);
 
     switch(msg.type) {
@@ -113,40 +114,10 @@ websocket.onmessage = (event) => {
             }
             break;
     }
-};
+});
 
 const send = (message, retries = 100) => {
-    if (retries == 0) { location.reload() }
-    try {
-        if (websocket.readyState === 1) {
-            websocket.send(JSON.stringify(message));
-        }
-        else {
-            throw(new Error("WebSocket is not in OPEN state."));
-        }
-    }
-    catch (e) {
-        const mess = websocket.onmessage;
-        const connect = websocket.onopen;
-        websocket = new WebSocket('ws://localhost:1337/ws');
-        websocket.onopen = connect;
-        websocket.onmessage = mess;
-        if (message.command !== 'refresh') {
-            sendCache.push(message);
-        }
-
-        mess({
-            data: JSON.stringify({
-                type: 'notification',
-                notification: {
-                    message: 'please reconnect to the internet',
-                    title: 'disconnected',
-                    level: 'error',
-                    autoDismiss: 5
-                }
-            })
-        });
-    }
+    websocket.emit(JSON.stringify(message));
 };
 
 const login = (phone, cb) => {
