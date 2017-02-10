@@ -17,12 +17,16 @@ const fake_plivo = {
 };
 
 const fake_stripe = {
-	create: (payment) => ({
-		outcome: {
-			risk_level: 'normal'
-		},
-		amount: payment.amount
-	})
+	charges: {
+		create: ( payment ) => (
+			{
+				outcome: {
+					risk_level: 'normal'
+				},
+				amount: payment.amount
+			}
+		)
+	}
 };
 
 class And {

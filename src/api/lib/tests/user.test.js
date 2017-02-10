@@ -235,7 +235,7 @@ const test = async() => {
 			score: 0,
 			sessions: '{object}',
 			status: 'not-playing'
-		} )
+		} );
 };
 
-test();
+module.exports = test;
