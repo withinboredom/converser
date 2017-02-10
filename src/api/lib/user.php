@@ -9,6 +9,10 @@ use Plivo;
 require_once 'actor.php';
 require_once 'payment.php';
 
+/**
+ * Class User
+ * @package Model
+ */
 class User extends Actor {
 	/**
 	 * @var Plivo\RestAPI The plivo client

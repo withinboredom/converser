@@ -1,49 +1,54 @@
 const uuid = require( 'uuid/v4' );
 
+/**
+ * An event driven model
+ */
 class Actor {
 	/**
-	 *
+	 * Creates a event driven actor
 	 * @param {string} id
 	 * @param {Container} container
+	 * @constructor
 	 */
 	constructor( id, container ) {
+
 		/**
-		 *
+		 * The internal id
 		 * @type {string}
 		 * @private
 		 */
 		this._id = id;
 
 		/**
-		 *
+		 * This instance id
 		 * @type {string}
 		 * @private
 		 */
 		this._instanceId = uuid();
 
 		/**
-		 *
+		 * DI container
 		 * @type {Container}
-		 * @private
+		 * @protected
 		 */
 		this._container = container;
 
 		/**
-		 *
+		 * The history of this actor
 		 * @type {Array}
 		 * @private
 		 */
 		this._records = [];
 
 		/**
-		 *
+		 * The point at which to make optimization and memoize
 		 * @type {number}
 		 * @private
 		 */
 		this._optimizeAt = 10;
 
 		/**
-		 *
+		 * The next version of this actor
 		 * @type {number}
 		 * @private
 		 */
@@ -57,34 +62,38 @@ class Actor {
 		this._repeater = [];
 
 		/**
-		 *
+		 * The internal state
 		 * @type {{}}
-		 * @private
+		 * @protected
 		 */
 		this._state = {};
 
 		/**
-		 *
+		 * Is this a replay of the past?
 		 * @type {boolean}
-		 * @private
+		 * @protected
 		 */
 		this._replaying = false;
 
 		/**
-		 *
+		 * What events are currently firing
 		 * @type {Array}
 		 * @private
 		 */
 		this._firing = [];
 
 		/**
-		 *
+		 * A promise that this aggregate will eventually be stored
 		 * @type {Promise|null}
 		 * @private
 		 */
 		this._storagePromise = null;
 	}
 
+	/**
+	 * Loads the aggregate from ES and replays past events
+	 * @returns {Promise.<void>}
+	 */
 	async Load() {
 		let latestSnapshot = await this._container.storage.LoadSnapshot( this._id );
 
@@ -102,6 +111,11 @@ class Actor {
 		await this._ReduceEvents();
 	}
 
+	/**
+	 * Replays all events to recreate state
+	 * @returns {Promise.<void>}
+	 * @private
+	 */
 	async _ReduceEvents() {
 		this._replaying = true;
 
@@ -118,9 +132,18 @@ class Actor {
 		this._replaying = false;
 	}
 
+	/**
+	 * Projects this aggregate somewhere
+	 * @abstract
+	 * @returns {Promise.<void>}
+	 */
 	async Project() {
 	}
 
+	/**
+	 * Stores the current State of the aggregate
+	 * @returns {Promise.<Array>}
+	 */
 	async Store() {
 		if ( this._storagePromise && ! this._container.storage.IsLocked( this._instanceId ) ) {
 			const result = await this._storagePromise;
@@ -142,19 +165,34 @@ class Actor {
 		} );
 
 		const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
+		this._storagePromise = null;
+		resolver( result );
 
 		return result;
 	}
 
+	/**
+	 * Returns the internal state of this aggregate
+	 * @returns {Promise.<object>}
+	 */
 	async Snapshot() {
 		//todo: make deep copy of state
 		return this._state;
 	}
 
+	/**
+	 * Get the id of this aggregate
+	 * @returns {string}
+	 */
 	Id() {
 		return this._id;
 	}
 
+	/**
+	 * Applies an event to the event store
+	 * @param {string} name The name of the event
+	 * @param {*} data The data about the event
+	 */
 	Fire( name, data ) {
 		const fire = async() => {
 			if ( this._container.storage.IsHardLocked( this._instanceId ) ) {
@@ -177,11 +215,12 @@ class Actor {
 				}
 			}
 			this._container.storage.Unlock( this._instanceId );
-			await this.Store();
+			const result = await this.Store();
+			return result;
 		};
 
-		if (!this._replaying) {
-			this._firing.push({
+		if ( ! this._replaying ) {
+			this._firing.push( {
 				id: [this._id, this._nextVersion],
 				model_id: this._id,
 				version: this._nextVersion,
@@ -190,13 +229,13 @@ class Actor {
 				data: data,
 				stored: false,
 				at: new Date()
-			});
+			} );
 
 			this._nextVersion += 1;
 
-			if (this._firing.length == 1) {
-				if (!this._container.storage.IsLocked(this._instanceId)) {
-					this._container.storage.SoftLock(this._instanceId);
+			if ( this._firing.length == 1 ) {
+				if ( ! this._container.storage.IsLocked( this._instanceId ) ) {
+					this._container.storage.SoftLock( this._instanceId );
 					fire();
 				}
 			}

@@ -1,0 +1,226 @@
+const Given = require( './framework' );
+const User = require( '../user' );
+
+const test = async() => {
+
+	const now = new Date();
+	const day = new Date( now.valueOf() );
+	day.setDate( now.getDate() + 1 );
+
+	const loggedInUser = [
+		{
+			name: 'zombie',
+			data: {
+				phone: '910297'
+			}
+		},
+		{
+			name: 'created_session',
+			data: {
+				id: 'session_id',
+				ip: '123',
+				password: 'password',
+				phone: '910297',
+				begins: now,
+				token: 'token'
+			}
+		},
+		{
+			name: 'password_text_sent',
+			data: {
+				text: 'password'
+			}
+		},
+		{
+			name: 'active_session_changed',
+			data: {
+				id: 'session_id',
+				token: 'token'
+			}
+		}
+	];
+
+	await (
+		await new Given( 'An initial login', User, [] )
+			.When( 'DoLogin', '910297', '123' )
+			.Then( [
+				{
+					name: 'zombie',
+					data: {
+						phone: '910297'
+					}
+				},
+				{
+					name: 'created_session',
+					data: {
+						id: '{string}',
+						ip: '123',
+						password: '{string}',
+						phone: '910297',
+						begins: '{object}',
+						token: '{string}'
+					}
+				},
+				{
+					name: 'password_text_sent',
+					data: {
+						text: '{string}'
+					}
+				}
+			] )
+	)
+		.And( {
+			lives: 0,
+			opponent: null,
+			payments: [],
+			phone: '910297',
+			score: 0,
+			sessions: '{object}',
+			status: 'not-playing'
+		} );
+	await (
+		await new Given( 'A text from a non-user', User, [] )
+			.When( 'DoRecordSms', 'from', 'to', 'text' )
+			.Then( [
+				{
+					name: 'received_text',
+					data: {
+						from: 'from',
+						to: 'to',
+						text: 'text'
+					}
+				},
+				{
+					name: 'sent_text',
+					data: {
+						from: null,
+						text: '{string}',
+						to: 'from'
+					}
+				}
+			] )
+	).And( {} );
+	await (
+		await new Given( 'A text from an existing user', User, [
+			{
+				name: 'zombie',
+				data: {
+					phone: '910297'
+				}
+			}
+		] ).When( 'DoRecordSms', 'from', 'to', 'text' )
+		   .Then( [
+			   {
+				   name: 'received_text',
+				   data: {
+					   from: 'from',
+					   to: 'to',
+					   text: 'text'
+				   }
+			   },
+			   {
+				   name: 'sent_text',
+				   data: {
+					   from: null,
+					   text: '{string}',
+					   to: 'from'
+				   }
+			   }
+		   ] )
+	).And( {
+		lives: 0,
+		opponent: null,
+		payments: [],
+		phone: '910297',
+		score: 0,
+		sessions: [],
+		status: 'not-playing'
+	} );
+
+	await (
+		await new Given( 'Login verification step', User, [
+			{
+				name: 'zombie',
+				data: {
+					phone: '910297'
+				}
+			},
+			{
+				name: 'created_session',
+				data: {
+					id: 'session_id',
+					ip: '123',
+					password: 'password',
+					phone: '910297',
+					begins: now,
+					token: 'token'
+				}
+			},
+			{
+				name: 'password_text_sent',
+				data: {
+					text: 'password'
+				}
+			}
+		] )
+			.When( 'DoVerify', 'phone', 'password' )
+			.Then( [
+				{
+					name: 'active_session_changed',
+					data: {
+						id: 'session_id',
+						token: '{string}'
+					}
+				}
+			] )
+	).And( {
+		lives: 0,
+		opponent: null,
+		payments: [],
+		phone: '910297',
+		score: 0,
+		status: 'not-playing',
+		sessions: [
+			{
+				active: true,
+				begins: now,
+				ends: day,
+				id: 'session_id',
+				ip: '123',
+				password: 'password',
+				phone: '910297',
+				used: true,
+				token: 'token'
+			}
+		]
+	} );
+
+	await (
+		await new Given( 'A logged in user makes a payment', User, loggedInUser )
+			.When( 'DoPurchase', {id: 'PayToken'}, 1 )
+			.Then( [
+				{
+					name: 'attempt_payment',
+					data: {
+						paymentToken: {
+							id: 'PayToken'
+						},
+						packageId: 1,
+						paymentId: '{string}'
+					}
+				},
+				{
+					name: 'set_lives',
+					data: {
+						lives: 1,
+						paymentForLives: 1,
+						fromPayment: '{string}',
+						amountPaid: 136
+					}
+				}
+			] )
+	)
+		.And( {} )
+};
+
+test();

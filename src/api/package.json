@@ -11,6 +11,7 @@
     "diff": "^3.2.0",
     "express": "^4.14.1",
     "harmonize": "^2.0.0",
+    "plivo": "^0.4.0",
     "rethinkdb": "^2.3.3",
     "socket.io": "^1.7.2",
     "uuid": "^3.0.1"

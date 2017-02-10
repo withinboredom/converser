@@ -25,7 +25,8 @@ const container = {
     uuid: r.uuid(),
     r: r.db(db.name),
     charge: null, //todo
-    storage: null //todo
+    storage: null, //todo
+	textFrom: plivo.sms
 };
 
 const config = {

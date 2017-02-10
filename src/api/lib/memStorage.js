@@ -1,13 +1,33 @@
+/**
+ * A simple in-memory storage adapter, useful for testing or volatile experiences
+ */
 class memStorage {
+	/**
+	 * Creates a memory storage
+	 * @constructor
+	 * @param {Container} container
+	 */
 	constructor( container ) {
 		this.events = {};
 		this.locks = {};
 	}
 
+	/**
+	 * Injects the given state into an ID space
+	 * @param {string} id
+	 * @param {object} data
+	 */
 	Inject( id, data ) {
 		this.events[id] = data;
 	}
 
+	/**
+	 * Stores the given events in the store
+	 * @param {string} id
+	 * @param {string} instanceId
+	 * @param {Array} events
+	 * @returns {Promise<Array>}
+	 */
 	async Store( id, instanceId, events ) {
 		if ( this.IsLocked( instanceId ) ) {
 			await this.locks[instanceId]();
@@ -21,12 +41,20 @@ class memStorage {
 
 		toStore.forEach( ( event ) => {
 			event.stored = true;
+			event.new = true;
 			this.events[id].push( event );
 		} );
 
-		return toStore;
+		const changesTotal = this.events[id].filter( ( event ) => event.new );
+
+		return changesTotal;
 	}
 
+	/**
+	 * Loads a snapshot from memory
+	 * @param id
+	 * @returns {Promise.<Array>}
+	 */
 	LoadSnapshot( id ) {
 		return Promise.resolve( [] );
 	}
@@ -84,7 +112,7 @@ class memStorage {
 
 		const lock = ( unlock ) => {
 			if ( unlock === 1 ) {
-				locked = 1;
+				return locked = 1;
 			}
 
 			if ( unlock === false ) {
@@ -93,11 +121,15 @@ class memStorage {
 
 			if ( unlock === true ) {
 				this.locks[instanceId] = undefined;
-				resolver( true );
+				return resolver( true );
 			}
 
 			return lockP;
 		};
+
+		/*setTimeout(() => {
+			lock(true);
+		}, 5000);*/
 
 		this.locks[instanceId] = lock;
 	}

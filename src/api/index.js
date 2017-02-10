@@ -45,3 +45,14 @@ new Given('test', User, []).When('DoLogin', '910297', '123').Then([
 		}
 	}
 ]);
+
+new Given('test2', User, [
+	{
+		name: 'zombie',
+		data: {
+			phone: '910297'
+		}
+	}
+]).When('DoLogin', '910297', '123').Then([
+
+]);

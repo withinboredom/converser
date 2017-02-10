@@ -24,7 +24,18 @@ class Container {
 		 */
 		this.conn = null;
 
+		/**
+		 *
+		 * @type {plivo}
+		 */
 		this.plivo = null;
+
+		/**
+		 *
+		 * @type {string}
+		 */
+		this.textFrom = null;
+
 		this.charge = null;
 
 		/**
