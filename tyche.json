@@ -54,7 +54,7 @@
               "name": "install-api",
               "exec": {
                 "native": {
-                  "command": ["composer install"],
+                  "command": ["yarn"],
                   "working": "src/api"
                 }
               }
@@ -138,10 +138,10 @@
           }
         },
         {
-          "name": "vendor",
+          "name": "api_modules",
           "exec": {
             "native": {
-              "command": ["rm","-rf","vendor"],
+              "command": ["rm","-rf","node_modules"],
               "working": "src/api"
             }
           }
@@ -179,7 +179,7 @@
           "name": "update-api-composer",
           "exec": {
             "native": {
-              "command": ["composer","update"],
+              "command": ["yarn","upgrade"],
               "working": "src/api"
             }
           }

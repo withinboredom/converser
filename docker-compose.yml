@@ -1,12 +1,11 @@
 version: '3'
 services:
   api-builder:
-    image: withinboredom/composer:latest
+    image: withinboredom/yarn:latest
     volumes:
       - ./src/api:/app/api
-      - api_vendor:/app/api/vendor
-      - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
-    command: bash -c "cd /app/api && exec composer install"
+      - api_modules:/app/api/node_modules
+    command: bash -c "cd /app/api && yarn"
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -22,14 +21,12 @@ services:
       - DB_HOST
     volumes:
       - ./src/api:/app/api
-      - api_vendor:/app/api/vendor
-      - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
+      - api_modules:/app/api/node_modules
     depends_on:
       - rethunk
       - api-builder
     ports:
       - '1337:1337'
-    command: bash -c "cd /app/api && /app/api/vendor/amphp/aerys/bin/aerys -c /app/api/index.php"
     deploy:
       mode: replicated
       replicas: 2
@@ -100,7 +97,7 @@ services:
       - '28015:28015'
     command: rethinkdb --bind all
 volumes:
-  api_vendor:
+  api_modules:
   engine_vendor:
   node_modules:
 

@@ -122,9 +122,6 @@ websocket.on( 'message', ( event ) => {
 			console.log( 'logging out due to invalid key/token' );
 			logout();
 			break;
-		case 'notification':
-
-			break;
 	}
 } );
 

@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": "https://github.com/withinboredom/converser",
   "author": "Robert Landers",
-  "license": "GPLv3",
+  "license": "GPL-3.0",
   "dependencies": {
     "colors": "^1.1.2",
     "diff": "^3.2.0",

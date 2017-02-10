@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "5dade2443fc1b3deb549cfa513d963893122597c"
+                "reference": "1369f5fd470bed057d568ac782580597731a9f2b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/5dade2443fc1b3deb549cfa513d963893122597c",
-                "reference": "5dade2443fc1b3deb549cfa513d963893122597c",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/1369f5fd470bed057d568ac782580597731a9f2b",
+                "reference": "1369f5fd470bed057d568ac782580597731a9f2b",
                 "shasum": ""
             },
             "require": {
@@ -76,7 +76,7 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2017-01-31 23:30:05"
+            "time": "2017-02-10 15:41:43"
         },
         {
             "name": "amphp/loop",
