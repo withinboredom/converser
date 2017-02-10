@@ -16,6 +16,15 @@ const fake_plivo = {
 	}
 };
 
+const fake_stripe = {
+	create: (payment) => ({
+		outcome: {
+			risk_level: 'normal'
+		},
+		amount: payment.amount
+	})
+};
+
 class And {
 	constructor( item ) {
 		this.item = item;
@@ -95,7 +104,7 @@ class When {
 		container.records = new DB( this.previous );
 		container.plivo = fake_plivo;
 		container.R = new DB();
-		container.charge = null;
+		container.charge = fake_stripe;
 		container.storage = new Storage( container );
 
 		console.log( this.story['cyan']['bold']['underline'] );

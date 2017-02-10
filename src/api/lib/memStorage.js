@@ -10,6 +10,7 @@ class memStorage {
 	constructor( container ) {
 		this.events = {};
 		this.locks = {};
+		this.subs = {};
 	}
 
 	/**
@@ -43,6 +44,11 @@ class memStorage {
 			event.stored = true;
 			event.new = true;
 			this.events[id].push( event );
+			if ( this.subs[id] ) {
+				this.subs[id].forEach( ( cb ) => {
+					cb( event );
+				} )
+			}
 		} );
 
 		const changesTotal = this.events[id].filter( ( event ) => event.new );
@@ -65,6 +71,24 @@ class memStorage {
 		}
 
 		return Promise.resolve( [] );
+	}
+
+	SubscribeTo( id, cb ) {
+		if ( ! this.subs[id] ) {
+			this.subs[id] = [];
+		}
+
+		this.subs[id].push( cb );
+
+		if ( this.events[id] ) {
+			this.events[id].forEach( cb );
+		}
+	}
+
+	Unsubscribe( id, cb ) {
+		if ( this.subs[id] ) {
+			this.subs[id] = this.subs[id].filter( ( sub ) => sub !== cb );
+		}
 	}
 
 	SetProjector( instanceId ) {
@@ -128,8 +152,8 @@ class memStorage {
 		};
 
 		/*setTimeout(() => {
-			lock(true);
-		}, 5000);*/
+		 lock(true);
+		 }, 5000);*/
 
 		this.locks[instanceId] = lock;
 	}

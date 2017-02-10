@@ -1,5 +1,6 @@
 const uuid = require( 'uuid/v4' );
 const Actor = require( './actor' );
+const Payment = require( './payment' );
 
 /**
  * Generally used to initialize a user...
@@ -122,8 +123,8 @@ class User extends Actor {
 	 * @param data
 	 */
 	active_session_changed( data ) {
-		this._state.sessions = this._state.sessions.map((session) => {
-			if (session.id === data.id && !session.used) {
+		this._state.sessions = this._state.sessions.map( ( session ) => {
+			if ( session.id === data.id && ! session.used ) {
 				session.used = true;
 				session.active = true;
 			} else {
@@ -131,7 +132,15 @@ class User extends Actor {
 			}
 
 			return session;
-		});
+		} );
+	}
+
+	attempt_payment(data) {
+		this._state.payments.push(data.paymentId);
+	}
+
+	set_lives(data) {
+		this._state.lives += data.lives;
 	}
 
 	/**
@@ -231,6 +240,42 @@ class User extends Actor {
 			from: this._container.textFrom,
 			to: from,
 			text: response
+		} );
+	}
+
+	async DoPurchase( paymentToken, packageId ) {
+		const payment = new Payment(uuid(), this._container);
+		await payment.Load();
+
+		this.ListenFor(payment.Id(), 'payment_success', 'set_lives', 1);
+
+		this.Fire('attempt_payment', {
+			paymentToken,
+			packageId,
+			paymentId: payment.Id()
+		})
+
+		await payment.DoPay(this.Id(), paymentToken, packageId);
+	}
+
+	Project() {
+		const r = this._container.r;
+		r.table( 'users' )
+		 .get( this.Id() )
+		 .replace( {
+			 id: this.Id(),
+			 phone: this._state.phone,
+			 lives: this._state.lives,
+			 status: this._state.status,
+			 score: this._state.score,
+			 payments: this._state.payments
+		 } ).run( this._container.conn );
+
+		this._state.sessions.forEach( ( session ) => {
+			r.table( 'sessions' )
+			 .get( session.id )
+			 .replace( session )
+			 .run( this._container.conn );
 		} );
 	}
 }

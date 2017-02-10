@@ -90,6 +90,28 @@ class Actor {
 		this._storagePromise = null;
 	}
 
+	ListenFor( id, eventToHear, eventToFire, number = 1, time = 60000 ) {
+		const wait = ( event ) => {
+			if ( event.name == eventToHear ) {
+				number -= 1;
+
+				this.Fire( eventToFire, event.data );
+			}
+
+			if ( number <= 0 ) {
+				this._container.storage.Unsubscribe( id, wait );
+			}
+		};
+
+		this._container.storage.SubscribeTo( id, wait );
+
+		setTimeout( () => {
+			if ( number > 0 ) {
+				this._container.storage.Unsubscribe( id, wait );
+			}
+		}, time );
+	}
+
 	/**
 	 * Loads the aggregate from ES and replays past events
 	 * @returns {Promise.<void>}
@@ -164,8 +186,8 @@ class Actor {
 			await this.Snapshot();
 		} );
 
-		const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
 		this._storagePromise = null;
+		const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
 		resolver( result );
 
 		return result;

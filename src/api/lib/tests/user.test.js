@@ -213,14 +213,29 @@ const test = async() => {
 					name: 'set_lives',
 					data: {
 						lives: 1,
-						paymentForLives: 1,
-						fromPayment: '{string}',
-						amountPaid: 136
+						amount: 150,
+						attempt: '{string}',
+						packageId: 1,
+						userId: '123456789',
+						data: {
+							amount: 150,
+							outcome: {
+								risk_level: 'normal'
+							}
+						}
 					}
 				}
 			] )
 	)
-		.And( {} )
+		.And( {
+			lives: 1,
+			opponent: null,
+			payments: '{object}',
+			phone: '910297',
+			score: 0,
+			sessions: '{object}',
+			status: 'not-playing'
+		} )
 };
 
 test();
