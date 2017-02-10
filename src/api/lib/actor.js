@@ -148,7 +148,7 @@ class Actor {
 				await this[func]( event.data );
 			}
 			counter = event.version;
-			this._nextVersion = counter + 1;
+			this._nextVersion = Math.max(counter + 1, this._nextVersion);
 		} );
 
 		this._replaying = false;
@@ -186,11 +186,23 @@ class Actor {
 			await this.Snapshot();
 		} );
 
-		this._storagePromise = null;
-		const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
-		resolver( result );
-
-		return result;
+		try {
+			const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
+			this._storagePromise = null;
+			resolver( result );
+			return result;
+		}
+		catch ( err ) {
+			const reApply = this._records.filter( ( event ) => ! event.stored );
+			await this.Load();
+			reApply.forEach( ( event ) => {
+				event.version = this._nextVersion ++;
+				this._records.push( event );
+			} );
+			const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
+			resolver( result );
+			return result;
+		}
 	}
 
 	/**

@@ -27,7 +27,7 @@ class Payment extends Actor {
 		};
 	}
 
-	DoPay(userId, payToken, packageId) {
+	async DoPay(userId, payToken, packageId) {
 		const pack = this._packages[packageId];
 		const attempt = uuid();
 		const payment = {
@@ -55,7 +55,7 @@ class Payment extends Actor {
 		this.Fire('payment_attempt', data);
 
 		const stripe = this._container.charge;
-		const charge = stripe.create(payment);
+		const charge = await stripe.charges.create(payment);
 
 		if (charge.outcome.risk_level == 'elevated') {
 			this.Fire('payment_fraud', {

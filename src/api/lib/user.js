@@ -56,7 +56,7 @@ class User extends Actor {
 	 * @static
 	 */
 	static _CleanPhone( phone ) {
-		return phone.replace( /D+/g, '' );
+		return phone.replace( /\D+/g, '' );
 	}
 
 	/**
@@ -277,6 +277,34 @@ class User extends Actor {
 			 .replace( session )
 			 .run( this._container.conn );
 		} );
+	}
+
+	GetActiveToken(password) {
+		const activeSession = this._state.sessions.reduce((carry, session) => {
+			if (session.active) {
+				return session;
+			}
+
+			return carry;
+		});
+
+		if (password && activeSession.password == password) {
+			return activeSession.token;
+		} else if (password) {
+			return;
+		}
+
+		return activeSession.token;
+	}
+
+	GetPlayerInfo() {
+		return {
+			type: 'user',
+			lives: this._state.lives,
+			score: this._state.score,
+			status: this._state.status,
+			userId: this.Id()
+		};
 	}
 }
 

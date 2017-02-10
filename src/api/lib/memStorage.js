@@ -1,15 +1,18 @@
+const Storage = require( './storage' );
+
 /**
  * A simple in-memory storage adapter, useful for testing or volatile experiences
+ * @augments Storage
  */
-class memStorage {
+class memStorage extends Storage {
 	/**
 	 * Creates a memory storage
 	 * @constructor
 	 * @param {Container} container
 	 */
 	constructor( container ) {
+		super(container);
 		this.events = {};
-		this.locks = {};
 		this.subs = {};
 	}
 
@@ -101,61 +104,6 @@ class memStorage {
 	}
 
 	UnsetSnapshot( instanceId ) {
-	}
-
-	IsLocked( instanceId ) {
-		return this.locks[instanceId] !== undefined;
-	}
-
-	IsHardLocked( instanceId ) {
-		return this.locks[instanceId]( false );
-	}
-
-	Unlock( instanceId ) {
-		if ( this.locks[instanceId] ) {
-			this.locks[instanceId]( true );
-		}
-	}
-
-	HardLock( instanceId ) {
-		if ( ! this.IsLocked( instanceId ) ) {
-			this.SoftLock( instanceId );
-		}
-
-		this.locks[instanceId]( 1 );
-	}
-
-	SoftLock( instanceId ) {
-		let locked = true;
-		let resolver = () => {
-		};
-
-		const lockP = new Promise( ( resolve ) => {
-			resolver = resolve;
-		} );
-
-		const lock = ( unlock ) => {
-			if ( unlock === 1 ) {
-				return locked = 1;
-			}
-
-			if ( unlock === false ) {
-				return locked === 1;
-			}
-
-			if ( unlock === true ) {
-				this.locks[instanceId] = undefined;
-				return resolver( true );
-			}
-
-			return lockP;
-		};
-
-		/*setTimeout(() => {
-		 lock(true);
-		 }, 5000);*/
-
-		this.locks[instanceId] = lock;
 	}
 }
 

@@ -1,5 +1,7 @@
 const r = require('rethinkdb');
 const conn = require('./migrations.js');
+const Stripe = require('stripe');
+const Plivo = require('plivo');
 
 const db = {
     name: process.env.DB_NAME ? process.env.DB_NAME : 'converser',
@@ -21,10 +23,13 @@ const stripe = {
 const container = {
     snapshots: r.db('records').table('snapshots'),
     records: r.db('records').table('events'),
-    plivo: null, //todo
+    plivo: Plivo.RestAPI({
+    	authId: plivo.id,
+	    authToken: plivo.token
+    }),
     uuid: r.uuid(),
     r: r.db(db.name),
-    charge: null, //todo
+    charge: Stripe(stripe.key),
     storage: null, //todo
 	textFrom: plivo.sms
 };
@@ -36,6 +41,6 @@ const config = {
     container
 };
 
-conn(db.host, config);
+container.conn = conn(db.host, config);
 
 module.exports = config;

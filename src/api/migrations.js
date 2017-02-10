@@ -16,9 +16,10 @@ const doMigration = async(host, config) =>
         });
 
         if (dbs.length == 0) {
-            r.dbCreate(config.db.name).run(conn);
-            r.db(config.db.name).tableCreate('version').run(conn);
-            r.db(config.db.name).table('version').insert({
+            await r.dbCreate(config.db.name).run(conn);
+	        await r.db(config.db.name).tableCreate('version').run(conn);
+            await r.db(config.db.name).table('version').wait();
+	        await r.db(config.db.name).table('version').insert({
                 id: 'db',
                 value: 0
             }).run(conn);
@@ -26,33 +27,42 @@ const doMigration = async(host, config) =>
 
         const db = r.db(config.db.name);
 
-        const currentVersion = await db.table('version').get('db').run(conn);
-        const expectedVersion = 13;
+        let currentVersion = await db.table('version').get('db').run(conn);
+        if (!currentVersion) {
+            currentVersion = 0;
+        }
+
+        const expectedVersion = 11;
 
         switch (currentVersion.value + 1) {
             case 1:
-                db.tableCreate('users').run(conn);
+	            await db.tableCreate('users').run(conn);
+	            await db.table('users').wait();
             case 2:
-                db.table('users').indexCreate('phone').run(conn);
+	            await db.table('users').indexCreate('phone').run(conn);
             case 3:
-                db.tableCreate('calls').run(conn);
+	            await db.tableCreate('calls').run(conn);
+	            await db.table('calls').wait();
             case 4:
-                db.tableCreate('sessions').run(conn);
+	            await db.tableCreate('sessions').run(conn);
+	            await db.table('sessions').wait();
             case 5:
-                db.tableCreate('sms').run(conn);
+	            await db.tableCreate('sms').run(conn);
             case 6:
-                db.table('sessions').indexCreate('phone').run(conn);
-                db.table('sessions').indexCreate('token').run(conn);
-                db.table('sessions').indexCreate('user_id').run(conn);
+	            await db.table('sessions').indexCreate('phone').run(conn);
+	            await db.table('sessions').indexCreate('token').run(conn);
+	            await db.table('sessions').indexCreate('user_id').run(conn);
             case 7:
-                r.dbCreate('records').run(conn);
+	            await r.dbCreate('records').run(conn);
             case 8:
-                r.db('records').tableCreate('events').run(conn);
-                r.db('records').tableCreate('snapshots').run(conn);
+	            await r.db('records').tableCreate('events').run(conn);
+	            await r.db('records').tableCreate('snapshots').run(conn);
             case 9:
-                r.db('records').table('events').indexCreate('model_id').run(conn);
+	            await r.db('records').table('events').indexCreate('model_id').run(conn);
             case 10:
-                db.tableCreate('payments').run(conn);
+	            await db.tableCreate('payments').run(conn);
+	        case 11:
+	        	await r.db('records').table('events').indexCreate('version').run(conn);
         }
 
         if (currentVersion.value != expectedVersion) {
@@ -61,6 +71,8 @@ const doMigration = async(host, config) =>
                 value: expectedVersion
             }).run(conn);
         }
+
+        return conn;
     } catch (err) {
         console.log(err);
         process.exit(1);
