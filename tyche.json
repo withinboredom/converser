@@ -201,6 +201,30 @@
               "working": "src/site/js"
             }
           }
+        },
+        {
+          "name": "updateable-api",
+          "exec": {
+            "native": {
+              "command": [
+                "echo",
+                "api updates",
+                "&&",
+                "yarn",
+                "outdated"
+              ],
+              "working": "src/api"
+            }
+          }
+        },
+        {
+          "name": "updatable-site",
+          "exec": {
+            "native": {
+              "command": ["echo","site updates","&&","yarn outdated"],
+              "working": "src/site/js"
+            }
+          }
         }
       ]
     },
