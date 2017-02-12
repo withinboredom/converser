@@ -1,5 +1,5 @@
 const uuid = require( 'uuid/v4' );
-const Actor = require( './actor' );
+const Actor = require( './liveActor' );
 const Payment = require( './payment' );
 
 /**
@@ -68,7 +68,7 @@ class User extends Actor {
 	static _OneTimeCode() {
 		let code = `${Math.floor( Math.random() * (
 				9
-			) )}`
+			) )}`;
 		for ( let i = 0; i < 4; i ++ ) {
 			code += `${Math.floor( Math.random() * (
 					9
@@ -222,7 +222,8 @@ class User extends Actor {
 	 * @fires sent_text
 	 */
 	DoRecordSms( from, to, text ) {
-		const response = `Thank you for your message, it has been stored. We will review it and get back to you as soon as possible.`;
+		const response =
+			`Thank you for your message, it has been stored. We will review it and get back to you as soon as possible.`;
 
 		this.Fire( 'received_text', {
 			from,
@@ -247,15 +248,15 @@ class User extends Actor {
 		const payment = new Payment(uuid(), this._container);
 		await payment.Load();
 
-		this.ListenFor(payment.Id(), 'payment_success', 'set_lives', 1);
-
 		this.Fire('attempt_payment', {
 			paymentToken,
 			packageId,
 			paymentId: payment.Id()
-		})
+		});
 
 		await payment.DoPay(this.Id(), paymentToken, packageId);
+
+		this.ListenFor(payment.Id(), 'payment_success', 'set_lives', 1);
 	}
 
 	Project() {

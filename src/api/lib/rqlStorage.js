@@ -1,6 +1,8 @@
 const r = require( 'rethinkdb' );
 const Storage = require( './storage' );
 
+let counter = 0;
+
 /**
  * @augments Storage
  */
@@ -29,7 +31,7 @@ class RqlStorage extends Storage {
 		           .run( this.container.conn );
 	}
 
-	async Store( id, instanceId, events ) {
+	async Store( id, instanceId, events, ignoreConcurrencyError = false ) {
 		if ( this.IsLocked( instanceId ) ) {
 			await this.locks[instanceId]();
 		}
@@ -47,7 +49,9 @@ class RqlStorage extends Storage {
 			                         .run( this.container.conn );
 			if ( result.errors > 0 ) {
 				event.stored = false;
-				throw new Error( 'Concurrency Exception' );
+				if ( ! ignoreConcurrencyError ) {
+					console.error( 'concurrency exception attempting to store: ', event );
+				}
 			}
 		} );
 
@@ -87,44 +91,118 @@ class RqlStorage extends Storage {
 		this.snaps[instanceId] = undefined;
 	}
 
-	SubscribeTo( id, cb ) {
-		if ( this.subs[id] ) {
-			this.subR[id] = this.subR[id] === undefined ? 1 : this.subR[id] + 1;
-			this.subs[id].each( ( err, event ) => {
+	SubscribeTo( id, cb, sinceVersion = - 1 ) {
+		if ( ! this.subs[id] ) {
+			this.subs[id] = [];
+		}
+
+		const promise = this.container.records
+		                    .filter( ( event ) => {
+			                    return event( 'model_id' ).eq( id )
+			                                              .and( event( 'version' ).gt( sinceVersion ) );
+		                    } )
+		                    .changes( {includeInitial: true, includeStates: true} )
+		                    .run( this.container.conn );
+
+		return promise.then( ( cursor ) => {
+			const tie = [cb, cursor];
+			this.subs[id].push( tie );
+			let holder = false;
+
+			let resolver;
+
+			const promise = new Promise((resolve, reject) => {
+				resolver = resolve;
+			});
+
+
+			cursor.each( ( err, event ) => {
+				if ( err ) {
+					console.log( err );
+					return;
+				}
+
+				if (event.state && event.state == 'initializing') {
+					holder = [];
+					return;
+				}
+
+				if (event.state && event.state == 'ready') {
+					holder = holder.sort((left, right) => {
+						return left.new_val.version < right.new_val.version ? -1 : 1;
+					});
+
+					holder.forEach(async (event) => {
+						console.log( `replay event: ${event.new_val.name}:${event.new_val.version} ` );
+						await cb(event.new_val);
+					});
+
+					resolver();
+
+					return;
+				}
+
+				if (holder) {
+					holder.push(event);
+					return;
+				}
+
+				console.log( `broadcast event: ${event.new_val.name}:${event.new_val.version} ` );
+				cb( event.new_val );
+			} );
+
+			return promise;
+		} );
+	}
+
+	/**
+	 * Subscribe to all events of a given name
+	 * @param name
+	 * @param cb
+	 */
+	SubscribeToName( name, cb ) {
+		if ( ! this.subR[name] ) {
+			this.subR[name] = [];
+		}
+
+		const promise = this.container.records
+		                    .filter( {name} )
+		                    .changes( {includeInitial: false} )
+		                    .run( this.container.conn );
+		promise.then( ( cursor ) => {
+			this.subR[name].push( [cb, cursor] );
+			cursor.each( ( err, event ) => {
 				if ( err ) {
 					console.log( err );
 					return;
 				}
 				cb( event.new_val );
-			} )
-		}
-		else {
-			const promise = this.container.records
-			                    .orderBy( {index: r.desc( 'version' )} )
-			                    .filter( {model_id: id} )
-			                    .limit( 10 )
-			                    .changes( {includeInitial: true} )
-			                    .run( this.container.conn );
-			promise.then( ( cursor ) => {
-				this.subs[id] = cursor;
-				this.SubscribeTo( id, cb );
-			} )
-		}
+			} );
+		} )
 	}
 
 	Unsubscribe( id, cb ) {
-		if ( this.subR[id] <= 0 ) {
-			console.log( 'real unsub' );
-			this.subs[id].close();
-			this.subs[id] = undefined;
-			this.subR[id] = 0;
+		if ( this.subs[id] ) {
+			this.unsub( 'subs', id, cb );
 		}
-		else {
-			this.subR[id] -= 1;
-			if ( this.subR[id] == 0 ) {
-				this.Unsubscribe( id, cb );
-			}
+
+		if ( this.subR[id] ) {
+			this.unsub( 'subR', id, cb );
 		}
+	}
+
+	/**
+	 * @private
+	 */
+	unsub( item, id, cb ) {
+		this[item][id] = this[item][id]
+			.filter( ( pair ) => {
+				if ( pair[0] === cb ) {
+					pair[1].close();
+					return false;
+				}
+				return true;
+			} )
 	}
 }
 

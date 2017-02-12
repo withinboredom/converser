@@ -7,6 +7,7 @@ const config = require( './config' );
 const User = require( './lib/user' );
 const Container = require( './lib/container' );
 const Storage = require( './lib/rqlStorage' );
+const Converser = require( './lib/converser' );
 
 const container = new Container();
 container.snapshots = config.container.snapshots;
@@ -20,6 +21,12 @@ container.textFrom = config.container.textFrom;
 config.container.conn.then( ( conn ) => {
 	container.conn = conn;
 	container.storage = new Storage( container );
+
+	const converser = new Converser( container );
+	converser.Load();
+
+	const junk = new Converser( container );
+	junk.Load();
 
 	app.get( '/', ( request, response ) => {
 		response.send( '<h1>Hello World</h1>' );
@@ -35,7 +42,7 @@ config.container.conn.then( ( conn ) => {
 
 		const sendUpdate = ( id ) => {
 			if ( ! continuousUpdate ) {
-				continuousUpdate = async () => {
+				continuousUpdate = async() => {
 					console.log( 'maybe update?' );
 					const now = new Date();
 					if ( lastUpdate === null ) {
@@ -101,7 +108,7 @@ config.container.conn.then( ( conn ) => {
 					userId: user.Id(),
 					token
 				} );
-				sendUpdate(user.Id());
+				sendUpdate( user.Id() );
 			}
 			else {
 				socket.emit( 'notification', {

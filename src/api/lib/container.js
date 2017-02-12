@@ -40,7 +40,7 @@ class Container {
 
 		/**
 		 *
-		 * @type {memStorage}
+		 * @type {RqlStorage}
 		 */
 		this.storage = null;
 	}

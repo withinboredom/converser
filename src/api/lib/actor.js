@@ -99,7 +99,10 @@ class Actor {
 			}
 
 			if ( number <= 0 ) {
-				this._container.storage.Unsubscribe( id, wait );
+				try {
+					this._container.storage.Unsubscribe( id, wait );
+				} catch ( err ) {
+				}
 			}
 		};
 
@@ -107,16 +110,20 @@ class Actor {
 
 		setTimeout( () => {
 			if ( number > 0 ) {
-				this._container.storage.Unsubscribe( id, wait );
+				try {
+					this._container.storage.Unsubscribe( id, wait );
+				} catch ( err ) {
+				}
 			}
 		}, time );
 	}
 
 	/**
-	 * Loads the aggregate from ES and replays past events
-	 * @returns {Promise.<void>}
+	 *
+	 * @returns {Promise.<object>}
+	 * @protected
 	 */
-	async Load() {
+	async ApplySnapshot() {
 		let latestSnapshot = await this._container.storage.LoadSnapshot( this._id );
 
 		if ( latestSnapshot && latestSnapshot.length > 0 ) {
@@ -129,8 +136,31 @@ class Actor {
 			this._nextVersion = 0;
 		}
 
+		return latestSnapshot;
+	}
+
+	/**
+	 * Loads the aggregate from ES and replays past events
+	 * @returns {Promise.<void>}
+	 */
+	async Load() {
+		const latestSnapshot = await this.ApplySnapshot();
+
 		this._records = await this._container.storage.LoadEvents( this._id, latestSnapshot.version );
 		await this._ReduceEvents();
+	}
+
+	/**
+	 *
+	 * @param event
+	 * @protected
+	 */
+	async ApplyEvent( event ) {
+		const func = event.name;
+		this._nextVersion = Math.max( event.version + 1, this._nextVersion );
+		if ( this[func] ) {
+			await this[func]( event.data );
+		}
 	}
 
 	/**
@@ -140,15 +170,9 @@ class Actor {
 	 */
 	async _ReduceEvents() {
 		this._replaying = true;
-
-		let counter = this._nextVersion - 1;
+		this._nextVersion = 0;
 		this._records.forEach( async( event ) => {
-			const func = event.name;
-			if ( this[func] ) {
-				await this[func]( event.data );
-			}
-			counter = event.version;
-			this._nextVersion = Math.max(counter + 1, this._nextVersion);
+			await this.ApplyEvent( event );
 		} );
 
 		this._replaying = false;
@@ -254,16 +278,7 @@ class Actor {
 		};
 
 		if ( ! this._replaying ) {
-			this._firing.push( {
-				id: [this._id, this._nextVersion],
-				model_id: this._id,
-				version: this._nextVersion,
-				type: 'event',
-				name: name,
-				data: data,
-				stored: false,
-				at: new Date()
-			} );
+			this._firing.push( this.CreateEvent( name, data ) );
 
 			this._nextVersion += 1;
 
@@ -273,6 +288,19 @@ class Actor {
 					fire();
 				}
 			}
+		}
+	}
+
+	CreateEvent( name, data ) {
+		return {
+			id: [this._id, this._nextVersion],
+			model_id: this._id,
+			version: this._nextVersion,
+			type: 'event',
+			name,
+			data,
+			stored: false,
+			at: new Date()
 		}
 	}
 }
