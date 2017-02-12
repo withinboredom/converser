@@ -257,6 +257,8 @@ class User extends Actor {
 		await payment.DoPay(this.Id(), paymentToken, packageId);
 
 		this.ListenFor(payment.Id(), 'payment_success', 'set_lives', 1);
+
+		payment.Destroy();
 	}
 
 	Project() {

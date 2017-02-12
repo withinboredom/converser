@@ -11,6 +11,7 @@ const Actor = require( './actor' );
 class LiveActor extends Actor {
 	constructor( id, container ) {
 		super( id, container );
+		this.subs = [];
 	}
 
 	async ApplyEvent( event, replay = true ) {
@@ -23,10 +24,21 @@ class LiveActor extends Actor {
 		}
 	}
 
+	Destroy() {
+		super.Destroy();
+		this.subs.forEach( ( sub ) => {
+			this._container.storage.Unsubscribe( sub[0], sub[1] );
+		} );
+	}
+
 	async Load() {
 		const latestSnapshot = await this.ApplySnapshot();
 
-		await this._container.storage.SubscribeTo( this.Id(), ( event ) => this.ApplyEvent( event ), latestSnapshot.version );
+		const cb = ( event ) => this.ApplyEvent( event );
+
+		this.subs.push( [this.Id(), cb] );
+
+		await this._container.storage.SubscribeTo( this.Id(), cb, latestSnapshot.version );
 	}
 
 	async Store() {

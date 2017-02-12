@@ -15,6 +15,16 @@ class RqlStorage extends Storage {
 		this.inProgress = {};
 		this.subs = {};
 		this.subR = {};
+
+		setInterval(() => {
+			const idSubs = Object.keys(this.subs).reduce((carry, current) => {
+				return carry + this.subs[current].length;
+			}, 0);
+			const nameSubs = Object.keys(this.subR).reduce((carry, current) => {
+				return carry + this.subR[current].length;
+			}, 0);
+			console.log(`Currently ${idSubs} id subscriptions, ${nameSubs} name subscriptions`)
+		}, 5000);
 	}
 
 	LoadSnapshot( id ) {
@@ -105,45 +115,50 @@ class RqlStorage extends Storage {
 		                    .run( this.container.conn );
 
 		return promise.then( ( cursor ) => {
+			console.log( `Subscribed to ${id}` );
 			const tie = [cb, cursor];
 			this.subs[id].push( tie );
 			let holder = false;
 
 			let resolver;
 
-			const promise = new Promise((resolve, reject) => {
+			const promise = new Promise( ( resolve, reject ) => {
 				resolver = resolve;
-			});
+			} );
 
 
 			cursor.each( ( err, event ) => {
 				if ( err ) {
-					console.log( err );
+					console.log( `cursor closed for ${id}` );
 					return;
 				}
 
-				if (event.state && event.state == 'initializing') {
+				if ( event.state && event.state == 'initializing' ) {
+					console.log( `Initializing subscription for ${id}` );
 					holder = [];
 					return;
 				}
 
-				if (event.state && event.state == 'ready') {
-					holder = holder.sort((left, right) => {
-						return left.new_val.version < right.new_val.version ? -1 : 1;
-					});
+				if ( event.state && event.state == 'ready' ) {
+					console.log(`Subscription for ${id} ready`);
+					holder = holder.sort( ( left, right ) => {
+						return left.new_val.version < right.new_val.version ? - 1 : 1;
+					} );
 
-					holder.forEach(async (event) => {
+					holder.forEach( async( event ) => {
 						console.log( `replay event: ${event.new_val.name}:${event.new_val.version} ` );
-						await cb(event.new_val);
-					});
+						await cb( event.new_val );
+					} );
+
+					holder = null;
 
 					resolver();
 
 					return;
 				}
 
-				if (holder) {
-					holder.push(event);
+				if ( holder ) {
+					holder.push( event );
 					return;
 				}
 
@@ -184,10 +199,12 @@ class RqlStorage extends Storage {
 	Unsubscribe( id, cb ) {
 		if ( this.subs[id] ) {
 			this.unsub( 'subs', id, cb );
+			console.log( `Unsubscribed from ${id} -- ${this.subs[id] ? this.subs[id].length : 0} still attached` );
 		}
 
 		if ( this.subR[id] ) {
 			this.unsub( 'subR', id, cb );
+			console.log( `Unsubscribed from ${id} -- ${this.subR[id] ? this.subR[id].length : 0} still attached` );
 		}
 	}
 

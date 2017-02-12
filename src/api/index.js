@@ -56,12 +56,14 @@ config.container.conn.then( ( conn ) => {
 							await user.Load();
 							socket.emit( 'refresh', user.GetPlayerInfo() );
 							lastUpdate = null;
+							user.Destroy();
 						}
 						else {
 							container.storage.Unsubscribe( id, continuousUpdate );
 						}
 					}
 				};
+				console.log( `continuous update is enabled for ${id}` );
 				container.storage.SubscribeTo( id, continuousUpdate );
 				unSubToken = id;
 			}
@@ -86,7 +88,10 @@ config.container.conn.then( ( conn ) => {
 			if ( data && data.userId && data.token ) {
 				const user = new User( data.userId, container );
 				await user.Load();
-				ValidateUser( user, data.token );
+				if ( ! ValidateUser( user, data.token ) ) {
+					socket.emit( 'logout' );
+				}
+				user.Destroy();
 			}
 		} );
 
@@ -95,6 +100,7 @@ config.container.conn.then( ( conn ) => {
 			await user.Load();
 			await user.DoLogin( data.phone, socket.request.headers );
 			socket.emit( 'logging_in', {phone: user.Id()} )
+			user.Destroy();
 		} );
 		socket.on( 'verify', async( data ) => {
 			const user = new User( data.phone, container );
@@ -118,6 +124,7 @@ config.container.conn.then( ( conn ) => {
 					position: 'tc'
 				} )
 			}
+			user.Destroy();
 		} );
 		socket.on( 'pay', async( data ) => {
 			const user = new User( data.userId, container );
@@ -126,6 +133,7 @@ config.container.conn.then( ( conn ) => {
 			if ( ValidateUser( user, data.token ) ) {
 				await user.DoPurchase( data.payToken, data.packageId );
 			}
+			user.Destroy();
 		} );
 		socket.on( 'disconnect', () => {
 			container.storage.Unsubscribe( unSubToken, continuousUpdate );
