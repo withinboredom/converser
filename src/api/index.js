@@ -9,6 +9,14 @@ const Container = require( './lib/container' );
 const Storage = require( './lib/rqlStorage' );
 const Converser = require( './lib/converser' );
 
+const log = console.log;
+
+console.log = (...args) => {
+	if (process.env.NODE_ENV != 'production') {
+		log(...args);
+	}
+};
+
 const container = new Container();
 container.snapshots = config.container.snapshots;
 container.records = config.container.records;
