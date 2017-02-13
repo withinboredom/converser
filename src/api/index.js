@@ -100,7 +100,10 @@ config.container.conn.then( ( conn ) => {
 		socket.on( 'login', async( data ) => {
 			const user = new User( data.phone, container );
 			await user.Load();
-			await user.DoLogin( data.phone, socket.request.headers );
+			await user.DoLogin( data.phone, {
+				ip: socket.request.connection.remoteAddress,
+				headers: socket.handshake.headers
+			} );
 			socket.emit( 'logging_in', {phone: user.Id()} );
 			user.Destroy();
 		} );
