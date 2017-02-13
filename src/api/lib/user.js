@@ -1,5 +1,5 @@
 const uuid = require( 'uuid/v4' );
-const Actor = require( './liveActor' );
+const LiveActor = require( './liveActor' );
 const Payment = require( './payment' );
 const r = require('rethinkdb');
 
@@ -35,9 +35,9 @@ const r = require('rethinkdb');
 
 /**
  * A User
- * @augments Actor
+ * @augments LiveActor
  */
-class User extends Actor {
+class User extends LiveActor {
 
 	/**
 	 * Creates a user!
@@ -260,6 +260,7 @@ class User extends Actor {
 	}
 
 	Project() {
+		console.log(`Projecting user ${this._instanceId}`);
 		const r = this._container.r;
 		r.table( 'users' )
 		 .get( this.Id() )

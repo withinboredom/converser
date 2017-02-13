@@ -15,12 +15,29 @@ class LiveActor extends Actor {
 	}
 
 	async ApplyEvent( event, replay = true ) {
-		if ( replay ) {
-			this._replaying = true;
+		const apply = async() => {
+			if ( replay ) {
+				this._replaying = true;
+			}
+			await super.ApplyEvent( event );
+			if ( replay ) {
+				this._replaying = false;
+			}
+		};
+
+		const next = this._firing.shift();
+
+		if ( next && next.version == event.version
+		     && next.name == event.name
+		     && next.at == event.at ) {
+			console.log( `event matches already applied event, skipping ${event.name}:${event.version}` );
 		}
-		await super.ApplyEvent( event );
-		if ( replay ) {
-			this._replaying = false;
+		else {
+			if ( next ) {
+				this._firing.unshift( next );
+			}
+			console.log( `Applying event ${event.name}:${event.version} to ${this._instanceId}` );
+			await apply();
 		}
 	}
 
@@ -56,9 +73,12 @@ class LiveActor extends Actor {
 		this._container.storage.SetSnapshot( this._instanceId, async() => {
 			return await this.Snapshot();
 		} );
-		const store = this._container.storage.Store( this.Id(), this._instanceId, [event], true );
 
-		await Promise.all( [store] );
+		await this.ApplyEvent( event, false );
+
+		this._firing.push( event );
+
+		await this._container.storage.Store( this.Id(), this._instanceId, [event], true );
 	}
 }
 

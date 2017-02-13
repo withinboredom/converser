@@ -114,16 +114,10 @@ websocket.on( 'refresh', ( data ) => {
 	}
 } );
 
-websocket.on( 'message', ( event ) => {
-	const msg = JSON.parse( event.data );
-
-	switch ( msg.type ) {
-		case 'logout':
-			console.log( 'logging out due to invalid key/token' );
-			logout();
-			break;
-	}
-} );
+websocket.on('logout', () => {
+	console.log( 'logging out due to invalid key/token' );
+	logout();
+});
 
 const send = ( message, retries = 100 ) => {
 	websocket.emit( message.command, message );

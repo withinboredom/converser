@@ -16,15 +16,15 @@ class RqlStorage extends Storage {
 		this.subs = {};
 		this.subR = {};
 
-		setInterval(() => {
-			const idSubs = Object.keys(this.subs).reduce((carry, current) => {
+		setInterval( () => {
+			const idSubs = Object.keys( this.subs ).reduce( ( carry, current ) => {
 				return carry + this.subs[current].length;
-			}, 0);
-			const nameSubs = Object.keys(this.subR).reduce((carry, current) => {
+			}, 0 );
+			const nameSubs = Object.keys( this.subR ).reduce( ( carry, current ) => {
 				return carry + this.subR[current].length;
-			}, 0);
-			console.log(`Currently ${idSubs} id subscriptions, ${nameSubs} name subscriptions`)
-		}, 5000);
+			}, 0 );
+			console.log( `Currently ${idSubs} id subscriptions, ${nameSubs} name subscriptions` )
+		}, 5000 );
 	}
 
 	LoadSnapshot( id ) {
@@ -35,10 +35,8 @@ class RqlStorage extends Storage {
 
 	LoadEvents( id, from = - 1 ) {
 		return this.container.records
-		           .getAll( id, {index: 'model_id'} )
-		           .filter( r.row( 'version' ).gt( from ) )
-		           .orderBy( 'version' )
-		           .run( this.container.conn );
+			.between([id, from], [id, r.maxval], {leftBound: 'open', rightBound: 'closed'})
+			.orderBy({index: 'id'});
 	}
 
 	async Store( id, instanceId, events, ignoreConcurrencyError = false ) {
@@ -66,19 +64,24 @@ class RqlStorage extends Storage {
 		} );
 
 		const projector = this.projectors[instanceId];
-		projector();
+		if ( projector ) {
+			projector();
+		}
 
-		if ( events[events.length - 1].version % this.optimizeAt == 0 ) {
+		if ( events[events.length - 1].version % this.optimizeAt == 0
+		     && events[events.length - 1].version > 1 ) {
 			const snap = this.snaps[instanceId];
-			const snapshot = {
-				id,
-				state: await snap(),
-				version: lastVersion
-			};
-			this.container.snapshots
-			    .get( id )
-			    .replace( snapshot )
-			    .run( this.container.conn );
+			if ( snap ) {
+				const snapshot = {
+					id,
+					state: await snap(),
+					version: lastVersion
+				};
+				this.container.snapshots
+				    .get( id )
+				    .replace( snapshot )
+				    .run( this.container.conn );
+			}
 		}
 
 		this.UnsetProjector( instanceId );
@@ -109,10 +112,7 @@ class RqlStorage extends Storage {
 		}
 
 		const promise = this.container.records
-		                    .filter( ( event ) => {
-			                    return event( 'model_id' ).eq( id )
-			                                              .and( event( 'version' ).gt( sinceVersion ) );
-		                    } )
+		                    .between([id, sinceVersion], [id, r.maxval])
 		                    .changes( {includeInitial: true, includeStates: true} )
 		                    .run( this.container.conn );
 
@@ -142,7 +142,7 @@ class RqlStorage extends Storage {
 				}
 
 				if ( event.state && event.state == 'ready' ) {
-					console.log(`Subscription for ${id} ready`);
+					console.log( `Subscription for ${id} ready` );
 					holder = holder.sort( ( left, right ) => {
 						return left.new_val.version < right.new_val.version ? - 1 : 1;
 					} );

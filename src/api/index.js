@@ -48,7 +48,7 @@ config.container.conn.then( ( conn ) => {
 
 		console.log( 'connected' );
 
-		const sendUpdate = ( id ) => {
+		const sendUpdate = ( id, token ) => {
 			if ( ! continuousUpdate ) {
 				continuousUpdate = async() => {
 					console.log( 'maybe update?' );
@@ -62,8 +62,13 @@ config.container.conn.then( ( conn ) => {
 							console.log( 'sending update' );
 							const user = new User( id, container );
 							await user.Load();
-							socket.emit( 'refresh', user.GetPlayerInfo() );
-							lastUpdate = null;
+							if (ValidateUser(user, token)) {
+								socket.emit( 'refresh', user.GetPlayerInfo() );
+								lastUpdate = null;
+							}
+							else {
+								socket.emit('logout');
+							}
 							user.Destroy();
 						}
 						else {
@@ -86,8 +91,10 @@ config.container.conn.then( ( conn ) => {
 		const ValidateUser = async( user, token ) => {
 			const isValid = await user.GetActiveToken() === token;
 
+			console.log(`validate: ${token} == ${await user.GetActiveToken()}`);
+
 			if ( isValid ) {
-				sendUpdate( user.Id() );
+				sendUpdate( user.Id(), token );
 			} //todo logout?
 			return isValid;
 		};
