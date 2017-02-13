@@ -42,18 +42,23 @@ class LiveActor extends Actor {
 	}
 
 	async Store() {
+		return this._records;
 	}
 
 	async Fire( name, data ) {
 		const event = this.CreateEvent( name, data );
-		const apply = super.ApplyEvent( event, false );
-		this._container.storage.SetProjector( this._instanceId, () => {
+		//const apply = super.ApplyEvent( event, false );
+		this._container.storage.SetProjector( this._instanceId, async() => {
+			if ( ! this._replaying ) {
+				await this.Project();
+			}
 		} );
-		this._container.storage.SetSnapshot( this._instanceId, () => {
+		this._container.storage.SetSnapshot( this._instanceId, async() => {
+			return await this.Snapshot();
 		} );
 		const store = this._container.storage.Store( this.Id(), this._instanceId, [event], true );
 
-		await Promise.all( [apply, store] );
+		await Promise.all( [store] );
 	}
 }
 

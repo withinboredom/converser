@@ -1,6 +1,7 @@
 const uuid = require( 'uuid/v4' );
 const Actor = require( './liveActor' );
 const Payment = require( './payment' );
+const r = require('rethinkdb');
 
 /**
  * Generally used to initialize a user...
@@ -135,11 +136,11 @@ class User extends Actor {
 		} );
 	}
 
-	attempt_payment(data) {
-		this._state.payments.push(data.paymentId);
+	attempt_payment( data ) {
+		this._state.payments.push( data.paymentId );
 	}
 
-	set_lives(data) {
+	set_lives( data ) {
 		this._state.lives += data.lives;
 	}
 
@@ -203,12 +204,9 @@ class User extends Actor {
 			return carry;
 		} );
 
-		const token = uuid();
-
 		if ( session ) {
 			this.Fire( 'active_session_changed', {
-				id: session.id,
-				token
+				id: session.id
 			} );
 		}
 	}
@@ -245,18 +243,18 @@ class User extends Actor {
 	}
 
 	async DoPurchase( paymentToken, packageId ) {
-		const payment = new Payment(uuid(), this._container);
+		const payment = new Payment( uuid(), this._container );
 		await payment.Load();
 
-		this.Fire('attempt_payment', {
+		this.Fire( 'attempt_payment', {
 			paymentToken,
 			packageId,
 			paymentId: payment.Id()
-		});
+		} );
 
-		await payment.DoPay(this.Id(), paymentToken, packageId);
+		await payment.DoPay( this.Id(), paymentToken, packageId );
 
-		this.ListenFor(payment.Id(), 'payment_success', 'set_lives', 1);
+		this.ListenFor( payment.Id(), 'payment_success', 'set_lives', 1 );
 
 		payment.Destroy();
 	}
@@ -282,20 +280,26 @@ class User extends Actor {
 		} );
 	}
 
-	GetActiveToken(password) {
-		const activeSession = this._state.sessions.reduce((carry, session) => {
-			if (session.active) {
-				return session;
-			}
+	async GetActiveToken( password ) {
+		const tokenResponse = await this._container.r.table( 'sessions' )
+		                        .getAll( this.Id(), {index: 'phone'} )
+		                        .filter( ( session ) => {
+			                        if (password) {
+			                        	return r.now().during(session('begins'), session('ends'))
+					                        .and(session('password').eq(password), session('used').not());
+			                        }
 
-			return carry;
-		});
+			                        return r.now().during(session('begins'), session('ends'))
+				                        .and(session('active'));
+		                        } ).pluck('token').run(this._container.conn);
 
-		if (password && activeSession.password == password) {
-			return activeSession.token;
-		} else if (password) {
+		const token = await tokenResponse.toArray();
+
+		if (token.length == 0) {
 			return;
 		}
+
+		const activeSession = token[0];
 
 		return activeSession.token;
 	}

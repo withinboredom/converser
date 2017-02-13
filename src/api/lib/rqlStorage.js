@@ -68,7 +68,7 @@ class RqlStorage extends Storage {
 		const projector = this.projectors[instanceId];
 		projector();
 
-		if ( events >= this.optimizeAt ) {
+		if ( events[events.length - 1].version % this.optimizeAt == 0 ) {
 			const snap = this.snaps[instanceId];
 			const snapshot = {
 				id,
@@ -91,6 +91,7 @@ class RqlStorage extends Storage {
 
 	UnsetProjector( instanceId ) {
 		this.projectors[instanceId] = undefined;
+		delete this.projectors[instanceId];
 	}
 
 	SetSnapshot( instanceId, callback ) {
@@ -99,6 +100,7 @@ class RqlStorage extends Storage {
 
 	UnsetSnapshot( instanceId ) {
 		this.snaps[instanceId] = undefined;
+		delete this.snaps[instanceId];
 	}
 
 	SubscribeTo( id, cb, sinceVersion = - 1 ) {

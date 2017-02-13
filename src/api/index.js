@@ -75,10 +75,12 @@ config.container.conn.then( ( conn ) => {
 		 * @param {string} token
 		 * @returns {boolean}
 		 */
-		const ValidateUser = ( user, token ) => {
-			const isValid = user.GetActiveToken() === token;
+		const ValidateUser = async( user, token ) => {
+			const isValid = await user.GetActiveToken() === token;
 
-			sendUpdate( user.Id() );
+			if ( isValid ) {
+				sendUpdate( user.Id() );
+			} //todo logout?
 			return isValid;
 		};
 
@@ -88,7 +90,7 @@ config.container.conn.then( ( conn ) => {
 			if ( data && data.userId && data.token ) {
 				const user = new User( data.userId, container );
 				await user.Load();
-				if ( ! ValidateUser( user, data.token ) ) {
+				if ( ! await ValidateUser( user, data.token ) ) {
 					socket.emit( 'logout' );
 				}
 				user.Destroy();
@@ -99,7 +101,7 @@ config.container.conn.then( ( conn ) => {
 			const user = new User( data.phone, container );
 			await user.Load();
 			await user.DoLogin( data.phone, socket.request.headers );
-			socket.emit( 'logging_in', {phone: user.Id()} )
+			socket.emit( 'logging_in', {phone: user.Id()} );
 			user.Destroy();
 		} );
 		socket.on( 'verify', async( data ) => {
@@ -108,7 +110,7 @@ config.container.conn.then( ( conn ) => {
 			await user.DoVerify( user.Id(), data.password );
 			await user.Store();
 
-			const token = user.GetActiveToken( data.password );
+			const token = await user.GetActiveToken( data.password );
 			if ( token ) {
 				socket.emit( 'token', {
 					userId: user.Id(),
@@ -130,7 +132,7 @@ config.container.conn.then( ( conn ) => {
 			const user = new User( data.userId, container );
 			await user.Load();
 
-			if ( ValidateUser( user, data.token ) ) {
+			if ( await ValidateUser( user, data.token ) ) {
 				await user.DoPurchase( data.payToken, data.packageId );
 			}
 			user.Destroy();

@@ -128,7 +128,7 @@ class Actor {
 	async ApplySnapshot() {
 		let latestSnapshot = await this._container.storage.LoadSnapshot( this._id );
 
-		if ( latestSnapshot && latestSnapshot.length > 0 ) {
+		if ( latestSnapshot ) {
 			this._state = latestSnapshot.state;
 			this._nextVersion = latestSnapshot.version + 1;
 		} else {
