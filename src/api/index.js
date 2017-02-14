@@ -62,7 +62,7 @@ config.container.conn.then( ( conn ) => {
 							console.log( 'sending update' );
 							const user = new User( id, container );
 							await user.Load();
-							if (ValidateUser(user, token)) {
+							if (await ValidateUser(user, token)) {
 								socket.emit( 'refresh', user.GetPlayerInfo() );
 								lastUpdate = null;
 							}
@@ -134,7 +134,7 @@ config.container.conn.then( ( conn ) => {
 					userId: user.Id(),
 					token
 				} );
-				sendUpdate( user.Id() );
+				sendUpdate( user.Id(), token );
 			}
 			else {
 				socket.emit( 'notification', {

@@ -65,7 +65,7 @@ class memStorage extends Storage {
 	 * @returns {Promise.<Array>}
 	 */
 	LoadSnapshot( id ) {
-		return Promise.resolve( [] );
+		return Promise.resolve( null );
 	}
 
 	LoadEvents( id, from = - 1 ) {
