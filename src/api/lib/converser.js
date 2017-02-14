@@ -3,9 +3,17 @@ const LiveActor = require( './liveActor' );
 class Converser extends LiveActor {
 	constructor( container ) {
 		super( 'converser', container );
+
+		// user tracking
 		this.doit( 'created_session' );
 		this.doit( 'zombie' );
 		this.doit( 'active_session_changed' );
+		this.doit( 'set_lives' );
+
+		// payment tracking
+		this.doit( 'payment_attempt' );
+		this.doit( 'payment_success' );
+		this.doit( 'payment_fraud' );
 		console.log( 'new: ', this._instanceId )
 	}
 
@@ -15,8 +23,24 @@ class Converser extends LiveActor {
 
 	/* Listening for events */
 
+	set_lives( data ) {
+		this.Fire( 'issued_lives', data );
+	}
+
+	payment_attempt( data ) {
+		this.Fire( 'payment_is_started', data );
+	}
+
+	payment_success( data ) {
+		this.Fire( 'payment_is_complete', data );
+	}
+
+	payment_fraud( data ) {
+		this.Fire( 'payment_might_be_fraud', data );
+	}
+
 	active_session_changed( data ) {
-		this.Fire( 'user signed in', data );
+		this.Fire( 'user_signed_in', data );
 	}
 
 	zombie( data ) {
