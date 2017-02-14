@@ -7,7 +7,7 @@ class Storage {
 	 * @constructor
 	 * @param container
 	 */
-	constructor(container) {
+	constructor( container ) {
 		/**
 		 * @protected
 		 */

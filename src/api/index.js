@@ -11,9 +11,9 @@ const Converser = require( './lib/converser' );
 
 const log = console.log;
 
-console.log = (...args) => {
-	if (process.env.NODE_ENV != 'production') {
-		log(...args);
+console.log = ( ...args ) => {
+	if ( process.env.NODE_ENV != 'production' ) {
+		log( ...args );
 	}
 };
 
@@ -62,12 +62,12 @@ config.container.conn.then( ( conn ) => {
 							console.log( 'sending update' );
 							const user = new User( id, container );
 							await user.Load();
-							if (await ValidateUser(user, token)) {
+							if ( await ValidateUser( user, token ) ) {
 								socket.emit( 'refresh', user.GetPlayerInfo() );
 								lastUpdate = null;
 							}
 							else {
-								socket.emit('logout');
+								socket.emit( 'logout' );
 							}
 							user.Destroy();
 						}
@@ -91,7 +91,7 @@ config.container.conn.then( ( conn ) => {
 		const ValidateUser = async( user, token ) => {
 			const isValid = await user.GetActiveToken() === token;
 
-			console.log(`validate: ${token} == ${await user.GetActiveToken()}`);
+			console.log( `validate: ${token} == ${await user.GetActiveToken()}` );
 
 			if ( isValid ) {
 				sendUpdate( user.Id(), token );

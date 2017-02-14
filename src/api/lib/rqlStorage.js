@@ -35,8 +35,8 @@ class RqlStorage extends Storage {
 
 	LoadEvents( id, from = - 1 ) {
 		return this.container.records
-			.between([id, from], [id, r.maxval], {leftBound: 'open', rightBound: 'closed'})
-			.orderBy({index: 'id'});
+		           .between( [id, from], [id, r.maxval], {leftBound: 'open', rightBound: 'closed'} )
+		           .orderBy( {index: 'id'} );
 	}
 
 	async Store( id, instanceId, events, ignoreConcurrencyError = false ) {
@@ -112,7 +112,7 @@ class RqlStorage extends Storage {
 		}
 
 		const promise = this.container.records
-		                    .between([id, sinceVersion], [id, r.maxval])
+		                    .between( [id, sinceVersion], [id, r.maxval] )
 		                    .changes( {includeInitial: true, includeStates: true} )
 		                    .run( this.container.conn );
 

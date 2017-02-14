@@ -11,7 +11,7 @@ class memStorage extends Storage {
 	 * @param {Container} container
 	 */
 	constructor( container ) {
-		super(container);
+		super( container );
 		this.events = {};
 		this.subs = {};
 	}

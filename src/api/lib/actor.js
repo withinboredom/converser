@@ -90,7 +90,8 @@ class Actor {
 		this._storagePromise = null;
 	}
 
-	Destroy() {}
+	Destroy() {
+	}
 
 	ListenFor( id, eventToHear, eventToFire, number = 1, time = 60000 ) {
 		const wait = ( event ) => {

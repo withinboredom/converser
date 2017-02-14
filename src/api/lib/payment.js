@@ -1,13 +1,13 @@
-const uuid = require('uuid');
-const LiveActor  = require('./liveActor');
+const uuid = require( 'uuid' );
+const LiveActor = require( './liveActor' );
 
 /**
  * Represents a payment
  * @augments LiveActor
  */
 class Payment extends LiveActor {
-	constructor(id, container) {
-		super(id, container);
+	constructor( id, container ) {
+		super( id, container );
 		this._packages = {
 			1: {
 				cost: 150,
@@ -27,7 +27,7 @@ class Payment extends LiveActor {
 		};
 	}
 
-	async DoPay(userId, payToken, packageId) {
+	async DoPay( userId, payToken, packageId ) {
 		const pack = this._packages[packageId];
 		const attempt = uuid();
 		const payment = {
@@ -52,26 +52,26 @@ class Payment extends LiveActor {
 			payment
 		};
 
-		this.Fire('payment_attempt', data);
+		this.Fire( 'payment_attempt', data );
 
 		const stripe = this._container.charge;
-		const charge = await stripe.charges.create(payment);
+		const charge = await stripe.charges.create( payment );
 
-		if (charge.outcome.risk_level == 'elevated') {
-			this.Fire('payment_fraud', {
+		if ( charge.outcome.risk_level == 'elevated' ) {
+			this.Fire( 'payment_fraud', {
 				data: charge
-			})
+			} )
 		}
 
-		if (charge.amount == payment.amount) {
-			this.Fire('payment_success', {
+		if ( charge.amount == payment.amount ) {
+			this.Fire( 'payment_success', {
 				data: charge,
 				attempt,
 				userId,
 				packageId,
 				lives: pack.lives,
 				amount: charge.amount
-			});
+			} );
 		}
 	}
 }

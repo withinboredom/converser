@@ -35,7 +35,7 @@ class And {
 	}
 
 	async And( expected ) {
-		console.log('with state:');
+		console.log( 'with state:' );
 		const snapshot = await this.item.Snapshot();
 		let failure = false;
 
@@ -198,8 +198,8 @@ class When {
 			}
 			process.stdout.write( "\n" );
 
-			if (failure) {
-				process.exit(1);
+			if ( failure ) {
+				process.exit( 1 );
 			}
 		} );
 	}

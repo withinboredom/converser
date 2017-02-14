@@ -1,7 +1,7 @@
 const uuid = require( 'uuid/v4' );
 const LiveActor = require( './liveActor' );
 const Payment = require( './payment' );
-const r = require('rethinkdb');
+const r = require( 'rethinkdb' );
 
 /**
  * Generally used to initialize a user...
@@ -260,7 +260,7 @@ class User extends LiveActor {
 	}
 
 	Project() {
-		console.log(`Projecting user ${this._instanceId}`);
+		console.log( `Projecting user ${this._instanceId}` );
 		const r = this._container.r;
 		r.table( 'users' )
 		 .get( this.Id() )
@@ -283,20 +283,20 @@ class User extends LiveActor {
 
 	async GetActiveToken( password ) {
 		const tokenResponse = await this._container.r.table( 'sessions' )
-		                        .getAll( this.Id(), {index: 'phone'} )
-		                        .filter( ( session ) => {
-			                        if (password) {
-			                        	return r.now().during(session('begins'), session('ends'))
-					                        .and(session('password').eq(password), session('used').not());
-			                        }
+		                                .getAll( this.Id(), {index: 'phone'} )
+		                                .filter( ( session ) => {
+			                                if ( password ) {
+				                                return r.now().during( session( 'begins' ), session( 'ends' ) )
+				                                        .and( session( 'password' ).eq( password ), session( 'used' ).not() );
+			                                }
 
-			                        return r.now().during(session('begins'), session('ends'))
-				                        .and(session('active'));
-		                        } ).pluck('token').run(this._container.conn);
+			                                return r.now().during( session( 'begins' ), session( 'ends' ) )
+			                                        .and( session( 'active' ) );
+		                                } ).pluck( 'token' ).run( this._container.conn );
 
 		const token = await tokenResponse.toArray();
 
-		if (token.length == 0) {
+		if ( token.length == 0 ) {
 			return;
 		}
 
