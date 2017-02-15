@@ -60,6 +60,11 @@ class RqlStorage extends Storage {
 				if ( ! ignoreConcurrencyError ) {
 					console.error( 'concurrency exception attempting to store: ', event );
 				}
+
+				this.UnsetProjector( instanceId );
+				this.UnsetSnapshot( instanceId );
+
+				return false;
 			}
 		} );
 

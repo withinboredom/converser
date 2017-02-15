@@ -62,7 +62,7 @@ class LiveActor extends Actor {
 		return this._records;
 	}
 
-	async Fire( name, data ) {
+	async Fire( name, data, successCallback = null ) {
 		const event = this.CreateEvent( name, data );
 		//const apply = super.ApplyEvent( event, false );
 		this._container.storage.SetProjector( this._instanceId, async() => {
@@ -78,7 +78,11 @@ class LiveActor extends Actor {
 
 		this._firing.push( event );
 
-		await this._container.storage.Store( this.Id(), this._instanceId, [event], true );
+		const result = await this._container.storage.Store( this.Id(), this._instanceId, [event], true );
+
+		if ( result !== false && successCallback ) {
+			successCallback();
+		}
 	}
 }
 
