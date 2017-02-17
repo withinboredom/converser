@@ -84,12 +84,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/loop.git",
-                "reference": "a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4"
+                "reference": "302a5c714c2700d32ca9444be09f21b2835b213f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/loop/zipball/a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4",
-                "reference": "a69bf4d3a0ce0f09b2ea82b657f059252f6b4ac4",
+                "url": "https://api.github.com/repos/amphp/loop/zipball/302a5c714c2700d32ca9444be09f21b2835b213f",
+                "reference": "302a5c714c2700d32ca9444be09f21b2835b213f",
                 "shasum": ""
             },
             "require": {
@@ -123,7 +123,7 @@
                 "loop",
                 "reactor"
             ],
-            "time": "2017-01-16 16:39:24"
+            "time": "2017-02-17 06:02:04"
         },
         {
             "name": "async-interop/event-loop",
@@ -384,12 +384,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "5f17a79615bd36d52d3b3ce44075aec02605d8bf"
+                "reference": "662ca4c076d56de355f423c1fa0fa7b51c224e17"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/5f17a79615bd36d52d3b3ce44075aec02605d8bf",
-                "reference": "5f17a79615bd36d52d3b3ce44075aec02605d8bf",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/662ca4c076d56de355f423c1fa0fa7b51c224e17",
+                "reference": "662ca4c076d56de355f423c1fa0fa7b51c224e17",
                 "shasum": ""
             },
             "require": {
@@ -441,7 +441,7 @@
                 "uri",
                 "url"
             ],
-            "time": "2016-11-02 14:11:11"
+            "time": "2017-02-14 19:21:36"
         },
         {
             "name": "plivo/plivo-php",
