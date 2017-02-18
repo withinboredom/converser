@@ -16,6 +16,29 @@ const fake_plivo = {
 	}
 };
 
+const oldST = setTimeout;
+const oldCT = clearTimeout;
+
+let timeouts = [];
+let stopNew = false;
+
+setTimeout = ( func, delay ) => {
+	if ( stopNew ) {
+		const id = oldST( func, 0 );
+		timeouts.push( id );
+		return id;
+	}
+};
+
+clearTimeout = ( id ) => {
+	timeouts = timeouts.map( ( item ) => {
+		if ( item !== id ) {
+			return item;
+		}
+	} );
+	oldCT( id );
+};
+
 const fake_stripe = {
 	charges: {
 		create: ( payment ) => (
@@ -40,13 +63,13 @@ class And {
 		let failure = false;
 
 		Object.keys( expected ).forEach( ( key ) => {
-			if ( typeof expected[key] === 'string'
-			     && expected[key][0] === '{'
-			     && expected[key][expected[key].length - 1] ) {
-				const token = expected[key].substr( 1, expected[key].length - 2 );
-				if ( snapshot[key]
-				     && typeof snapshot[key] == token ) {
-					expected[key] = snapshot[key];
+			if ( typeof expected[ key ] === 'string'
+			     && expected[ key ][ 0 ] === '{'
+			     && expected[ key ][ expected[ key ].length - 1 ] ) {
+				const token = expected[ key ].substr( 1, expected[ key ].length - 2 );
+				if ( snapshot[ key ]
+				     && typeof snapshot[ key ] == token ) {
+					expected[ key ] = snapshot[ key ];
 				}
 			}
 		} );
@@ -65,7 +88,7 @@ class And {
 							return 'red';
 						}
 					)() : 'grey';
-			process.stdout.write( part.value[color] );
+			process.stdout.write( part.value[ color ] );
 		} );
 
 		if ( failure ) {
@@ -111,20 +134,44 @@ class When {
 		container.charge = fake_stripe;
 		container.storage = new Storage( container );
 
-		console.log( this.story['cyan']['bold']['underline'] );
+		console.log( this.story[ 'cyan' ][ 'bold' ][ 'underline' ] );
 
 		const model = this.model;
 		const UT = new model( '123456789', container );
 		container.storage.Inject( UT.Id(), this.previous );
 
+		stopNew = false;
+
 		const action = this.action;
 		await UT.Load();
 		try {
-			await UT[action]( ...this.parameters );
+			await UT[ action ]( ...this.parameters );
 		}
 		catch ( err ) {
-			console.log( `Tried to apply ${action['magenta']} but it failed,\n with error: ${err.message['yellow']}` )
+			console.log( `Tried to apply ${action[ 'magenta' ]} but it failed,\n with error: ${err.message[ 'yellow' ]}` )
 		}
+
+		await new Promise( ( resolve ) => {
+			if ( UT.isStoring !== undefined ) {
+				const check = () => {
+					if ( ! UT.isStoring ) {
+						resolve();
+					}
+				};
+
+				process.nextTick( check );
+				return;
+			}
+
+			resolve();
+		} );
+
+		stopNew = true;
+		timeouts.forEach( ( item ) => {
+			oldCT( item );
+		} );
+		timeouts = [];
+
 		const results = await UT.Store();
 		this.Test( expected, results );
 		return new And( UT );
@@ -153,25 +200,43 @@ class When {
 								return 'red';
 							}
 						)() : 'grey';
-				process.stdout.write( part.value[color] );
+				process.stdout.write( part.value[ color ] );
+			} );
+		}
+		else if ( expected.length != 0 && results.length == 0 ) {
+			const d = diff.diffJson( expected, results );
+			d.forEach( ( part ) => {
+				const color = part.added ? (
+						() => {
+							failure = true;
+							return 'green';
+						}
+					)() :
+					part.removed ? (
+							() => {
+								failure = true;
+								return 'red';
+							}
+						)() : 'grey';
+				process.stdout.write( part.value[ color ] );
 			} );
 		}
 
 		results.forEach( ( result, i ) => {
-			console.log( `${result.name['blue']}:` );
-			if ( expected[i] ) {
-				if ( expected[i].name === result.name ) {
-					Object.keys( expected[i].data ).forEach( ( key ) => {
-						if ( typeof expected[i].data[key] === 'string'
-						     && expected[i].data[key][0] === '{'
-						     && expected[i].data[key][expected[i].data[key].length - 1] === '}' ) {
-							if ( expected[i].data[key]
-							     && typeof result.data[key] === expected[i].data[key].substr( 1, expected[i].data[key].length - 2 ).toLowerCase() ) {
-								expected[i].data[key] = result.data[key];
+			console.log( `${result.name[ 'blue' ]}:` );
+			if ( expected[ i ] ) {
+				if ( expected[ i ].name === result.name ) {
+					Object.keys( expected[ i ].data ).forEach( ( key ) => {
+						if ( typeof expected[ i ].data[ key ] === 'string'
+						     && expected[ i ].data[ key ][ 0 ] === '{'
+						     && expected[ i ].data[ key ][ expected[ i ].data[ key ].length - 1 ] === '}' ) {
+							if ( expected[ i ].data[ key ]
+							     && typeof result.data[ key ] === expected[ i ].data[ key ].substr( 1, expected[ i ].data[ key ].length - 2 ).toLowerCase() ) {
+								expected[ i ].data[ key ] = result.data[ key ];
 							}
 						}
 					} );
-					const d = diff.diffJson( result.data, expected[i].data );
+					const d = diff.diffJson( result.data, expected[ i ].data );
 					d.forEach( ( part ) => {
 						const color = part.added ? (
 								() => {
@@ -185,15 +250,15 @@ class When {
 										return 'red';
 									}
 								)() : 'grey';
-						process.stdout.write( part.value[color] );
+						process.stdout.write( part.value[ color ] );
 					} );
 					//console.log( d );
 				} else {
-					console.log( `Got event ${result.name['blue']} but expected ${expected[i].name['blue']}`['red'] );
+					console.log( `Got event ${result.name[ 'blue' ]} but expected ${expected[ i ].name[ 'blue' ]}`[ 'red' ] );
 					process.exit( 1 );
 				}
 			} else {
-				console.log( `Unexpected event '${result.name['blue']}'`['red'] );
+				console.log( `Unexpected event '${result.name[ 'blue' ]}'`[ 'red' ] );
 				process.exit( 1 );
 			}
 			process.stdout.write( "\n" );

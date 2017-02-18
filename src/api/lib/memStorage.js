@@ -22,7 +22,7 @@ class memStorage extends Storage {
 	 * @param {object} data
 	 */
 	Inject( id, data ) {
-		this.events[id] = data;
+		this.events[ id ] = data;
 	}
 
 	/**
@@ -34,27 +34,34 @@ class memStorage extends Storage {
 	 */
 	async Store( id, instanceId, events ) {
 		if ( this.IsLocked( instanceId ) ) {
-			await this.locks[instanceId]();
+			await this.locks[ instanceId ]();
 		}
 
 		let lastVersion = - 1;
 		const toStore = events.filter( ( event ) => ! event.stored );
-		if ( this.events[id] === undefined ) {
-			this.events[id] = [];
+		if ( this.events[ id ] === undefined ) {
+			this.events[ id ] = [];
 		}
 
 		toStore.forEach( ( event ) => {
 			event.stored = true;
 			event.new = true;
-			this.events[id].push( event );
-			if ( this.subs[id] ) {
-				this.subs[id].forEach( ( cb ) => {
+			this.events[ id ].push( event );
+			if ( this.subs[ id ] ) {
+				this.subs[ id ].forEach( ( cb ) => {
 					cb( event );
 				} )
 			}
 		} );
 
-		const changesTotal = this.events[id].filter( ( event ) => event.new );
+		const changesTotal = this.events[ id ]
+			.filter( ( event ) => event.new )
+			.sort( ( left, right ) => {
+				if ( left.version < right.version ) {
+					return 0 - 1;
+				}
+				return 1;
+			} );
 
 		return changesTotal;
 	}
@@ -69,28 +76,28 @@ class memStorage extends Storage {
 	}
 
 	LoadEvents( id, from = - 1 ) {
-		if ( this.events[id] ) {
-			return Promise.resolve( this.events[id].filter( ( event ) => event.version > from ) );
+		if ( this.events[ id ] ) {
+			return Promise.resolve( this.events[ id ].filter( ( event ) => event.version > from ) );
 		}
 
 		return Promise.resolve( [] );
 	}
 
 	SubscribeTo( id, cb ) {
-		if ( ! this.subs[id] ) {
-			this.subs[id] = [];
+		if ( ! this.subs[ id ] ) {
+			this.subs[ id ] = [];
 		}
 
-		this.subs[id].push( cb );
+		this.subs[ id ].push( cb );
 
-		if ( this.events[id] ) {
-			this.events[id].forEach( cb );
+		if ( this.events[ id ] ) {
+			this.events[ id ].forEach( cb );
 		}
 	}
 
 	Unsubscribe( id, cb ) {
-		if ( this.subs[id] ) {
-			this.subs[id] = this.subs[id].filter( ( sub ) => sub !== cb );
+		if ( this.subs[ id ] ) {
+			this.subs[ id ] = this.subs[ id ].filter( ( sub ) => sub !== cb );
 		}
 	}
 

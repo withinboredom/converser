@@ -168,8 +168,7 @@ const test = async() => {
 				{
 					name: 'active_session_changed',
 					data: {
-						id: 'session_id',
-						token: '{string}'
+						id: 'session_id'
 					}
 				}
 			] )
@@ -197,7 +196,7 @@ const test = async() => {
 
 	await (
 		await new Given( 'A logged in user makes a payment', User, loggedInUser )
-			.When( 'DoPurchase', {id: 'PayToken'}, 1 )
+			.When( 'DoPurchase', { id: 'PayToken' }, 1 )
 			.Then( [
 				{
 					name: 'attempt_payment',

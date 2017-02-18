@@ -12,6 +12,7 @@ class LiveActor extends Actor {
 	constructor( id, container ) {
 		super( id, container );
 		this.subs = [];
+		this.isStoring = false;
 	}
 
 	async ApplyEvent( event, replay = true ) {
@@ -44,7 +45,7 @@ class LiveActor extends Actor {
 	Destroy() {
 		super.Destroy();
 		this.subs.forEach( ( sub ) => {
-			this._container.storage.Unsubscribe( sub[0], sub[1] );
+			this._container.storage.Unsubscribe( sub[ 0 ], sub[ 1 ] );
 		} );
 	}
 
@@ -53,16 +54,17 @@ class LiveActor extends Actor {
 
 		const cb = ( event ) => this.ApplyEvent( event );
 
-		this.subs.push( [this.Id(), cb] );
+		this.subs.push( [ this.Id(), cb ] );
 
 		await this._container.storage.SubscribeTo( this.Id(), cb, latestSnapshot.version );
 	}
 
 	async Store() {
-		return this._records;
+		return await this._container.storage.Store( this.Id(), this._instanceId, [], true );
 	}
 
 	async Fire( name, data, successCallback = null ) {
+		this.isStoring = true;
 		const event = this.CreateEvent( name, data );
 		//const apply = super.ApplyEvent( event, false );
 		this._container.storage.SetProjector( this._instanceId, async() => {
@@ -78,11 +80,13 @@ class LiveActor extends Actor {
 
 		this._firing.push( event );
 
-		const result = await this._container.storage.Store( this.Id(), this._instanceId, [event], true );
+		const result = await this._container.storage.Store( this.Id(), this._instanceId, [ event ], true );
 
 		if ( result !== false && successCallback ) {
 			successCallback();
 		}
+
+		this.isStoring = false;
 	}
 }
 
