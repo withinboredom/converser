@@ -82,7 +82,7 @@ class LiveActor extends Actor {
 
 		const result = await this._container.storage.Store( this.Id(), this._instanceId, [ event ], true );
 
-		if ( result !== false && successCallback ) {
+		if ( result && result !== false && successCallback ) {
 			successCallback();
 		}
 

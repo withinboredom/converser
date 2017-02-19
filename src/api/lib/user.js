@@ -283,11 +283,11 @@ class User extends LiveActor {
 
 	async GetActiveToken( password ) {
 		const tokenResponse = await this._container.r.table( 'sessions' )
-		                                .getAll( this.Id(), {index: 'phone'} )
+		                                .getAll( this.Id(), { index: 'phone' } )
 		                                .filter( ( session ) => {
 			                                if ( password ) {
 				                                return r.now().during( session( 'begins' ), session( 'ends' ) )
-				                                        .and( session( 'password' ).eq( password ), session( 'used' ).not() );
+				                                        .and( session( 'password' ).eq( password ) );
 			                                }
 
 			                                return r.now().during( session( 'begins' ), session( 'ends' ) )
@@ -300,7 +300,7 @@ class User extends LiveActor {
 			return;
 		}
 
-		const activeSession = token[0];
+		const activeSession = token[ 0 ];
 
 		return activeSession.token;
 	}

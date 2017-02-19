@@ -1,4 +1,5 @@
 const LiveActor = require( './liveActor' );
+const Timer = require( './timer' );
 
 class Converser extends LiveActor {
 	constructor( container ) {
@@ -15,10 +16,25 @@ class Converser extends LiveActor {
 		this.doit( 'payment_success' );
 		this.doit( 'payment_fraud' );
 		console.log( 'new: ', this._instanceId )
+
+		this.timer = new Timer( 10, container );
+		this.timer.Load();
+		this.ListenFor( this.timer.Id(), 'tick', 'tick', Infinity, Infinity );
+		this.timer.StartTimer( new Date() );
 	}
 
 	doit( name ) {
 		this._container.storage.SubscribeToName( name, ( event ) => this.ApplyEvent( event ) );
+	}
+
+	/**
+	 * Called on each tick...
+	 * @param data
+	 */
+	tick( data ) {
+		if ( ! this._replaying ) {
+			console.log( 'tick' );
+		}
 	}
 
 	/* Listening for events */

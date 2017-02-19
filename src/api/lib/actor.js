@@ -102,6 +102,7 @@ class Actor {
 			}
 
 			if ( number <= 0 ) {
+				console.log( 'Unsubscribe due to repeat exhaustion' )
 				try {
 					this._container.storage.Unsubscribe( id, wait );
 				} catch ( err ) {
@@ -111,14 +112,17 @@ class Actor {
 
 		this._container.storage.SubscribeTo( id, wait );
 
-		setTimeout( () => {
-			if ( number > 0 ) {
-				try {
-					this._container.storage.Unsubscribe( id, wait );
-				} catch ( err ) {
+		if ( time < Infinity ) {
+			setTimeout( () => {
+				if ( number > 0 ) {
+					try {
+						console.log( 'Unsubscribe due to timeout' )
+						this._container.storage.Unsubscribe( id, wait );
+					} catch ( err ) {
+					}
 				}
-			}
-		}, time );
+			}, time );
+		}
 	}
 
 	/**
@@ -161,8 +165,8 @@ class Actor {
 	async ApplyEvent( event ) {
 		const func = event.name;
 		this._nextVersion = Math.max( event.version + 1, this._nextVersion );
-		if ( this[func] ) {
-			await this[func]( event.data );
+		if ( this[ func ] ) {
+			await this[ func ]( event.data );
 		}
 	}
 
@@ -266,8 +270,8 @@ class Actor {
 
 				if ( toFire ) {
 					name = toFire.name;
-					if ( this[name] ) {
-						await this[name]( toFire.data );
+					if ( this[ name ] ) {
+						await this[ name ]( toFire.data );
 					}
 					this._records.push( toFire );
 				}
@@ -296,7 +300,7 @@ class Actor {
 
 	CreateEvent( name, data ) {
 		return {
-			id: [this._id, this._nextVersion],
+			id: [ this._id, this._nextVersion ],
 			model_id: this._id,
 			version: this._nextVersion,
 			type: 'event',

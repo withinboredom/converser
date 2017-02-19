@@ -11,7 +11,9 @@ class Timer extends OnlyActor {
 	}
 
 	getMsToNextTick( now ) {
-		return this._state[ 'next_tick' ].getTime() - now.getTime();
+		return (
+		       this._state[ 'next_tick' ].getTime() - now.getTime()
+		       ) / 10;
 	}
 
 	StartTimer( nextTick ) {
