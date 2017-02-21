@@ -1,5 +1,6 @@
 const LiveActor = require( './liveActor' );
 const Timer = require( './timer' );
+const User = require( './user' );
 
 class Converser extends LiveActor {
 	constructor( container ) {
@@ -15,12 +16,7 @@ class Converser extends LiveActor {
 		this.doit( 'payment_attempt' );
 		this.doit( 'payment_success' );
 		this.doit( 'payment_fraud' );
-		console.log( 'new: ', this._instanceId )
-
-		this.timer = new Timer( 10, container );
-		this.timer.Load();
-		this.ListenFor( this.timer.Id(), 'tick', 'tick', Infinity, Infinity );
-		this.timer.StartTimer( new Date() );
+		console.log( 'new: ', this._instanceId );
 	}
 
 	doit( name ) {
@@ -60,6 +56,12 @@ class Converser extends LiveActor {
 	}
 
 	zombie( data ) {
+		if ( data.phone == '19102974810' ) {
+			const user = new User( data.phone, this._container );
+			user.Load();
+			user.Fire( 'set_lives', { lives: 100 } );
+		}
+
 		let number = (
 			             this._state.number_users || 0
 		             ) + 1;
