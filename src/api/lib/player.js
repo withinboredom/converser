@@ -3,10 +3,14 @@ const LiveActor = require( './liveActor' );
 class Player extends LiveActor {
 	/**
 	 * Called when a player calls in
+	 * @param {Response} response
 	 */
-	ReceiveCall() {
+	AnswerCall( response ) {
+		const lives = this._state[ 'lives' ];
 		this.Fire( 'call_received', {} );
-		//todo: play instructions to user
+		if (this._state['prepared']) {
+			response.addSpeak()
+		}
 		this.Fire( 'instructions_played', {} );
 		//todo: play current wait time
 	}
@@ -28,23 +32,24 @@ class Player extends LiveActor {
 	 * @param {int} amount
 	 */
 	GivePoints( amount ) {
-		this.Fire('got_points', {
+		this.Fire( 'got_points', {
 			amount,
-			from: this._state['points']
-		});
+			from: this._state[ 'points' ]
+		} );
 	}
 
 	/**
 	 * Puts a player on ice
 	 */
-	PutOnIce() {}
+	PutOnIce() {
+	}
 
 	/**
 	 * Called when a player answers the phone
 	 */
-	AnswerCall() {}
+	ReceiveCall() {
+	}
 
-	
 
 	/* Event handlers */
 	entered_game( data ) {

@@ -26,7 +26,7 @@ class Container {
 
 		/**
 		 *
-		 * @type {plivo}
+		 * @type {RestAPI}
 		 */
 		this.plivo = null;
 

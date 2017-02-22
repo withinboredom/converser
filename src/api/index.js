@@ -2,9 +2,12 @@ require( 'harmonize' );
 const app = require( 'express' )();
 const http = require( 'http' ).Server( app );
 const io = require( 'socket.io' )( http );
+const plivo = require( 'plivo' );
+
 const config = require( './config' );
 
 const User = require( './lib/user' );
+const Player = require( './lib/player' );
 const Container = require( './lib/container' );
 const Storage = require( './lib/rqlStorage' );
 const Converser = require( './lib/converser' );
@@ -38,6 +41,12 @@ config.container.conn.then( ( conn ) => {
 
 	app.get( '/', ( request, response ) => {
 		response.send( '<h1>Hello World</h1>' );
+	} );
+
+	app.get( '/call/', ( request, response ) => {
+		const r = plivo.Response();
+		const player = new Player( request.param( 'From' ), container );
+		player.AnswerCall( r );
 	} );
 
 	io.on( 'connection', ( socket ) => {
@@ -119,7 +128,7 @@ config.container.conn.then( ( conn ) => {
 				ip: socket.request.connection.remoteAddress,
 				headers: socket.handshake.headers
 			} );
-			socket.emit( 'logging_in', {phone: user.Id()} );
+			socket.emit( 'logging_in', { phone: user.Id() } );
 			user.Destroy();
 		} );
 		socket.on( 'verify', async( data ) => {
