@@ -12,6 +12,7 @@ cache:
   - "$HOME/.yarn"
   - "$HOME/.yarn-config"
 before_install:
+- curl -sSL https://get.docker.com/ | sudo sh
 - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 - curl -SL https://github.com/grammarly/rocker/releases/download/1.3.0/rocker_linux_amd64.tar.gz | sudo tar -xzC /usr/local/bin && sudo chmod +x /usr/local/bin/rocker
 - curl -L https://github.com/docker/compose/releases/download/1.10.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose
