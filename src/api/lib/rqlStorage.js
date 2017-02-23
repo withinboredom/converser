@@ -12,7 +12,6 @@ class RqlStorage extends Storage {
 		this.optimizeAt = 10;
 		this.projectors = {};
 		this.snaps = {};
-		this.inProgress = {};
 		this.subs = {};
 		this.subR = {};
 
@@ -27,9 +26,9 @@ class RqlStorage extends Storage {
 		}, 5000 );
 	}
 
-	LoadSnapshot( id ) {
+	LoadSnapshot( instance ) {
 		return this.container.snapshots
-		           .get( id )
+		           .get( `${instance.constructor.name}_${instance.Id()}` )
 		           .run( this.container.conn );
 	}
 
@@ -39,7 +38,10 @@ class RqlStorage extends Storage {
 		           .orderBy( { index: 'id' } );
 	}
 
-	async Store( id, instanceId, events, ignoreConcurrencyError = false ) {
+	async Store( instance, events, ignoreConcurrencyError = false ) {
+		const instanceId = instance._instanceId;
+		const id = instance.Id();
+		const snapshotId = `${instance.constructor.name}_${id}`;
 		if ( this.IsLocked( instanceId ) ) {
 			await this.locks[ instanceId ]();
 		}
@@ -83,7 +85,7 @@ class RqlStorage extends Storage {
 					version: lastVersion
 				};
 				this.container.snapshots
-				    .get( id )
+				    .get( snapshotId )
 				    .replace( snapshot )
 				    .run( this.container.conn );
 			}

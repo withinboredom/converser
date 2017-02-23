@@ -78,7 +78,7 @@ const render = () => {
                     getComponent={ ( nextState, cb ) => {
                         import( './App/components/me' ).then( ( module ) => {
                             const Me = module.default;
-                            cb( null, () => <State><Me player={{lives: 0, score: 0}} /></State> )
+                            cb( null, () => <State><Me player={{lives: 0, score: 0, status: 'not-playing'}} /></State> )
                         } )
                     } }
                     onEnter={requireAuth}

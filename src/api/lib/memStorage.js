@@ -32,7 +32,11 @@ class memStorage extends Storage {
 	 * @param {Array} events
 	 * @returns {Promise<Array>}
 	 */
-	async Store( id, instanceId, events ) {
+	async Store( instance, events ) {
+		const instanceId = instance._instanceId;
+		const id = instance.Id();
+		const snapshotId = instance.constructor.name;
+
 		if ( this.IsLocked( instanceId ) ) {
 			await this.locks[ instanceId ]();
 		}

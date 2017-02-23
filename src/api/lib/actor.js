@@ -131,7 +131,7 @@ class Actor {
 	 * @protected
 	 */
 	async ApplySnapshot() {
-		let latestSnapshot = await this._container.storage.LoadSnapshot( this._id );
+		let latestSnapshot = await this._container.storage.LoadSnapshot( this );
 
 		if ( latestSnapshot ) {
 			this._state = latestSnapshot.state;
@@ -218,7 +218,7 @@ class Actor {
 		} );
 
 		try {
-			const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
+			const result = await this._container.storage.Store( this, this._records );
 			this._storagePromise = null;
 			resolver( result );
 			return result;
@@ -230,7 +230,7 @@ class Actor {
 				event.version = this._nextVersion ++;
 				this._records.push( event );
 			} );
-			const result = await this._container.storage.Store( this._id, this._instanceId, this._records );
+			const result = await this._container.storage.Store( this, this._records );
 			resolver( result );
 			return result;
 		}

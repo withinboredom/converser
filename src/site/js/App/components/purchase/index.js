@@ -9,21 +9,26 @@ import me from '../me/style.css';
 class Purchase extends PureComponent {
     componentWillMount() {
         document.title = "Purchase more lives";
+        fbq('track', 'InitiateCheckout');
     }
 
-    fund = (packageId) => (token) => {
+    fund = (packageId, amount) => (token) => {
         window.ga('send', 'event', 'user', 'payment', '', packageId);
         auth.makePayment(packageId, token);
-        browserHistory.push('/me');
+        fbq('track', 'Purchase', {
+		    value: amount,
+		    currency: 'USD'
+	    });
+	    browserHistory.push('/me');
     };
 
     render() {
         const stripeKey = process.env.STRIPE_P_KEY;
         return (
             <div className={me.me}>
-                <Carrier token={this.fund(1)} stripeKey={stripeKey} cost={1} lives={1}/>
-                <Carrier token={this.fund(2)} stripeKey={stripeKey} cost={3} lives={3}/>
-                <Carrier token={this.fund(3)} stripeKey={stripeKey} cost={20} lives={25}/>
+                <Carrier token={this.fund(1, 2)} stripeKey={stripeKey} cost={1} lives={1}/>
+                <Carrier token={this.fund(2, 6)} stripeKey={stripeKey} cost={3} lives={3}/>
+                <Carrier token={this.fund(3, 20)} stripeKey={stripeKey} cost={20} lives={25}/>
                 <div className={me.status}>
                     { auth.getPlayer().lives > 0 ? <Button onClick={ () => {
                             browserHistory.push('/me');

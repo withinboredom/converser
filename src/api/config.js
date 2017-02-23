@@ -11,7 +11,7 @@ const db = {
 const plivo = {
 	sms: process.env.SMS ? process.env.SMS : '18037143889',
 	call: process.env.CALL ? process.env.CALL : '18037143889',
-	host: process.env.CALL_HOST ? process.env.CALL_HOST : 'http://dev.converser.space:2200/',
+	host: process.env.CALL_HOST ? process.env.CALL_HOST : 'http://dev.converser.space:1337/',
 	id: process.env.PLIVO_ID,
 	token: process.env.PLIVO_TOKEN
 };

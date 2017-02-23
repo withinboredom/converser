@@ -78,6 +78,14 @@ class User extends LiveActor {
 		return code;
 	}
 
+	was_initialized(data) {
+		this._state.status = 'waiting';
+	}
+
+	stopped_playing(data) {
+		this._state.status = 'not-playing';
+	}
+
 	/**
 	 * This is the 'initializing' event of this object...
 	 * @listens zombie
@@ -141,7 +149,7 @@ class User extends LiveActor {
 	}
 
 	set_lives( data ) {
-		this._state.lives += data.lives;
+		this._state.lives += this._state.lives == data.existingLives ? data.lives : 0;
 	}
 
 	/**
@@ -252,7 +260,7 @@ class User extends LiveActor {
 			paymentId: payment.Id()
 		} );
 
-		await payment.DoPay( this.Id(), paymentToken, packageId );
+		await payment.DoPay( this.Id(), paymentToken, packageId, this._state.lives );
 
 		this.ListenFor( payment.Id(), 'payment_success', 'set_lives', 1 );
 

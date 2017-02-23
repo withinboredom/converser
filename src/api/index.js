@@ -28,6 +28,7 @@ container.uuid = config.container.uuid;
 container.r = config.container.r;
 container.charge = config.container.charge;
 container.textFrom = config.container.textFrom;
+container.callHost = config.plivo.host;
 
 config.container.conn.then( ( conn ) => {
 	container.conn = conn;
@@ -43,10 +44,54 @@ config.container.conn.then( ( conn ) => {
 		response.send( '<h1>Hello World</h1>' );
 	} );
 
-	app.get( '/call/', ( request, response ) => {
+	app.get( '/call', async( request, response ) => {
+		console.log( `incoming call from ${request.query[ 'From' ]}` );
 		const r = plivo.Response();
-		const player = new Player( request.param( 'From' ), container );
-		player.AnswerCall( r );
+		const player = new Player( request.query[ 'From' ], container );
+		await player.Load();
+		player.AnswerCall( r, request.query['CallUUID'] );
+		response.set( {
+			'Content-Type': 'text/xml'
+		} );
+		response.end( r.toXML() );
+	} );
+
+	app.get( '/reply_text', ( request, response ) => {
+		const send = request.query[ 'From' ];
+		const r = plivo.Response();
+		const digit = request.query[ 'Digits' ];
+
+		if ( digit && digit == '1' ) {
+			r.addSpeak( 'It has been sent! Hope to see you soon, Goodbye!', {
+				language: 'en-GB',
+				voice: 'MAN'
+			} );
+			container.plivo.send_message( {
+				src: container.textFrom,
+				dst: send,
+				text: `Please visit http://converser.space/ to purchase credits. Hope to see you soon!`
+			} );
+		}
+		else {
+			r.addSpeak( `I apologize, but I didn't get that!`, {
+				language: 'en-GB',
+				voice: 'MAN'
+			} );
+		}
+
+		response.set( {
+			'Content-Type': 'text/xml'
+		} );
+		response.end( r.toXML() );
+	} );
+
+	app.get( '/hangup', async( request, response ) => {
+		console.log( request.query );
+		console.log( `Hangup` );
+		const player = new Player( request.query[ 'From' ], container );
+		await player.Load();
+		player.Hangup( request.query );
+		response.end();
 	} );
 
 	io.on( 'connection', ( socket ) => {

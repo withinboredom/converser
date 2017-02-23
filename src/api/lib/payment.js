@@ -27,7 +27,7 @@ class Payment extends LiveActor {
 		};
 	}
 
-	async DoPay( userId, payToken, packageId ) {
+	async DoPay( userId, payToken, packageId, existingLives ) {
 		const pack = this._packages[packageId];
 		const attempt = uuid();
 		const payment = {
@@ -70,6 +70,7 @@ class Payment extends LiveActor {
 				userId,
 				packageId,
 				lives: pack.lives,
+				existingLives,
 				amount: charge.amount
 			} );
 		}

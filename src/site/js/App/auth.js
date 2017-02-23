@@ -88,7 +88,11 @@ websocket.on( 'token', ( data ) => {
 	tokenResp.forEach( ( cb ) => {
 		cb( data );
 		tokenResp.pop();
-	} )
+	} );
+	fbq('track', 'CompleteRegistration', {
+		value: 0.00,
+		currency: 'USD'
+	});
 } );
 
 websocket.on( 'notification', ( data ) => {

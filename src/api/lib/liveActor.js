@@ -60,7 +60,7 @@ class LiveActor extends Actor {
 	}
 
 	async Store() {
-		return await this._container.storage.Store( this.Id(), this._instanceId, [], true );
+		return await this._container.storage.Store( this, [], true );
 	}
 
 	async Fire( name, data, successCallback = null ) {
@@ -80,7 +80,7 @@ class LiveActor extends Actor {
 
 		this._firing.push( event );
 
-		const result = await this._container.storage.Store( this.Id(), this._instanceId, [ event ], true );
+		const result = await this._container.storage.Store( this, [ event ], true );
 
 		if ( result && result !== false && successCallback ) {
 			successCallback();
