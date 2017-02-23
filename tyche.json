@@ -514,7 +514,6 @@
     {
       "name": "bump",
       "tasks": [
-        "build",
         "push"
       ]
     }
