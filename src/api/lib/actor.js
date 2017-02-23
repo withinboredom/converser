@@ -166,7 +166,7 @@ class Actor {
 		const func = event.name;
 		this._nextVersion = Math.max( event.version + 1, this._nextVersion );
 		if ( this[ func ] ) {
-			await this[ func ]( event.data );
+			await this[ func ]( event.data, event );
 		}
 	}
 

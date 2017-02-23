@@ -24,6 +24,7 @@ class Player extends LiveActor {
 	constructor( id, container ) {
 		super( id, container );
 		this._state[ 'status' ] = NOTPLAYING;
+		this._state[ 'lives' ] = 0;
 	}
 
 	/**
@@ -54,6 +55,7 @@ class Player extends LiveActor {
 				language: 'en-GB',
 				voice: 'MAN'
 			} );
+			return;
 		}
 
 		if ( this._state[ 'welcomed' ] != WELCOME_VERSION ) {
@@ -124,7 +126,9 @@ class Player extends LiveActor {
 
 	/* Event handlers */
 	set_lives( data ) {
-		this._state.lives = this._state.lives == data.existingLives ? (this._state.lives || 0) + data.lives: this._state.lives;
+		this._state.lives = this._state.lives == data.existingLives ? (
+		                                                              this._state.lives || 0
+		                                                              ) + data.lives : this._state.lives;
 	}
 
 	welcomed( data ) {
@@ -142,9 +146,9 @@ class Player extends LiveActor {
 		}
 		if ( from == NOTPLAYING || from == ONICE || from == UNKOWN ) {
 			this._state[ 'status' ] = INITIALIZED;
-			this.Fire('was_initialized', {
+			this.Fire( 'was_initialized', {
 				callId: data.callId
-			});
+			} );
 		} else {
 			this.Fire( 'invalid_state_transition', {
 				from,
@@ -157,7 +161,7 @@ class Player extends LiveActor {
 	hungup( data ) {
 		let status = NOTPLAYING;
 
-		this.Fire('stopped_playing', {});
+		this.Fire( 'stopped_playing', {} );
 
 		this._state[ 'status' ] = status;
 	}

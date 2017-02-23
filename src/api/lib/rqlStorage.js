@@ -80,10 +80,11 @@ class RqlStorage extends Storage {
 			const snap = this.snaps[ instanceId ];
 			if ( snap ) {
 				const snapshot = {
-					id,
+					id: snapshotId,
 					state: await snap(),
 					version: lastVersion
 				};
+				console.log( 'WTF ', snapshot );
 				this.container.snapshots
 				    .get( snapshotId )
 				    .replace( snapshot )

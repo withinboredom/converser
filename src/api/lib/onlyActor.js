@@ -17,7 +17,7 @@ class OnlyActor extends LiveActor {
 		if ( this._isWinner ) {
 			const timeout = setTimeout( () => {
 				this._isWinner = false;
-			}, 100 );
+			}, 1000 );
 			await super.Fire( name, data, () => {
 				clearTimeout( timeout );
 				this._isWinner = true;
@@ -32,7 +32,7 @@ class OnlyActor extends LiveActor {
 					this._isWinner = true;
 					await this.Fire( name, data );
 				}
-			}, Math.floor( 500 ) );
+			}, Math.floor( Math.random() * 1000 + 500 ) );
 		}
 	}
 }
