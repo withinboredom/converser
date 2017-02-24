@@ -80,7 +80,10 @@ config.container.conn.then( ( conn ) => {
 		const r = plivo.Response();
 
 		r.addPlay( "http://dev.converser.space/static/Elevator-music.mp3" );
-		r.addSpeak( 'You may press 1 at any time to receive a call back when the next game is available.' );
+		r.addSpeak( 'You may press 1 at any time to receive a call back when the next game is available.', {
+			language: 'en-GB',
+			voice: 'MAN'
+		} );
 
 		response.set( { 'Content-Type': 'text/xml' } );
 		response.end( r.toXML() );
@@ -118,7 +121,7 @@ config.container.conn.then( ( conn ) => {
 			container.plivo.send_message( {
 				src: container.textFrom,
 				dst: send,
-				text: `Please visit to purchase credits. Hope to see you soon!`
+				text: `Please visit http://converser.space/ to purchase credits. Hope to see you soon!`
 			} );
 		}
 		else {
