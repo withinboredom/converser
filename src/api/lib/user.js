@@ -47,6 +47,16 @@ class User extends LiveActor {
 	constructor( id, container ) {
 		id = User._CleanPhone( id );
 		super( id, container );
+
+		this._state = {
+			phone: id,
+			lives: 0,
+			status: 'not-playing',
+			opponent: null,
+			score: 0,
+			sessions: [],
+			payments: []
+		};
 	}
 
 	/**
@@ -210,7 +220,7 @@ class User extends LiveActor {
 			}
 
 			return carry;
-		} );
+		}, null );
 
 		if ( session ) {
 			this.Fire( 'active_session_changed', {

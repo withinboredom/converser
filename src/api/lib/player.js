@@ -73,7 +73,13 @@ class Player extends LiveActor {
 				'voice': 'MAN'
 			} );
 		}
-		//todo: play current wait time
+
+		response.addConference('lobby', {
+			muted: true,
+			waitSound: `${this._container.callHost}pretty_music`,
+			callbackUrl: `${this._container.callHost}lobby`,
+			callbackMethod: 'GET'
+		});
 
 		return response;
 	}

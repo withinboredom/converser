@@ -1,4 +1,6 @@
-require( 'harmonize' );
+process.on( "unhandledRejection", function ( err ) {
+	throw err
+} );
 const app = require( 'express' )();
 const http = require( 'http' ).Server( app );
 const io = require( 'socket.io' )( http );
@@ -57,6 +59,16 @@ config.container.conn.then( ( conn ) => {
 		player.Destroy();
 	} );
 
+	app.get( '/pretty_music', ( request, response ) => {
+		const r = plivo.Response();
+
+		r.addPlay( "http://dev.converser.space/static/Elevator-music.mp3" );
+		r.addSpeak( 'You may press 1 at any time to receive a call back when the next game is available.' );
+
+		response.set( { 'Content-Type': 'text/xml' } );
+		response.end( r.toXML() );
+	} );
+
 	app.get( '/sms', async( request, response ) => {
 		const user = new User( request.query[ 'From' ], container );
 		await user.Load();
@@ -105,15 +117,15 @@ config.container.conn.then( ( conn ) => {
 
 	app.get( '/health', ( request, response ) => {
 		const conn = container.conn;
-		if (conn.isOpen()) {
-			response.status(200).send("healthy");
+		if ( conn.isOpen() ) {
+			response.status( 200 ).send( "healthy" );
 			return;
 		} else {
 			response.status( 500 ).send( "db disconnect" );
 			try {
 				//conn.reconnect(); // ??????????
 			}
-			catch(err) {
+			catch ( err ) {
 
 			}
 		}
