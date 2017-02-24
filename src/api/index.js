@@ -49,11 +49,20 @@ config.container.conn.then( ( conn ) => {
 		const r = plivo.Response();
 		const player = new Player( request.query[ 'From' ], container );
 		await player.Load();
-		player.AnswerCall( r, request.query['CallUUID'] );
+		await player.AnswerCall( r, request.query[ 'CallUUID' ] );
 		response.set( {
 			'Content-Type': 'text/xml'
 		} );
 		response.end( r.toXML() );
+		player.Destroy();
+	} );
+
+	app.get( '/sms', async( request, response ) => {
+		const user = new User( request.query[ 'From' ], container );
+		await user.Load();
+		await user.DoRecordSms( request.query[ 'From' ], request.query[ 'To' ], request.query[ 'Text' ] );
+		user.Destroy();
+		response.end();
 	} );
 
 	app.get( '/reply_text', ( request, response ) => {
@@ -69,7 +78,7 @@ config.container.conn.then( ( conn ) => {
 			container.plivo.send_message( {
 				src: container.textFrom,
 				dst: send,
-				text: `Please visit http://converser.space/ to purchase credits. Hope to see you soon!`
+				text: `Please visit to purchase credits. Hope to see you soon!`
 			} );
 		}
 		else {

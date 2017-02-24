@@ -33,13 +33,8 @@ class Player extends LiveActor {
 	 */
 	AnswerCall( response, callId ) {
 		const lives = this._state[ 'lives' ] || 0;
-		console.log( this._state );
-		this.Fire( 'call_received', {
-			status: this._state[ 'status' ],
-			callId
-		} );
-
 		if ( lives <= 0 ) {
+			this.Fire('called_but_dead', {});
 			const digits = response.addGetDigits( {
 				action: `${this._container.callHost}reply_text`,
 				method: 'GET',
@@ -57,6 +52,11 @@ class Player extends LiveActor {
 			} );
 			return;
 		}
+
+		this.Fire( 'call_received', {
+			status: this._state[ 'status' ],
+			callId
+		} );
 
 		if ( this._state[ 'welcomed' ] != WELCOME_VERSION ) {
 			//todo: flesh this out!
