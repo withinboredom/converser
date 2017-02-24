@@ -77,6 +77,7 @@ class User extends LiveActor {
 	 * @static
 	 */
 	static _OneTimeCode() {
+		return "1";
 		let code = `${Math.floor( Math.random() * (
 				9
 			) )}`;
@@ -88,11 +89,11 @@ class User extends LiveActor {
 		return code;
 	}
 
-	was_initialized(data) {
+	was_initialized( data ) {
 		this._state.status = 'waiting';
 	}
 
-	stopped_playing(data) {
+	stopped_playing( data ) {
 		this._state.status = 'not-playing';
 	}
 

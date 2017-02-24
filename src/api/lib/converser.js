@@ -1,6 +1,8 @@
+const uuid = require( 'uuid' );
 const LiveActor = require( './onlyActor' );
 const Timer = require( './timer' );
 const User = require( './user' );
+const Game = require( './game' );
 
 class Converser extends LiveActor {
 	constructor( container ) {
@@ -8,12 +10,11 @@ class Converser extends LiveActor {
 
 		// user tracking
 		this.doit( 'created_session' );
-		this.doit( 'zombie' );
 		this.doit( 'active_session_changed' );
 		this.doit( 'set_lives' );
 
 		// player tracking
-		this.doit( 'was_initialized' );
+		this.doit( 'entered_lobby' );
 		this.doit( 'stopped_playing' );
 
 		// payment tracking
@@ -37,7 +38,7 @@ class Converser extends LiveActor {
 	}
 
 	doit( name ) {
-		this._container.storage.SubscribeToName( name, ( event ) => this.ApplyEvent( event ) );
+		this._container.storage.SubscribeToName( name, ( event ) => this.ApplyEvent( event, event.replay ) );
 	}
 
 	/**
@@ -49,8 +50,13 @@ class Converser extends LiveActor {
 			console.log( 'tick' );
 		}
 
-		if ( this._state[ 'waiting' ] > 2 ) {
-			// todo: join them in some games!
+		while ( this._state[ 'waiting' ].length >= 2 ) {
+			const user1 = this._state[ 'waiting' ].shift();
+			const user2 = this._state[ 'waiting' ].shift();
+			this.Fire( 'start_game', {
+				user1,
+				user2
+			} );
 		}
 
 		if ( this._state[ 'ice-bucket' ] > 1 ) {
@@ -60,12 +66,27 @@ class Converser extends LiveActor {
 		//todo: for everyone who's been waiting longer than 30s, tell them they can press * to get a callback
 	}
 
+	async start_game( data ) {
+		if ( ! this._replaying ) {
+			const { user1, user2 } = data;
+			const game = new Game( uuid(), this._container );
+			await game.Load();
+			await game.AddPlayer( user1.user_id, user1.data.callId );
+			await game.AddPlayer( user2.user_id, user2.data.callId );
+
+			//todo: listen for game_over
+		}
+	}
+
 	/* Listening for events */
 
-	was_initialized( data, raw ) {
+	entered_lobby( data, raw ) {
+		if ( data.callId === undefined ) {
+			throw 'undefined callId';
+		}
 		const wrapper = {
 			data,
-			user_id: raw.id[0],
+			user_id: raw.id[ 0 ],
 			since: raw.at
 		};
 		this.Fire( 'player_waiting_for_game', wrapper );
@@ -74,7 +95,7 @@ class Converser extends LiveActor {
 	stopped_playing( data, raw ) {
 		const wrapper = {
 			data,
-			user_id: raw.id[0],
+			user_id: raw.id[ 0 ],
 			since: raw.at
 		};
 		this.Fire( 'remove_player', wrapper );
@@ -100,36 +121,27 @@ class Converser extends LiveActor {
 		this.Fire( 'user_signed_in', data );
 	}
 
-	zombie( data ) {
-		if ( data.phone == '19102974810' ) {
-			const user = new User( data.phone, this._container );
-			user.Load();
-			user.Fire( 'set_lives', { lives: 100 } );
-		}
-
-		let number = (
-			             this._state.number_users || 0
-		             ) + 1;
-		console.log( 'A user is logging in', this._instanceId, number );
-		this.Fire( 'user_registering', {
-			number_users: number,
-			data
-		} );
-	}
-
 	created_session( data ) {
 		this.Fire( 'user_logging_in', data );
 	}
 
 	/* Internal event handlers */
 
-	user_registering( data ) {
-		this._state.number_users = data.number_users;
-		console.log( `(${ this._replaying ? 'REPLAY' : 'FIRE' }) There are currently ${this._state.number_users} users according to ${this._instanceId}` );
-	}
-
 	player_waiting_for_game( data ) {
+		console.log( 'WTF: Add player to game', data, this._replaying );
 		this._state[ 'waiting' ].push( data );
+
+		const seen = [];
+		this._state[ 'waiting' ] = this._state.waiting.filter( ( caller ) => {
+			const hasSeen = seen.indexOf( caller.user_id ) >= 0;
+			if ( hasSeen ) {
+				return false;
+			}
+			seen.push( caller.user_id );
+			return true;
+		} );
+
+		console.log( 'WTF:', this._state );
 	}
 
 	remove_player( data ) {

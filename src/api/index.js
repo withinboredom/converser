@@ -18,7 +18,7 @@ const log = console.log;
 
 console.log = ( ...args ) => {
 	if ( process.env.NODE_ENV != 'production' ) {
-		log( ...args );
+		log( new Date(), ...args );
 	}
 };
 
@@ -59,8 +59,21 @@ config.container.conn.then( ( conn ) => {
 		player.Destroy();
 	} );
 
-	app.get( '/lobby', ( request, response ) => {
+	app.get( '/lobby', async( request, response ) => {
 		console.log( request.query );
+		response.end();
+		switch ( request.query[ 'Event' ] ) {
+			case 'ConferenceEnter':
+				const id = request.query[ 'From' ];
+				const player = new Player( id, container );
+				await player.Load();
+				await player.JoinedLobby( request.query[ 'CallUUID' ] );
+				player.Destroy();
+				break;
+			default:
+				console.log( request.query );
+				break;
+		}
 	} );
 
 	app.post( '/pretty_music', ( request, response ) => {
@@ -79,6 +92,17 @@ config.container.conn.then( ( conn ) => {
 		await user.DoRecordSms( request.query[ 'From' ], request.query[ 'To' ], request.query[ 'Text' ] );
 		user.Destroy();
 		response.end();
+	} );
+
+	app.get( '/game', async( request, response ) => {
+		const r = plivo.Response();
+
+		r.addSpeak( 'You have joined a game' );
+
+		response.set( { 'Content-Type': 'text/xml' } );
+		response.end( r.toXML() );
+
+		console.log( request.query );
 	} );
 
 	app.get( '/reply_text', ( request, response ) => {

@@ -12,7 +12,7 @@ class Timer extends OnlyActor {
 
 	getMsToNextTick( now ) {
 		return (
-		       this._state[ 'next_tick' ].getTime() - now.getTime()
+			       this._state[ 'next_tick' ].getTime() - now.getTime()
 		       ) / 10;
 	}
 
@@ -21,14 +21,21 @@ class Timer extends OnlyActor {
 	}
 
 	initialize_tick( data ) {
+		if ( this._replaying ) {
+			return;
+		}
 		const now = new Date();
 		if ( this._state[ 'initialized' ] ) {
+			console.log( 'Starting already initialized timer' );
+			console.log( `next tick at ${this._state[ 'next_tick' ]}` );
 			if ( this._state[ 'next_tick' ] <= now ) {
+				console.log( 'firing tick immediately' );
 				this.Fire( 'tick', {
 					nextTick: this.getNextTick( now )
 				} );
 			} else {
 				const wait = this.getMsToNextTick( now );
+				console.log( `waiting ${wait}ms to fire` );
 				setTimeout( () => {
 					this.Fire( 'tick', {
 						nextTick: this.getNextTick( now )
@@ -52,11 +59,13 @@ class Timer extends OnlyActor {
 	tick( data ) {
 		const now = new Date();
 		const nextTick = this._state[ 'next_tick' ] = this.getNextTick( now );
-		setTimeout( () => {
-			this.Fire( 'tick', {
-				nextTick
-			} );
-		}, this.getMsToNextTick( now ) );
+		if ( ! this._replaying ) {
+			setTimeout( () => {
+				this.Fire( 'tick', {
+					nextTick
+				} );
+			}, this.getMsToNextTick( now ) );
+		}
 	}
 }
 

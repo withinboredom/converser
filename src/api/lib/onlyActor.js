@@ -10,7 +10,12 @@ class OnlyActor extends LiveActor {
 	constructor( id, container ) {
 		super( id, container );
 
-		this._isWinner = true;
+		this._isWinner = false;
+	}
+
+	async ApplyEvent( event, replay = true ) {
+		this.lastEvent = event;
+		await super.ApplyEvent( event, replay );
 	}
 
 	async Fire( name, data ) {
@@ -25,15 +30,38 @@ class OnlyActor extends LiveActor {
 			} );
 		}
 		else {
-			console.log( `${this._instanceId} is waiting for expected event: ${name}` );
+			console.log( `${this.constructor.name}:${this._instanceId} is waiting for expected event: ${name}` );
 			const oldVersion = this._nextVersion;
 			setTimeout( async() => {
-				if ( oldVersion === this._nextVersion ) {
+				const lastEvent = this.lastEvent;
+				if ( oldVersion == this._nextVersion || ! this.isDupe( lastEvent, { name, data } ) ) {
 					this._isWinner = true;
+					console.log( `${this._instanceId} is firing expected event: ${name}` );
 					await this.Fire( name, data );
+				} else {
+					console.log( `${this._instanceId} is skipping ${name}` );
 				}
 			}, Math.floor( Math.random() * 1000 + 500 ) );
 		}
+	}
+
+	isDupe( oldEvent, newEvent ) {
+		if ( ! oldEvent || ! newEvent ) {
+			return false;
+		}
+
+		if ( oldEvent.name != newEvent.name ) {
+			return false;
+		}
+
+		const keys = Object.keys( newEvent.data );
+		if ( keys.length == 0 ) {
+			return false;
+		}
+		const differences = keys.filter( ( key ) => oldEvent.data[ key ] == newEvent.data[ key ] );
+		return (
+			       differences.length / keys.length
+		       ) < 0.75;
 	}
 }
 

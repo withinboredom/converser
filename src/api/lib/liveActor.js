@@ -37,7 +37,7 @@ class LiveActor extends Actor {
 			if ( next ) {
 				this._firing.unshift( next );
 			}
-			console.log( `Applying event ${event.name}:${event.version} to ${this._instanceId}` );
+			console.log( `Applying event ${event.name}:${event.version} to ${this.constructor.name}:${this._instanceId}` );
 			await apply();
 		}
 	}
@@ -52,7 +52,7 @@ class LiveActor extends Actor {
 	async Load() {
 		const latestSnapshot = await this.ApplySnapshot();
 
-		const cb = ( event ) => this.ApplyEvent( event );
+		const cb = ( event ) => this.ApplyEvent( event, true );
 
 		this.subs.push( [ this.Id(), cb ] );
 

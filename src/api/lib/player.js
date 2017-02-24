@@ -4,6 +4,8 @@ const NOTPLAYING = 'not-playing';
 const INITIALIZED = 'initialized';
 const UNKOWN = 'unknown';
 const ONICE = 'on-ice';
+const PLAYING = 'playing';
+const WAITING = 'waiting';
 
 const WELCOME_VERSION = 'alpha.3';
 const WELCOME_TEXT = `
@@ -25,6 +27,7 @@ class Player extends LiveActor {
 		super( id, container );
 		this._state[ 'status' ] = NOTPLAYING;
 		this._state[ 'lives' ] = 0;
+		this._state[ 'points' ] = 0;
 	}
 
 	/**
@@ -34,7 +37,7 @@ class Player extends LiveActor {
 	AnswerCall( response, callId ) {
 		const lives = this._state[ 'lives' ] || 0;
 		if ( lives <= 0 ) {
-			this.Fire('called_but_dead', {});
+			this.Fire( 'called_but_dead', {} );
 			const digits = response.addGetDigits( {
 				action: `${this._container.callHost}reply_text`,
 				method: 'GET',
@@ -74,14 +77,33 @@ class Player extends LiveActor {
 			} );
 		}
 
-		response.addConference('lobby', {
+		response.addConference( `lobby_${this.Id()}`, {
 			muted: true,
+			startConferenceOnEnter: false,
+			endConferenceOnExit: false,
+			stayAlone: true,
+			digitsMatch: '1',
+			relayDTMF: false,
 			waitSound: `${this._container.callHost}pretty_music`,
 			callbackUrl: `${this._container.callHost}lobby`,
 			callbackMethod: 'GET'
-		});
+		} );
 
 		return response;
+	}
+
+	JoinedLobby( callId ) {
+		if ( this._state.status != INITIALIZED ) {
+			this.Fire( 'invalid_state_transitiion', {
+				from: this._state.status,
+				to: WAITING,
+				reason: 'tried to enter lobby without being initialized'
+			} );
+		}
+
+		this.Fire( 'entered_lobby', {
+			callId
+		} );
 	}
 
 	Hangup( request ) {
@@ -98,12 +120,29 @@ class Player extends LiveActor {
 	 * Called when a player enters a game
 	 * @param {string} gameId
 	 */
-	EnterGame( gameId ) {
-		if ( this._state[ 'status' ] != 'waiting' ) {
-			throw new Error( 'tried to enter game with incorrect state' );
+	EnterGame( gameId, callId ) {
+		if ( this._state[ 'status' ] != WAITING ) {
+			this.Fire( 'invalid_state_transition', {
+				from: this._state[ 'status' ],
+				to: PLAYING,
+				reason: 'tried to enter game without being in lobby'
+			} );
+			return;
 		}
 
-		this.Fire( 'entered_game', { gameId } );
+		console.log( 'WTF: Transferred ', this.Id(), callId );
+
+		const plivo = this._container.plivo;
+
+		setTimeout( () => {
+			plivo.transfer_call( {
+				call_uuid: callId,
+				aleg_url: `${this._container.callHost}game`,
+				aleg_method: 'GET'
+			} );
+		}, Math.floor( Math.random() * 1000 ) );
+
+		this.Fire( 'entered_game', { gameId, callId } );
 	}
 
 	/**
@@ -133,7 +172,7 @@ class Player extends LiveActor {
 	/* Event handlers */
 	set_lives( data ) {
 		this._state.lives = this._state.lives == data.existingLives ? (
-		                                                              this._state.lives || 0
+			                                                              this._state.lives || 0
 		                                                              ) + data.lives : this._state.lives;
 	}
 
@@ -142,7 +181,11 @@ class Player extends LiveActor {
 	}
 
 	entered_game( data ) {
-		this._state[ 'status' ] = 'playing';
+		this._state[ 'status' ] = PLAYING;
+	}
+
+	entered_lobby( data ) {
+		this._state.status = WAITING;
 	}
 
 	call_received( data ) {

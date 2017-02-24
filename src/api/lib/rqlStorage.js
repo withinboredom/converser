@@ -168,6 +168,7 @@ class RqlStorage extends Storage {
 				}
 
 				if ( holder ) {
+					event.new_val.replay = true;
 					holder.push( event );
 					return;
 				}

@@ -97,12 +97,13 @@ class Actor {
 		const wait = ( event ) => {
 			if ( event.name == eventToHear ) {
 				number -= 1;
-
-				this.Fire( eventToFire, event.data );
+				if ( ! event.replay ) {
+					this.Fire( eventToFire, event.data );
+				}
 			}
 
 			if ( number <= 0 ) {
-				console.log( 'Unsubscribe due to repeat exhaustion' )
+				console.log( 'Unsubscribe due to repeat exhaustion' );
 				try {
 					this._container.storage.Unsubscribe( id, wait );
 				} catch ( err ) {
