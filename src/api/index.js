@@ -103,6 +103,22 @@ config.container.conn.then( ( conn ) => {
 		response.end();
 	} );
 
+	app.get( '/health', ( request, response ) => {
+		const conn = container.conn;
+		if (conn.isOpen()) {
+			response.status(200).send("healthy");
+			return;
+		} else {
+			response.status( 500 ).send( "db disconnect" );
+			try {
+				//conn.reconnect(); // ??????????
+			}
+			catch(err) {
+
+			}
+		}
+	} );
+
 	io.on( 'connection', ( socket ) => {
 
 		let continuousUpdate = false;
