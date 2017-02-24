@@ -59,7 +59,11 @@ config.container.conn.then( ( conn ) => {
 		player.Destroy();
 	} );
 
-	app.get( '/pretty_music', ( request, response ) => {
+	app.get( '/lobby', ( request, response ) => {
+		console.log( request.query );
+	} );
+
+	app.post( '/pretty_music', ( request, response ) => {
 		const r = plivo.Response();
 
 		r.addPlay( "http://dev.converser.space/static/Elevator-music.mp3" );

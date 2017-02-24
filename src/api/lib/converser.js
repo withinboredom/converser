@@ -28,8 +28,12 @@ class Converser extends LiveActor {
 
 		this.timer = new Timer( 5, container );
 		this.timer.Load();
-		this.timer.StartTimer( new Date() );
 		this.ListenFor( this.timer.Id(), 'tick', 'tock', Infinity, Infinity );
+	}
+
+	async Load() {
+		await super.Load();
+		this.timer.StartTimer( new Date() );
 	}
 
 	doit( name ) {
