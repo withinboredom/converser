@@ -9,18 +9,12 @@ const test = async() => {
 
 	const loggedInUser = [
 		{
-			name: 'zombie',
-			data: {
-				phone: '910297'
-			}
-		},
-		{
 			name: 'created_session',
 			data: {
 				id: 'session_id',
 				ip: '123',
 				password: 'password',
-				phone: '910297',
+				phone: '123456789',
 				begins: now,
 				token: 'token'
 			}
@@ -42,21 +36,15 @@ const test = async() => {
 
 	await (
 		await new Given( 'An initial login', User, [] )
-			.When( 'DoLogin', '910297', '123' )
+			.When( 'DoLogin', '123456789', '123' )
 			.Then( [
-				{
-					name: 'zombie',
-					data: {
-						phone: '910297'
-					}
-				},
 				{
 					name: 'created_session',
 					data: {
 						id: '{string}',
 						ip: '123',
 						password: '{string}',
-						phone: '910297',
+						phone: '123456789',
 						begins: '{object}',
 						token: '{string}'
 					}
@@ -73,7 +61,7 @@ const test = async() => {
 			lives: 0,
 			opponent: null,
 			payments: [],
-			phone: '910297',
+			phone: '123456789',
 			score: 0,
 			sessions: '{object}',
 			status: 'not-playing'
@@ -99,16 +87,18 @@ const test = async() => {
 					}
 				}
 			] )
-	).And( {} );
+	).And( {
+		lives: 0,
+		opponent: null,
+		payments: [],
+		phone: '123456789',
+		score: 0,
+		sessions: [],
+		status: 'not-playing'
+	} );
 	await (
-		await new Given( 'A text from an existing user', User, [
-			{
-				name: 'zombie',
-				data: {
-					phone: '910297'
-				}
-			}
-		] ).When( 'DoRecordSms', 'from', 'to', 'text' )
+		await new Given( 'A text from an existing user', User, [] )
+			.When( 'DoRecordSms', 'from', 'to', 'text' )
 		   .Then( [
 			   {
 				   name: 'received_text',
@@ -131,7 +121,7 @@ const test = async() => {
 		lives: 0,
 		opponent: null,
 		payments: [],
-		phone: '910297',
+		phone: '123456789',
 		score: 0,
 		sessions: [],
 		status: 'not-playing'
@@ -140,18 +130,12 @@ const test = async() => {
 	await (
 		await new Given( 'Login verification step', User, [
 			{
-				name: 'zombie',
-				data: {
-					phone: '910297'
-				}
-			},
-			{
 				name: 'created_session',
 				data: {
 					id: 'session_id',
 					ip: '123',
 					password: 'password',
-					phone: '910297',
+					phone: '123456789',
 					begins: now,
 					token: 'token'
 				}
@@ -176,7 +160,7 @@ const test = async() => {
 		lives: 0,
 		opponent: null,
 		payments: [],
-		phone: '910297',
+		phone: '123456789',
 		score: 0,
 		status: 'not-playing',
 		sessions: [
@@ -187,7 +171,7 @@ const test = async() => {
 				id: 'session_id',
 				ip: '123',
 				password: 'password',
-				phone: '910297',
+				phone: '123456789',
 				used: true,
 				token: 'token'
 			}
@@ -211,6 +195,7 @@ const test = async() => {
 				{
 					name: 'set_lives',
 					data: {
+						existingLives: 0,
 						lives: 1,
 						amount: 150,
 						attempt: '{string}',
@@ -230,7 +215,7 @@ const test = async() => {
 			lives: 1,
 			opponent: null,
 			payments: '{object}',
-			phone: '910297',
+			phone: '123456789',
 			score: 0,
 			sessions: '{object}',
 			status: 'not-playing'
