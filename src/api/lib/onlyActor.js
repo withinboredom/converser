@@ -10,7 +10,7 @@ class OnlyActor extends LiveActor {
 	constructor( id, container ) {
 		super( id, container );
 
-		this._isWinner = false;
+		this._isWinner = true;
 
 	}
 
