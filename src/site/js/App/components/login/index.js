@@ -85,6 +85,10 @@ class Login extends PureComponent {
                             <input
                                 name="password"
                                 className={styles.input}
+                                autoComplete="off"
+                                autoFocus="true"
+                                autoCapitalize="off"
+                                autoCorrect="off"
                                 type="number"
                                 pattern="[0-9]*"
                                 onChange={this.passInput}
@@ -98,6 +102,10 @@ class Login extends PureComponent {
                                 <input
                                     name="phone"
                                     className={styles.input}
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    autoFocus="true"
+                                    autoCapitalize="off"
                                     type="tel"
                                     onChange={this.validate}
                                     onKeyPress={this.next}

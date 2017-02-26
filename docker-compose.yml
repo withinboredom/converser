@@ -1,15 +1,11 @@
 version: '3'
 services:
   api-builder:
-    image: withinboredom/composer:latest
+    image: withinboredom/yarn:latest
     volumes:
       - ./src/api:/app/api
-      - api_vendor:/app/api/vendor
-      - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
-    command: bash -c "cd /app/api && exec composer install"
-    deploy:
-      placement:
-        constraints: [node.role == manager]
+      - api_modules:/app/api/node_modules
+    command: bash -c "cd /app/api && yarn"
   api:
     image: withinboredom/api:latest
     environment:
@@ -22,19 +18,12 @@ services:
       - DB_HOST
     volumes:
       - ./src/api:/app/api
-      - api_vendor:/app/api/vendor
-      - ./images/builder/php.development.ini:/usr/local/etc/php/php.ini
+      - api_modules:/app/api/node_modules
     depends_on:
       - rethunk
       - api-builder
     ports:
       - '1337:1337'
-    command: bash -c "cd /app/api && /app/api/vendor/amphp/aerys/bin/aerys -c /app/api/index.php"
-    deploy:
-      mode: replicated
-      replicas: 2
-      placement:
-        constraints: [ node.role == worker ]
   engine-builder:
     image: withinboredom/composer:latest
     volumes:
@@ -69,6 +58,7 @@ services:
       - ./src/site:/app
       - node_modules:/app/js/node_modules
     command: bash -c "cd /app/js && yarn && node_modules/.bin/webpack -w"
+    restart: always
   web:
     image: withinboredom/site:latest
     volumes:
@@ -78,31 +68,16 @@ services:
       - web-builder
     command: /caddy -conf /Caddyfile
     ports:
-      - '8090:8080'
-    deploy:
-      mode: replicated
-      replicas: 3
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-      update_config:
-        parallelism: 1
-        delay: 10s
-        failure_action: continue
-        monitor: 60s
-        max_failure_ratio: 0.3
+      - '80:8080'
+    restart: always
   rethunk:
     image: rethinkdb:latest
     ports:
-      - '8080:8080'
+      - '8000:8080'
       - '28015:28015'
+    command: rethinkdb --bind all
+    restart: always
 volumes:
-  api_vendor:
+  api_modules:
   engine_vendor:
   node_modules:
-
-networks:
-  public:
-  private:

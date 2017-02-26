@@ -43,7 +43,7 @@ class Me extends PureComponent {
                 );
                 break;
             case 'waiting':
-                status = (<span>Waiting for player 2</span>);
+                status = (<span>Ready player 1</span>);
                 break;
         }
 

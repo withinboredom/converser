@@ -50,7 +50,26 @@ services:
         failure_action: continue
         monitor: 60s
         max_failure_ratio: 0.3
+
   rethunk:
     image: rethinkdb:latest
     ports:
       - '9000:8080'
+    command: rethinkdb --join rethunk
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 5m
+        failure_action: pause
+        monitor: 30s
+        max_failure_ratio: 0.1
+      resources:
+        reservations:
+          cpus: '1'
+          memory: 128M
+      restart_policy:
+        condition: any
+        delay: 10s
+        window: 10s

@@ -1,0 +1,27 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "Public API for converser",
+  "main": "index.js",
+  "repository": "https://github.com/withinboredom/converser",
+  "author": "Robert Landers",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "diff": "^3.2.0",
+    "express": "^4.14.1",
+    "harmonize": "^2.0.0",
+    "plivo": "^0.4.0",
+    "rethinkdb": "^2.3.3",
+    "socket.io": "^1.7.2",
+    "stripe": "^4.15.0",
+    "uuid": "^3.0.1"
+  },
+  "resolutions": {
+    "debug": "2.3.3",
+    "qs": "6.3.1",
+    "ms": "0.7.2",
+    "assert-plus": "1.0.0",
+    "component-emitter": "1.2.1"
+  }
+}

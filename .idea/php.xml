@@ -52,6 +52,37 @@
         <option value="Amp\UvReactor-&gt;enablePollFromWatcher" />
         <option value="Aerys\Websocket\Rfc6455Endpoint-&gt;onParsedControlFrame" />
         <option value="r\Connection-&gt;sendStr" />
+        <option value="r\Connection-&gt;r\{closure}" />
+        <option value="Amp\Deferred-&gt;succeed" />
+        <option value="Amp\disable" />
+        <option value="Amp\enable" />
+        <option value="Amp\Deferred-&gt;promise" />
+        <option value="r\DatumConverter-&gt;nativeToDatum" />
+        <option value="r\Queries\Selecting\Get-&gt;__construct" />
+        <option value="r\Query-&gt;run" />
+        <option value="r\Queries\Selecting\GetAll-&gt;__construct" />
+        <option value="r\row" />
+        <option value="r\Datum\ObjectDatum::decodeServerResponse" />
+        <option value="r\DatumConverter::decodedJSONToDatum" />
+        <option value="r\Datum\ArrayDatum::decodeServerResponse" />
+        <option value="r\Datum\Datum-&gt;getValue" />
+        <option value="r\Datum\ObjectDatum-&gt;toNative" />
+        <option value="r\Datum\Datum-&gt;toNative" />
+        <option value="r\Datum\ArrayDatum-&gt;toNative" />
+        <option value="r\Datum\StringDatum-&gt;setValue" />
+        <option value="r\Datum\StringDatum::decodeServerResponse" />
+        <option value="r\Queries\Tables\Table-&gt;insert" />
+        <option value="r\Datum\NumberDatum::decodeServerResponse" />
+        <option value="r\Queries\Writing\Insert-&gt;__construct" />
+        <option value="r\Connection-&gt;isOpen" />
+        <option value="r\Connection-&gt;generateToken" />
+        <option value="r\Connection-&gt;convertOptions" />
+        <option value="r\Datum\StringDatum-&gt;encodeServerRequest" />
+        <option value="r\Queries\Dbs\Db-&gt;getTermType" />
+        <option value="r\Datum\ArrayDatum-&gt;encodeServerRequest" />
+        <option value="r\Connection-&gt;receiveResponse" />
+        <option value="r\Datum\Datum-&gt;__construct" />
+        <option value="Amp\UvReactor-&gt;invokePollWatcher" />
       </list>
     </option>
   </component>

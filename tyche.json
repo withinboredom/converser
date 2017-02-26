@@ -8,13 +8,175 @@
       "description": "build the project",
       "tasks": [
         {
-          "name": "pre-build",
+          "name": "docker-pull",
           "tasks": [
             {
-              "name": "rocker-build-builder",
               "exec": {
                 "native": {
-                  "command": ["rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--no-garbage","."]
+                  "command": [
+                    "docker pull withinboredom/yarn:latest"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker pull withinboredom/caddy:latest"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker pull withinboredom/site:latest"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker pull withinboredom/api:latest"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "yarn",
+          "tasks": [
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker build",
+                    "--cache-from withinboredom/yarn:latest",
+                    "-t withinboredom/yarn:latest",
+                    "-f images/yarn.dockerfile",
+                    "."
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "caddy",
+          "tasks": [
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker build",
+                    "--cache-from withinboredom/caddy:latest",
+                    "-t withinboredom/caddy:latest",
+                    "-f images/caddy.dockerfile",
+                    "."
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "site",
+          "tasks": [
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker build",
+                    "--build-arg CALL=$CALL",
+                    "--build-arg STRIPE_P_KEY=$STRIPE_P_KEY",
+                    "--build-arg API_HOST=$API_HOST",
+                    "-t temp",
+                    "-f images/site-builder.dockerfile",
+                    "."
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker run",
+                    "--rm",
+                    "temp tar -c /app > site.tar"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker build",
+                    "-t withinboredom/site:latest",
+                    "--cache-from withinboredom/site:latest",
+                    "-f images/site.dockerfile",
+                    "."
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "rm -f site.tar && docker rmi temp"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "api",
+          "tasks": [
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker build -t temp -f images/api-builder.dockerfile ."
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker run --rm temp tar -c /app > api.tar"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker build",
+                    "-t withinboredom/api:latest",
+                    "--cache-from withinboredom/api:latest",
+                    "-f images/api.dockerfile",
+                    "."
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "rm -f api.tar && docker rmi temp"
+                  ]
                 }
               }
             }
@@ -26,20 +188,81 @@
       "name": "deploy",
       "tasks": [
         {
-          "name": "git-tag",
-          "exec": {
-            "native": {
-              "command": ["git","tag","-s","$BUILD_NUMBER"]
-            }
-          }
-        },
-        {
           "name": "push",
-          "exec": {
-            "native": {
-              "command": ["rocker","build","--var","BUILD_NUMBER=$BUILD_NUMBER","-f","images/builder/builder.Rockerfile","--pull","--no-garbage","--push","."]
+          "tasks": [
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker tag withinboredom/yarn:latest withinboredom/yarn:$BUILD_NUMBER"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker tag withinboredom/caddy:latest withinboredom/caddy:$BUILD_NUMBER"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker tag withinboredom/site:latest withinboredom/site:$BUILD_NUMBER"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker tag withinboredom/api:latest withinboredom/api:$BUILD_NUMBER"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker push withinboredom/yarn"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker push withinboredom/caddy"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker push withinboredom/site"
+                  ]
+                }
+              }
+            },
+            {
+              "exec": {
+                "native": {
+                  "command": [
+                    "docker push withinboredom/api"
+                  ]
+                }
+              }
             }
-          }
+          ]
         }
       ]
     },
@@ -54,7 +277,9 @@
               "name": "install-api",
               "exec": {
                 "native": {
-                  "command": ["composer install"],
+                  "command": [
+                    "yarn"
+                  ],
                   "working": "src/api"
                 }
               }
@@ -63,7 +288,9 @@
               "name": "install-web",
               "exec": {
                 "native": {
-                  "command": ["yarn"],
+                  "command": [
+                    "yarn"
+                  ],
                   "working": "src/site/js"
                 }
               }
@@ -72,7 +299,10 @@
               "name": "install-engine",
               "exec": {
                 "native": {
-                  "command": ["composer","install"],
+                  "command": [
+                    "composer",
+                    "install"
+                  ],
                   "working": "src/engine"
                 }
               }
@@ -86,14 +316,20 @@
               "name": "stop",
               "exec": {
                 "native": {
-                  "command": ["docker-compose","down"]
+                  "command": [
+                    "docker-compose",
+                    "down"
+                  ]
                 }
               }
             }
           ],
           "exec": {
             "native": {
-              "command": ["docker-compose","up"]
+              "command": [
+                "docker-compose",
+                "up"
+              ]
             }
           }
         },
@@ -101,7 +337,12 @@
           "name": "api",
           "exec": {
             "native": {
-              "command": ["docker-compose","up","--no-recreate","api"]
+              "command": [
+                "docker-compose",
+                "up",
+                "--no-recreate",
+                "api"
+              ]
             }
           }
         },
@@ -109,7 +350,10 @@
           "name": "site",
           "exec": {
             "native": {
-              "command": ["node_modules/.bin/webpack","-w"],
+              "command": [
+                "node_modules/.bin/webpack",
+                "-w"
+              ],
               "working": "src/site/js"
             }
           }
@@ -118,7 +362,12 @@
           "name": "engine",
           "exec": {
             "native": {
-              "command": ["docker-compose","up","--no-recreate","engine"]
+              "command": [
+                "docker-compose",
+                "up",
+                "--no-recreate",
+                "engine"
+              ]
             }
           }
         }
@@ -132,16 +381,24 @@
           "name": "node_modules",
           "exec": {
             "native": {
-              "command": ["rm","-rf","node_modules"],
+              "command": [
+                "rm",
+                "-rf",
+                "node_modules"
+              ],
               "working": "src/site/js"
             }
           }
         },
         {
-          "name": "vendor",
+          "name": "api_modules",
           "exec": {
             "native": {
-              "command": ["rm","-rf","vendor"],
+              "command": [
+                "rm",
+                "-rf",
+                "node_modules"
+              ],
               "working": "src/api"
             }
           }
@@ -150,7 +407,11 @@
           "name": "engine-vendor",
           "exec": {
             "native": {
-              "command": ["rm","-rf","vendor"],
+              "command": [
+                "rm",
+                "-rf",
+                "vendor"
+              ],
               "working": "src/engine"
             }
           }
@@ -159,7 +420,11 @@
           "name": "build",
           "exec": {
             "native": {
-              "command": ["rm","-f","bundle.js"],
+              "command": [
+                "rm",
+                "-f",
+                "bundle.js"
+              ],
               "working": "src/site/build"
             }
           }
@@ -167,7 +432,11 @@
       ],
       "exec": {
         "native": {
-          "command": ["docker-compose","down","-v"]
+          "command": [
+            "docker-compose",
+            "down",
+            "-v"
+          ]
         }
       }
     },
@@ -179,7 +448,10 @@
           "name": "update-api-composer",
           "exec": {
             "native": {
-              "command": ["composer","update"],
+              "command": [
+                "yarn",
+                "upgrade"
+              ],
               "working": "src/api"
             }
           }
@@ -188,7 +460,10 @@
           "name": "update-engine-composer",
           "exec": {
             "native": {
-              "command": ["composer","update"],
+              "command": [
+                "composer",
+                "update"
+              ],
               "working": "src/engine"
             }
           }
@@ -197,7 +472,39 @@
           "name": "update-node",
           "exec": {
             "native": {
-              "command": ["yarn","upgrade"],
+              "command": [
+                "yarn",
+                "upgrade"
+              ],
+              "working": "src/site/js"
+            }
+          }
+        },
+        {
+          "name": "updateable-api",
+          "exec": {
+            "native": {
+              "command": [
+                "echo",
+                "api updates",
+                "&&",
+                "yarn",
+                "outdated"
+              ],
+              "working": "src/api"
+            }
+          }
+        },
+        {
+          "name": "updatable-site",
+          "exec": {
+            "native": {
+              "command": [
+                "echo",
+                "site updates",
+                "&&",
+                "yarn outdated"
+              ],
               "working": "src/site/js"
             }
           }
@@ -207,6 +514,7 @@
     {
       "name": "bump",
       "tasks": [
+        "build",
         "push"
       ]
     }

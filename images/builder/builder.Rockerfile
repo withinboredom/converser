@@ -71,15 +71,12 @@ PUSH withinboredom/composer:latest
 # Step 6: Build the api
 ##############################
 
-FROM withinboredom/composer:latest
-
-COPY src/api/composer.lock /app/api/composer.lock
-COPY src/api/composer.json /app/api/composer.json
-
-WORKDIR /app/api
-RUN composer install --no-dev
+FROM withinboredom/yarn:latest
 
 COPY src/api /app/api
+
+WORKDIR /app/api
+RUN yarn install
 
 EXPORT /app/ /api
 
@@ -87,35 +84,17 @@ EXPORT /app/ /api
 # Step 7: Build the api image
 ##############################
 
-FROM php:cli
-
-COPY images/builder/php.production.ini /usr/local/etc/php/php.ini
-
-RUN echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list && \
-    apt-get update && apt-get install -y git && \
-    apt-get -t jessie-backports install -y libuv1 libuv1-dev && \
-    docker-php-source extract && \
-    git clone https://github.com/bwoebi/php-uv.git && \
-    apt-get purge -y git && apt-get autoremove -y && \
-    cd php-uv && \
-    phpize && \
-    ./configure && \
-    make -j$(nproc) && \
-    make install && \
-    cd .. && \
-    docker-php-ext-enable uv && \
-    rm -rf php-uv && \
-    docker-php-source delete
+FROM node:latest
 
 IMPORT /api/ /app
 
 USER nobody
 
 # Run tests
-RUN cd /app/api && php lib/tests/run_all.php
+RUN cd /app/api && node --harmony lib/tests/run_all.js
 
 WORKDIR /app/api
-CMD ["vendor/bin/aerys","-c","index.php"]
+CMD ["node","--harmony","index.js"]
 
 USER root
 
