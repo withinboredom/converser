@@ -9,9 +9,24 @@ class Game extends LiveActor {
 			player: [],
 			time: 0
 		};
+		this._state.progress = 'not-started';
 		this.timer = new Timer( 60, container );
 		this.timer.Load();
 		this.ListenFor( this.timer.Id(), 'tick', 'tock', Infinity, Infinity );
+	}
+
+	Project() {
+		console.log( `Projecting game:${this._instanceId}` );
+		const r = this._container.r;
+		const conn = this._container.conn;
+
+		r.table( 'games' )
+		 .get( this.Id() )
+		 .replace( {
+			 id: this.Id(),
+			 players: this._state.player,
+			 progress: this._state.progress
+		 } ).run( conn );
 	}
 
 	tock( data ) {
@@ -62,17 +77,30 @@ class Game extends LiveActor {
 	}
 
 	player_join( data ) {
+		this._state.progress = 'in-progress';
 		this.ListenFor( data.playerId, 'hangup', 'hangup', 1, 600000 );
-		this._state.player.push( {
-			id: data.playerId,
-			callId: data.callId
-		} );
+		const has = this._state.player.reduce( ( carry, current ) => {
+			if ( carry ) {
+				return carry;
+			}
+
+			return current.id === data.playerId;
+		}, false );
+
+		if ( ! has ) {
+			this._state.player.push( {
+				id: data.playerId,
+				callId: data.callId
+			} );
+		}
 	}
 
 	started_game( data ) {
+		this._state.progress = 'in-progress'
 	}
 
 	hangup( data ) {
+		//this._state.progress = 'game_over';
 	}
 }
 

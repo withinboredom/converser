@@ -53,10 +53,12 @@ class Converser extends LiveActor {
 		while ( this._state[ 'waiting' ].length >= 2 ) {
 			const user1 = this._state[ 'waiting' ].shift();
 			const user2 = this._state[ 'waiting' ].shift();
-			this.Fire( 'start_game', {
-				user1,
-				user2
-			} );
+			if ( ! this._replaying ) {
+				this.Fire( 'start_game', {
+					user1,
+					user2
+				} );
+			}
 		}
 
 		if ( this._state[ 'ice-bucket' ] > 1 ) {

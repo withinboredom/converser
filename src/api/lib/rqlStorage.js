@@ -39,6 +39,7 @@ class RqlStorage extends Storage {
 	}
 
 	async Store( instance, events, ignoreConcurrencyError = false ) {
+		let stored = true;
 		const instanceId = instance._instanceId;
 		const id = instance.Id();
 		const snapshotId = `${instance.constructor.name}_${id}`;
@@ -61,6 +62,7 @@ class RqlStorage extends Storage {
 				event.stored = false;
 				if ( ! ignoreConcurrencyError ) {
 					console.error( 'concurrency exception attempting to store: ', event );
+					stored = false;
 				}
 
 				this.UnsetProjector( instanceId );
@@ -94,6 +96,8 @@ class RqlStorage extends Storage {
 
 		this.UnsetProjector( instanceId );
 		this.UnsetSnapshot( instanceId );
+
+		return stored;
 	}
 
 	SetProjector( instanceId, callback ) {

@@ -10,31 +10,53 @@ class OnlyActor extends LiveActor {
 	constructor( id, container ) {
 		super( id, container );
 
-		this._isWinner = true;
+		this._isWinner = false;
+
 	}
 
 	async ApplyEvent( event, replay = true ) {
-		this.lastEvent = event;
+		if ( ! replay ) {
+			console.log( `APPLY ${event.name}` );
+			this._records.push( event );
+		}
+		else {
+			console.log( `REPLAY ${event.name}` );
+		}
+
 		await super.ApplyEvent( event, replay );
 	}
 
 	async Fire( name, data ) {
+		const oldVersion = this._nextVersion;
 		if ( this._isWinner ) {
+			console.log( `${this.constructor.name}:${this._instanceId} fired ${name}` );
 			const timeout = setTimeout( () => {
+				console.log( `${this.constructor.name}:${this._instanceId} not leader` );
 				this._isWinner = false;
 			}, 1000 );
 			await super.Fire( name, data, () => {
 				clearTimeout( timeout );
+				if (this._nextVersion != oldVersion + 1) {
+					this._isWinner = false;
+					console.log(`${this.constructor.name}:${this._instanceId} has lost leadership`);
+					return;
+				}
 				this._isWinner = true;
-				console.log( `${this._instanceId} is the onlyActor` )
+				console.log( `${this.constructor.name}:${this._instanceId} is the onlyActor` )
 			} );
 		}
 		else {
 			console.log( `${this.constructor.name}:${this._instanceId} is waiting for expected event: ${name}` );
-			const oldVersion = this._nextVersion;
 			setTimeout( async() => {
-				const lastEvent = this.lastEvent;
-				if ( oldVersion == this._nextVersion || ! this.isDupe( lastEvent, { name, data } ) ) {
+				const hasPassed = this._records
+				                      .filter( ( event ) => event.version >= oldVersion )
+				                      .reduce( ( carry, current ) => {
+					                      if ( carry ) {
+						                      return carry;
+					                      }
+					                      return this.isDupe( current, { name, data } )
+				                      }, false );
+				if ( oldVersion == this._nextVersion || ! hasPassed ) {
 					this._isWinner = true;
 					console.log( `${this._instanceId} is firing expected event: ${name}` );
 					await this.Fire( name, data );
@@ -61,7 +83,7 @@ class OnlyActor extends LiveActor {
 		const differences = keys.filter( ( key ) => oldEvent.data[ key ] == newEvent.data[ key ] );
 		return (
 			       differences.length / keys.length
-		       ) < 0.75;
+		       ) > 0.75;
 	}
 }
 

@@ -279,7 +279,7 @@ class User extends LiveActor {
 	}
 
 	Project() {
-		console.log( `Projecting user ${this._instanceId}` );
+		console.log( `Projecting user:${this._instanceId}` );
 		const r = this._container.r;
 		r.table( 'users' )
 		 .get( this.Id() )

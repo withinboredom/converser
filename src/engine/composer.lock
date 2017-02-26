@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "1369f5fd470bed057d568ac782580597731a9f2b"
+                "reference": "72378e2b82d9f1dee6b93de2bee8aa138e7f67e1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/1369f5fd470bed057d568ac782580597731a9f2b",
-                "reference": "1369f5fd470bed057d568ac782580597731a9f2b",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/72378e2b82d9f1dee6b93de2bee8aa138e7f67e1",
+                "reference": "72378e2b82d9f1dee6b93de2bee8aa138e7f67e1",
                 "shasum": ""
             },
             "require": {
@@ -76,7 +76,7 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2017-02-10 15:41:43"
+            "time": "2017-02-22 21:52:30"
         },
         {
             "name": "amphp/loop",
@@ -268,12 +268,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "6a99df94a22f01b4b9c32ed8789cf30d05bdba92"
+                "reference": "437c0c33217953b3b75e5080b73554da5f76b179"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/6a99df94a22f01b4b9c32ed8789cf30d05bdba92",
-                "reference": "6a99df94a22f01b4b9c32ed8789cf30d05bdba92",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/437c0c33217953b3b75e5080b73554da5f76b179",
+                "reference": "437c0c33217953b3b75e5080b73554da5f76b179",
                 "shasum": ""
             },
             "require": {
@@ -325,7 +325,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2017-02-19 15:59:27"
+            "time": "2017-02-23 20:32:34"
         },
         {
             "name": "guzzlehttp/promises",

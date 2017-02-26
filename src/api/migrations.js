@@ -29,7 +29,7 @@ const doMigration = async( host, config ) => {
 			currentVersion = 0;
 		}
 
-		const expectedVersion = 11;
+		const expectedVersion = 13;
 
 		switch ( currentVersion.value + 1 ) {
 			case 1:
@@ -60,6 +60,11 @@ const doMigration = async( host, config ) => {
 				await db.tableCreate( 'payments' ).run( conn );
 			case 11:
 				await r.db( 'records' ).table( 'events' ).indexCreate( 'version' ).run( conn );
+			case 12:
+				await db.tableDrop( 'calls' ).run( conn );
+				await db.tableCreate( 'games' ).run( conn );
+			case 13:
+				await db.table('games').indexCreate('progress').run(conn);
 		}
 
 		if ( currentVersion.value != expectedVersion ) {
