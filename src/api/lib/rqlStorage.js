@@ -1,4 +1,3 @@
-const r = require( 'rethinkdb' );
 const Storage = require( './storage' );
 
 let counter = 0;
@@ -27,15 +26,16 @@ class RqlStorage extends Storage {
 	}
 
 	LoadSnapshot( instance ) {
-		return this.container.snapshots
+		return this.container.conn.db( 'records' ).table( 'snapshots' )
 		           .get( `${instance.constructor.name}_${instance.Id()}` )
-		           .run( this.container.conn );
+		           .run();
 	}
 
 	LoadEvents( id, from = - 1 ) {
-		return this.container.records
+		return this.container.conn.db( 'records' ).table( 'events' )
 		           .between( [ id, from ], [ id, r.maxval ], { leftBound: 'open', rightBound: 'closed' } )
-		           .orderBy( { index: 'id' } );
+		           .orderBy( { index: 'id' } )
+		           .run();
 	}
 
 	async Store( instance, events, ignoreConcurrencyError = false ) {
@@ -55,9 +55,9 @@ class RqlStorage extends Storage {
 
 		toStore.forEach( async( event ) => {
 			event.stored = true;
-			const result = await this.container.records
+			const result = await this.container.conn.db( 'records' ).table( 'events' )
 			                         .insert( event )
-			                         .run( this.container.conn );
+			                         .run();
 			if ( result.errors > 0 ) {
 				event.stored = false;
 				if ( ! ignoreConcurrencyError ) {
@@ -87,10 +87,10 @@ class RqlStorage extends Storage {
 					version: lastVersion
 				};
 				console.log( 'WTF ', snapshot );
-				this.container.snapshots
+				this.container.conn.db( 'records' ).table( 'snapshots' )
 				    .get( snapshotId )
 				    .replace( snapshot )
-				    .run( this.container.conn );
+				    .run();
 			}
 		}
 
@@ -123,10 +123,10 @@ class RqlStorage extends Storage {
 			this.subs[ id ] = [];
 		}
 
-		const promise = this.container.records
-		                    .between( [ id, sinceVersion ], [ id, r.maxval ] )
+		const promise = this.container.conn.db( 'records' ).table( 'events' )
+		                    .between( [ id, sinceVersion ], [ id, this.container.conn.maxval ] )
 		                    .changes( { includeInitial: true, includeStates: true } )
-		                    .run( this.container.conn );
+		                    .run();
 
 		return promise.then( ( cursor ) => {
 			console.log( `Subscribed to ${id}` );
@@ -195,10 +195,10 @@ class RqlStorage extends Storage {
 			this.subR[ name ] = [];
 		}
 
-		const promise = this.container.records
+		const promise = this.container.conn.db( 'records' ).table( 'events' )
 		                    .filter( { name } )
 		                    .changes( { includeInitial: false } )
-		                    .run( this.container.conn );
+		                    .run();
 		promise.then( ( cursor ) => {
 			this.subR[ name ].push( [ cb, cursor ] );
 			cursor.each( ( err, event ) => {

@@ -20,13 +20,13 @@ class Game extends LiveActor {
 		const r = this._container.r;
 		const conn = this._container.conn;
 
-		r.table( 'games' )
+		conn.db('converser').table('games')
 		 .get( this.Id() )
 		 .replace( {
 			 id: this.Id(),
 			 players: this._state.player,
 			 progress: this._state.progress
-		 } ).run( conn );
+		 } ).run();
 	}
 
 	tock( data ) {

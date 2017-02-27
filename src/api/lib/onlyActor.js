@@ -1,4 +1,3 @@
-const r = require( 'rethinkdb' );
 const LiveActor = require( './liveActor' );
 
 /**
@@ -36,9 +35,9 @@ class OnlyActor extends LiveActor {
 			}, 1000 );
 			await super.Fire( name, data, () => {
 				clearTimeout( timeout );
-				if (this._nextVersion != oldVersion + 1) {
+				if ( this._nextVersion != oldVersion + 1 ) {
 					this._isWinner = false;
-					console.log(`${this.constructor.name}:${this._instanceId} has lost leadership`);
+					console.log( `${this.constructor.name}:${this._instanceId} has lost leadership` );
 					return;
 				}
 				this._isWinner = true;

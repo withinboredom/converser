@@ -1,7 +1,6 @@
 const uuid = require( 'uuid/v4' );
 const LiveActor = require( './liveActor' );
 const Payment = require( './payment' );
-const r = require( 'rethinkdb' );
 
 /**
  * Generally used to initialize a user...
@@ -281,39 +280,39 @@ class User extends LiveActor {
 	Project() {
 		console.log( `Projecting user:${this._instanceId}` );
 		const r = this._container.r;
-		r.table( 'users' )
-		 .get( this.Id() )
-		 .replace( {
-			 id: this.Id(),
-			 phone: this._state.phone,
-			 lives: this._state.lives,
-			 status: this._state.status,
-			 score: this._state.score,
-			 payments: this._state.payments
-		 } ).run( this._container.conn );
+		this._container.conn.db( 'converser' ).table( 'users' )
+		    .get( this.Id() )
+		    .replace( {
+			    id: this.Id(),
+			    phone: this._state.phone,
+			    lives: this._state.lives,
+			    status: this._state.status,
+			    score: this._state.score,
+			    payments: this._state.payments
+		    } ).run();
 
 		this._state.sessions.forEach( ( session ) => {
-			r.table( 'sessions' )
+			this._container.conn.db('converser').table('sessions')
 			 .get( session.id )
 			 .replace( session )
-			 .run( this._container.conn );
+			 .run();
 		} );
 	}
 
 	async GetActiveToken( password ) {
-		const tokenResponse = await this._container.r.table( 'sessions' )
+		const tokenResponse = await this._container.conn.db('converser').table('sessions')
 		                                .getAll( this.Id(), { index: 'phone' } )
 		                                .filter( ( session ) => {
 			                                if ( password ) {
-				                                return r.now().during( session( 'begins' ), session( 'ends' ) )
+				                                return this._container.conn.now().during( session( 'begins' ), session( 'ends' ) )
 				                                        .and( session( 'password' ).eq( password ) );
 			                                }
 
-			                                return r.now().during( session( 'begins' ), session( 'ends' ) )
+			                                return this._container.conn.now().during( session( 'begins' ), session( 'ends' ) )
 			                                        .and( session( 'active' ) );
-		                                } ).pluck( 'token' ).run( this._container.conn );
+		                                } ).pluck( 'token' ).run();
 
-		const token = await tokenResponse.toArray();
+		const token = tokenResponse;
 
 		if ( token.length == 0 ) {
 			return;

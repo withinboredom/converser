@@ -1,4 +1,3 @@
-const r = require( 'rethinkdb' );
 const conn = require( './migrations.js' );
 const Stripe = require( 'stripe' );
 const Plivo = require( 'plivo' );
@@ -21,14 +20,10 @@ const stripe = {
 };
 
 const container = {
-	snapshots: r.db( 'records' ).table( 'snapshots' ),
-	records: r.db( 'records' ).table( 'events' ),
 	plivo: Plivo.RestAPI( {
 		authId: plivo.id,
 		authToken: plivo.token
 	} ),
-	uuid: r.uuid(),
-	r: r.db( db.name ),
 	charge: Stripe( stripe.key ),
 	storage: null, //todo
 	textFrom: plivo.sms
