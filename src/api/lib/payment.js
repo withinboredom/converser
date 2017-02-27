@@ -1,11 +1,11 @@
 const uuid = require( 'uuid' );
-const LiveActor = require( './liveActor' );
+const QueueActor = require( './queueActor' );
 
 /**
  * Represents a payment
- * @augments LiveActor
+ * @augments QueueActor
  */
-class Payment extends LiveActor {
+class Payment extends QueueActor {
 	constructor( id, container ) {
 		super( id, container );
 		this._packages = {

@@ -215,7 +215,7 @@ class Actor {
 		} );
 
 		this._container.storage.SetSnapshot( this._instanceId, async() => {
-			await this.Snapshot();
+			return await this.Snapshot();
 		} );
 
 		try {

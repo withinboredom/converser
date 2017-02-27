@@ -1,5 +1,5 @@
 const uuid = require( 'uuid/v4' );
-const LiveActor = require( './liveActor' );
+const QueueActor = require( './queueActor' );
 const Payment = require( './payment' );
 
 /**
@@ -36,7 +36,7 @@ const Payment = require( './payment' );
  * A User
  * @augments LiveActor
  */
-class User extends LiveActor {
+class User extends QueueActor {
 
 	/**
 	 * Creates a user!

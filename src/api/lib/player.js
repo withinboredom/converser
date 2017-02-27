@@ -1,4 +1,4 @@
-const LiveActor = require( './liveActor' );
+const QueueActor = require( './queueActor' );
 
 const NOTPLAYING = 'not-playing';
 const INITIALIZED = 'initialized';
@@ -22,7 +22,7 @@ You don't seem to have any credits. Please visit http://converser.space to buy s
 You may press 1, to have the link sent to your phone.
 `;
 
-class Player extends LiveActor {
+class Player extends QueueActor {
 	constructor( id, container ) {
 		super( id, container );
 		this._state[ 'status' ] = NOTPLAYING;

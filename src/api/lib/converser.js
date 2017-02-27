@@ -1,14 +1,17 @@
 const uuid = require( 'uuid' );
-const LiveActor = require( './onlyActor' );
+const QueueActor = require( './queueActor' );
 const Timer = require( './timer' );
 const User = require( './user' );
 const Game = require( './game' );
 
-class Converser extends LiveActor {
-	constructor( container ) {
+class Converser extends QueueActor {
+	constructor( id, container ) {
+		if (!container) {
+			container = id;
+		}
 		super( 'converser', container );
 
-		// user tracking
+		/* user tracking
 		this.doit( 'created_session' );
 		this.doit( 'active_session_changed' );
 		this.doit( 'set_lives' );
@@ -22,19 +25,21 @@ class Converser extends LiveActor {
 		this.doit( 'payment_success' );
 		this.doit( 'payment_fraud' );
 		console.log( 'new: ', this._instanceId );
+		*/
 
 		this._state[ 'waiting' ] = [];
 		this._state[ 'ice-bucket' ] = [];
 		this._state[ 'games' ] = [];
 
-		this.timer = new Timer( 5, container );
+		this.timer = new Timer( 'timer_5', container );
 		this.timer.Load();
-		this.ListenFor( this.timer.Id(), 'tick', 'tock', Infinity, Infinity );
+		this.ListenFor( 'timer_5', 'tick', 'tock', Infinity, Infinity );
 	}
 
 	async Load() {
 		await super.Load();
 		this.timer.StartTimer( new Date() );
+		this.timer = undefined;
 	}
 
 	doit( name ) {

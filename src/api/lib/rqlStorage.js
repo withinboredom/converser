@@ -33,7 +33,7 @@ class RqlStorage extends Storage {
 
 	LoadEvents( id, from = - 1 ) {
 		return this.container.conn.db( 'records' ).table( 'events' )
-		           .between( [ id, from ], [ id, r.maxval ], { leftBound: 'open', rightBound: 'closed' } )
+		           .between( [ id, from ], [ id, this.container.conn.maxval ], { leftBound: 'open', rightBound: 'closed' } )
 		           .orderBy( { index: 'id' } )
 		           .run();
 	}

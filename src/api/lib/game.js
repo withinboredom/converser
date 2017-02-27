@@ -1,8 +1,8 @@
-const LiveActor = require( './liveActor' );
+const QueueActor = require( './queueActor' );
 const Timer = require( './timer' );
 const Player = require( './player' );
 
-class Game extends LiveActor {
+class Game extends QueueActor {
 	constructor( id, container ) {
 		super( id, container );
 		this._state = {

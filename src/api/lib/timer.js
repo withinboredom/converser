@@ -1,19 +1,25 @@
-const OnlyActor = require( './onlyActor' );
+const QueueActor = require( './queueActor' );
 
-class Timer extends OnlyActor {
+class Timer extends QueueActor {
 	constructor( resolution, container ) {
-		super( `timer_${resolution}`, container );
-		this._resolution = resolution;
+		const id = typeof resolution === 'string' ? resolution : `timer_${resolution}`;
+		super( id, container );
+		this._resolution = typeof resolution == 'string' ? resolution.replace( /\D+/g, '' ) : resolution;
 	}
 
 	getNextTick( now ) {
-		return new Date( now.getTime() + this._resolution * 10000 );
+		const next = new Date( now.getTime() + this._resolution * 10000 );
+		return next;
 	}
 
 	getMsToNextTick( now ) {
-		return (
-			       this._state[ 'next_tick' ].getTime() - now.getTime()
-		       ) / 10;
+		const ms = (
+			           this._state[ 'next_tick' ].getTime() - now.getTime()
+		           ) / 10;
+		if ( ms <= 0 ) {
+			return 1;
+		}
+		return ms;
 	}
 
 	StartTimer( nextTick ) {
@@ -57,13 +63,15 @@ class Timer extends OnlyActor {
 	}
 
 	tick( data ) {
-		const now = new Date();
-		const nextTick = this._state[ 'next_tick' ] = this.getNextTick( now );
 		if ( ! this._replaying ) {
+			const now = new Date();
+			const nextTick = this._state[ 'next_tick' ] = this.getNextTick( now );
 			setTimeout( () => {
-				this.Fire( 'tick', {
-					nextTick
-				} );
+				if ( nextTick == this._state[ 'next_tick' ] ) {
+					this.Fire( 'tick', {
+						nextTick
+					} );
+				}
 			}, this.getMsToNextTick( now ) );
 		}
 	}
