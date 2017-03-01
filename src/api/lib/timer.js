@@ -1,4 +1,4 @@
-const QueueActor = require( './queueActor' );
+const QueueActor = require( './onlyActor' );
 
 class Timer extends QueueActor {
 	constructor( resolution, container ) {

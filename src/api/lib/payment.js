@@ -1,5 +1,5 @@
 const uuid = require( 'uuid' );
-const QueueActor = require( './queueActor' );
+const QueueActor = require( './liveActor' );
 
 /**
  * Represents a payment

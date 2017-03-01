@@ -14,6 +14,8 @@ const Container = require( './lib/container' );
 const Storage = require( './lib/rqlStorage' );
 const Converser = require( './lib/converser' );
 
+const EventBus = require('./lib/EventBus');
+
 const log = console.log;
 
 console.log = ( ...args ) => {
@@ -36,11 +38,11 @@ config.container.conn.then( ( conn ) => {
 	container.conn = conn;
 	container.storage = new Storage( container );
 
-	const converser = new Converser( container );
-	converser.Load();
+	//const converser = new Converser( container );
+	//converser.Load();
 
-	const junk = new Converser( container );
-	junk.Load();
+	//const junk = new Converser( container );
+	//junk.Load();
 
 	app.get( '/', ( request, response ) => {
 		response.send( '<h1>Hello World</h1>' );

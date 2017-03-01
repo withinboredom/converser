@@ -1,4 +1,4 @@
-const QueueActor = require( './queueActor' );
+const QueueActor = require( './liveActor' );
 
 const NOTPLAYING = 'not-playing';
 const INITIALIZED = 'initialized';

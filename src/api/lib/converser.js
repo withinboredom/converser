@@ -1,5 +1,5 @@
 const uuid = require( 'uuid' );
-const QueueActor = require( './queueActor' );
+const QueueActor = require( './onlyActor' );
 const Timer = require( './timer' );
 const User = require( './user' );
 const Game = require( './game' );

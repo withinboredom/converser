@@ -12,17 +12,9 @@
     "express": "^4.14.1",
     "harmonize": "^2.0.0",
     "plivo": "^0.4.0",
-    "rethinkdb-job-queue": "^3.0.0",
     "rethinkdbdash": "^2.3.28",
     "socket.io": "^1.7.2",
     "stripe": "^4.15.0",
     "uuid": "^3.0.1"
-  },
-  "resolutions": {
-    "debug": "2.3.3",
-    "qs": "6.3.1",
-    "ms": "0.7.2",
-    "assert-plus": "1.0.0",
-    "component-emitter": "1.2.1"
   }
 }

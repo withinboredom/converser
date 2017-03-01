@@ -1,4 +1,4 @@
-const QueueActor = require( './queueActor' );
+const QueueActor = require( './liveActor' );
 const Timer = require( './timer' );
 const Player = require( './player' );
 
